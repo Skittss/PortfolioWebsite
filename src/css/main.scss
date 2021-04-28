@@ -1,0 +1,148 @@
+@import "./_fonts.scss";
+
+$bg: #f0f2f5;
+$bg2: #ffffff;
+
+body {
+
+    background-color: $bg;
+
+    .loadingPage {
+        text-align: center;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .navigation {
+        font-family: "Raleway", sans-serif !important;
+        letter-spacing: 0.2em;
+        height: 50px;
+        line-height: 50px;
+    }
+
+    .main-content {
+        background-color: $bg;
+        margin-top: 50px;
+        padding: 1em;
+    }
+
+    .project-view {
+        
+        .LangTag {
+            border: 1px;
+            display: inline-block;
+            padding: 0.1em 0.6em;
+        }
+        
+        .ant-card-meta-description
+        {
+            white-space: nowrap;
+            text-overflow: "& Others ...";
+            overflow: hidden;
+        }
+
+        .ant-card-cover
+        {
+            height: 200px;
+            overflow: hidden;
+
+            .cover-image-container
+            {
+                height: inherit;
+                display: grid;
+                position: relative;
+
+                .ant-image
+                {
+                    width: inherit;
+                    grid-area: 1/1;
+
+                    .ant-image-mask
+                    {
+                        @extend .ant-card-cover;
+                    }
+
+                    .ant-image-mask-info::after
+                    {
+                        content: " Thumbnail";
+                    }
+                }
+
+                .fade-out
+                {
+                    height: 20%;
+                    width: inherit;
+                    grid-area: 1/1;
+                    background: linear-gradient(to top, rgba(255,255,255,1) 0%,rgba(255,255,255,0) 100%);
+                    position: absolute;
+                    bottom: 0;
+                }
+            }
+        }
+    }
+
+    .project-home-wrapper {
+        padding: 4.5em;
+        font-family: "Raleway-bold", sans-serif !important;
+
+        .home-header {
+            text-align: center;
+
+            #title {
+                text-transform: uppercase;
+                letter-spacing: 0.12em;
+                font-size: 2.5em;
+                margin-bottom: 0.25em;
+            }
+
+            a {
+                color: #000000;
+            }
+
+            a:hover {
+                color: #61dafb;
+            }
+        }
+    }
+
+    .App {
+        text-align: center;
+          
+        .App-logo {
+            height: 40vmin;
+            pointer-events: none;
+        }
+          
+        @media (prefers-reduced-motion: no-preference) {
+            .App-logo {
+                animation: App-logo-spin infinite 20s linear;
+            }
+        }
+          
+        .App-header {
+            background-color: #282c34;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: calc(10px + 2vmin);
+            color: white;
+        }
+          
+        .App-link {
+            color: #61dafb;
+        }
+          
+        @keyframes App-logo-spin {
+            from {
+                transform: rotate(0deg);
+            }
+            to {
+                transform: rotate(360deg);
+            }
+        }
+    }
+}

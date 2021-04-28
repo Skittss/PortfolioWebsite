@@ -1,0 +1,76 @@
+$back-button-height: 32px;
+
+body {
+    #root {
+
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+
+        .main-content {
+
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+
+            .fill-container {
+
+                display: flex;
+                flex-direction: column;    
+                flex-grow: 1;
+            
+                .ant-steps-item-description {
+                    max-width: 170px;
+                }
+
+                .back-overlay {
+                    position: absolute;
+
+                    #button {
+                        height: $back-button-height;
+                    }
+                }
+
+                .fill-and-vertically-center {
+                    margin: $back-button-height 0;
+                    padding: 3px 0;
+                    display: flex;
+                    flex-direction: column;    
+                    flex-grow: 1;
+                    justify-content: center;
+
+                    .process-preview-grid-col {
+
+                        min-width: 300px;
+                        max-width: 600px;
+    
+                        .process-preview-container {
+                            padding: 2px;
+                            border: 2px solid;
+                            border-color: black;
+                            width: 100%;
+                            line-height: 0;
+
+                            #preview-before {
+                                .ant-image-mask-info::after {
+                                    content: " (before)";
+                                }
+                            }
+                
+                            #preview-after {
+                                .ant-image-mask-info::after {
+                                    content: " (after)";
+                                }
+                            }
+                        }
+        
+                        .processor-options {
+                            width: 100%;
+                        }
+                        
+                    }
+                }
+            }
+        }
+    }
+}
