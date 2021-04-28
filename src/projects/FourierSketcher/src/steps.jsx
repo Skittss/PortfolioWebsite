@@ -98,7 +98,7 @@ const Step1 = () => {
                     <FadeIn className="fill-and-vertically-center">
                         <Row gutter={[16,16]} justify="center" align="middle" style={{display: "flex", alignItems: "center"}}>
                             <Col className="process-preview-grid-col" flex={1}>
-                                <div className="process-preview-container" ><Image id="preview-before" src={imgSource} /></div>
+                                <div className="process-preview-container" ><Image id="preview-before" src={imgSource} style={{maxWidth: "30vw"}}/></div>
                             </Col>
 
                             <Col className="process-preview-grid-col" flex={1}>
@@ -122,8 +122,8 @@ const Step1 = () => {
                     </FadeIn>
 
                     <Surface width={rawInput.width} height={rawInput.height}>
-                        {/* <ToEdgeMagnitudes> */}
-                            <ToNMS dimensions={[rawInput.width, rawInput.height]}>
+                        <ToEdgeMagnitudes>
+                            {/* <ToNMS dimensions={[rawInput.width, rawInput.height]}> */}
                                 <ToEdgeFinding 
                                     dimensions={[rawInput.width, rawInput.height]}
                                     hKernel={[
@@ -146,8 +146,8 @@ const Step1 = () => {
                                         </ToHorizontalBlur>
                                     </ToVerticalBlur>
                                 </ToEdgeFinding>
-                            </ToNMS>
-                        {/* </ToEdgeMagnitudes> */}
+                            {/* </ToNMS> */}
+                        </ToEdgeMagnitudes>
                     </Surface>
                 </div>
             ) : null}

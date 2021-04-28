@@ -48,8 +48,9 @@ body {
                             padding: 2px;
                             border: 2px solid;
                             border-color: black;
-                            width: 100%;
+                            width: fit-content;
                             line-height: 0;
+                            margin: auto;
 
                             #preview-before {
                                 .ant-image-mask-info::after {
