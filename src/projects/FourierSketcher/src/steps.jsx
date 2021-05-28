@@ -1,9 +1,13 @@
-import React, { useState } from 'react';
+import * as THREE from 'three';
+import { Canvas } from 'react-three-fiber';
+import React, { useState, useRef, Suspense, useEffect } from 'react';
 import FadeIn from 'react-fade-in';
 import { Image, Slider, Button, Row, Col, Select } from 'antd';
 import { ArrowLeftOutlined } from '@ant-design/icons';
 import ImageUploader from "./imageUploader";
 import "./main.scss";
+
+import EdgeDetector from "./edgeDetector";
 
 import shaders from "./shaders";
 import { Node } from 'gl-react';
@@ -48,6 +52,14 @@ const ToNMS = ({children: t, dimensions: dim}) => {
 
 const Step1 = () => {
 
+    const ImgContainerRef = useRef(null);
+    const [shaderDisplayHeight, setDisplayHeight] = useState(0);
+
+    useEffect(() => {
+        ImgContainerRef.current ? console.log(ImgContainerRef.current.offsetWidth) : console.log("fuck this shit");
+        if (ImgContainerRef.current) setDisplayHeight(ImgContainerRef.current.offsetHeight );
+    }, [ImgContainerRef.current])
+
     const [rawInput, setRawInput] = useState(null);
     const [processedOutput, setProcessedOutput] = useState(null);
     const [imgSource, setImgSource] = useState(null);
@@ -63,7 +75,6 @@ const Step1 = () => {
     const onImageUpload = data => {
         setImgSource(data.src);
         setRawInput(data.raw);
-        console.log(data.raw);
         setUploadVisibility(false);
     }
 
@@ -93,16 +104,23 @@ const Step1 = () => {
                 <ImageUploader onLoadCallback={onImageUpload} style={{display: _getDisplay()}}/>
             </FadeIn>
 
-            {(imgSource !== null && rawInput !== null) ? (
+            {(imgSource != null && rawInput != null) ? (
                 <div className="fill-container">
                     <FadeIn className="fill-and-vertically-center">
                         <Row gutter={[16,16]} justify="center" align="middle" style={{display: "flex", alignItems: "center"}}>
                             <Col className="process-preview-grid-col" flex={1}>
-                                <div className="process-preview-container" ><Image id="preview-before" src={imgSource} style={{maxWidth: "30vw"}}/></div>
+                                <div className="process-preview-container" ><div ref={ImgContainerRef}><Image id="preview-before" src={imgSource} /></div></div>
                             </Col>
 
                             <Col className="process-preview-grid-col" flex={1}>
-                                <div className="process-preview-container"><Image id="preview-after" src={imgSource} /></div>                      
+                                <div className="process-preview-container">
+                                    {/* <Image id="preview-before" src={imgSource} preview={false} style={{visibility: "hidden"}}/> */}
+                                    <Canvas className="shader" camera={{fov: 50, position: [0, 0, 30]}} style={{position: "relative", height: shaderDisplayHeight}}>
+                                        <Suspense fallback={null}>
+                                            <EdgeDetector img={imgSource} dim={{width: rawInput.width, height: rawInput.height}}/>
+                                        </Suspense>
+                                    </Canvas>
+                                </div>
                             </Col>
 
                             <Col className="process-preview-grid-col" flex={1}>
@@ -121,34 +139,6 @@ const Step1 = () => {
                         </Button> 
                     </FadeIn>
 
-                    <Surface width={rawInput.width} height={rawInput.height}>
-                        <ToEdgeMagnitudes>
-                            {/* <ToNMS dimensions={[rawInput.width, rawInput.height]}> */}
-                                <ToEdgeFinding 
-                                    dimensions={[rawInput.width, rawInput.height]}
-                                    hKernel={[
-                                        1, 0, -1,
-                                        2, 0, -2,
-                                        1, 0, -1
-                                    ]}
-
-                                    vKernel={[
-                                        1, 2, 1,
-                                        0, 0, 0,
-                                        -1,-2,-1
-                                    ]}
-                                >
-                                    <ToVerticalBlur gaussianKernel={getTrunc1DKernel(3, 1.5)} dimensions={[rawInput.width, rawInput.height]}>                        
-                                        <ToHorizontalBlur gaussianKernel={getTrunc1DKernel(3, 1.5)} dimensions={[rawInput.width, rawInput.height]}>
-                                            <ToGray colorWeights={selectedGrayscaleEncoding}>
-                                                {imgSource}
-                                            </ToGray>
-                                        </ToHorizontalBlur>
-                                    </ToVerticalBlur>
-                                </ToEdgeFinding>
-                            {/* </ToNMS> */}
-                        </ToEdgeMagnitudes>
-                    </Surface>
                 </div>
             ) : null}
         </div>

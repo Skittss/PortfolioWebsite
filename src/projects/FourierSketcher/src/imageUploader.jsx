@@ -69,7 +69,6 @@ const ImageUploader = ({onLoadCallback, style}) => {
             customRequest={loadImageLocally}
             beforeUpload={validateUpload}
             onChange={handleChange}
-            
         >
             <p className="ant-upload-drag-icon">
                 <UploadIcon loading={loadingImage} />
