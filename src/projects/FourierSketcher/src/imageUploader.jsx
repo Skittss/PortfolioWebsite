@@ -1,5 +1,4 @@
 import React, { useState } from 'react'
-import { PNG } from 'pngjs';
 import { message, Upload } from 'antd'
 import { InboxOutlined, LoadingOutlined } from '@ant-design/icons';
 const { Dragger } = Upload;
@@ -24,14 +23,16 @@ const ImageUploader = ({onLoadCallback, style}) => {
                 const reader = new FileReader();
                 reader.onload = event => {
                     
-                    // Convert to raw pixel data using PNGjs.
-                    const trunc64 = event.target.result.split(",")[1]
+                    const img = new Image();
+                    img.src = event.target.result;
+                    img.onload = () => 
+                    {
+                        resolve({src: event.target.result, dim: {width: img.width, height: img.height}})
 
-                    const pixelData = PNG.sync.read(Buffer.from(trunc64, 'base64'));
-
-                    resolve({src: event.target.result, raw: pixelData});
+                    }
                 }
                 reader.readAsDataURL(file);
+
             }, 30);
         }).then(data => onSuccess(data));
     }
