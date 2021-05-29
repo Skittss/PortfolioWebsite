@@ -8,14 +8,15 @@ import ImageUploader from "./imageUploader";
 import "./main.scss";
 
 import ThreeImagePlane from "./threeImagePlane";
-import { GrayscaleShader, hGaussianBlur, vGaussianBlur } from "./shaders";
-import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer'
-import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass'
-import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass'
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer';
+import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass';
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass';
 
-import {getTrunc1DKernel} from "./gaussianKernel";
+import { GrayscalePass, HorizontalBlurPass, VerticalBlurPass } from './shaders';
 
-extend({ EffectComposer, ShaderPass, RenderPass, GrayscaleShader, hGaussianBlur, vGaussianBlur});
+import { getSeparableKernel } from "./gaussianKernel";
+
+extend({ EffectComposer, ShaderPass, RenderPass, GrayscalePass, HorizontalBlurPass, VerticalBlurPass });
 
 const { Option } = Select;
 
@@ -26,43 +27,19 @@ const grayScaleCoefficients = {
     "Mean" : [0.3333, 0.3333, 0.3333]
 }
 
-// const ToGray = ({children: t, colorWeights: weights }) => {
-//     return <Node shader={shaders.Grayscale} uniforms={ { weights, t } } />
-// }
-
-// const ToHorizontalBlur = ({children: t, gaussianKernel: kernel, dimensions: dim}) => {
-//     const kernelSize = kernel.length;
-//     return <Node shader={shaders.hGaussianBlur} uniforms={ { dim, kernelSize, kernel, t } } />
-// }
-
-// const ToVerticalBlur = ({children: t, gaussianKernel: kernel, dimensions: dim}) => {
-//     const kernelSize = kernel.length;
-//     return <Node shader={shaders.vGaussianBlur} uniforms={ { dim, kernelSize, kernel, t } } />
-// }
-
-// const ToEdgeMagnitudes = ({children: t}) => {
-//     return <Node shader={shaders.ShowEdgeMagnitudes} uniforms={ { t } }/>
-// }
-
-// const ToEdgeFinding = ({children: t, hKernel: GX, vKernel: GY, dimensions: dim}) => {
-//     return <Node shader={shaders.EdgeFinding} uniforms={ { dim, GX, GY, t } } />
-// }
-
-// const ToNMS = ({children: t, dimensions: dim}) => {
-//     return <Node shader={shaders.NMS} uniforms={ { dim, t } } />
-// }
-
 const Step1 = () => {
+
+    const [step, setStep] = useState(0);
 
     const ImgContainerRef = useRef();
     const [shaderDisplayDim, setDisplayDim] = useState({width: 0, height: 0});
 
     const [rawInput, setRawInput] = useState(null);
-    const [processedOutput, setProcessedOutput] = useState(null);
     const [imgSource, setImgSource] = useState(null);
     const [uploadVisibility, setUploadVisibility] = useState(true);
 
-    const [selectedGrayscaleEncoding, setSelectedGrayscaleEncoding] = useState(grayScaleCoefficients["BT.601"]);
+    const [selectedGrayscaleTag, setSelectedGrayscaleTag] = useState("BT.601")
+    const [selectedGrayscaleEncoding, setSelectedGrayscaleEncoding] = useState(grayScaleCoefficients[selectedGrayscaleTag]);
 
     const _getDisplay = ({reverse = false, value = "block"} = {}) => {
         if (reverse) return uploadVisibility ? "none" : value;
@@ -71,7 +48,7 @@ const Step1 = () => {
 
     const onImageUpload = data => {
         setImgSource(data.src);
-        setRawInput(data.raw);
+        setRawInput(data.dim);
         setUploadVisibility(false);
     }
 
@@ -80,16 +57,52 @@ const Step1 = () => {
         setUploadVisibility(true);
     }
 
-    const getOptions = () => {
-        return (
-            <div className="processor-options">
-                <Select defaultValue="BT.601" onChange={v => setSelectedGrayscaleEncoding(grayScaleCoefficients[v])}>
+    const stepOptions = {
+        
+        0: (
+            <>
+                <Select defaultValue={selectedGrayscaleTag} onChange={v => {setSelectedGrayscaleTag(v); setSelectedGrayscaleEncoding(grayScaleCoefficients[v])}}>
                     <Option value="BT.601">BT.601</Option>
                     <Option value="BT.709">BT.709</Option>
                     <Option value="BT.2100">BT.2100</Option>
                     <Option value="Mean">Mean</Option>
                 </Select>
+            </>
+        ),
+
+        1: (
+            <>
                 <Slider />
+                <Slider />
+            </>
+        ),
+
+        2: (
+            <>
+            </>
+        )
+    }
+
+    const getStepShaders = (step) => {
+
+        return (
+            <>
+                {step >= 0 ? <grayscalePass attachArray="passes" args={[selectedGrayscaleEncoding]} /> : null}
+                {step >= 1 ?  
+                <>
+                    <horizontalBlurPass attachArray="passes" args={[getSeparableKernel(10, 100), getSeparableKernel(10, 100).length, ImgContainerRef.current.offsetWidth]} />
+                    <verticalBlurPass attachArray="passes" args={[getSeparableKernel(10, 100), getSeparableKernel(10, 100).length, ImgContainerRef.current.offsetHeight]} />
+                </>
+                : null}
+            </>
+        )
+    }
+
+    const getOptions = (step) => {
+
+        return (
+            <div className="processor-options">
+                {stepOptions[step]}
             </div>
         )
     }
@@ -103,17 +116,12 @@ const Step1 = () => {
         return (
             <effectComposer ref={composer} args={[gl]}>
                 <renderPass attachArray="passes" scene={scene} camera={camera} />
-                {/* <shaderPass attachArray="passes" args={[GrayscaleShader]} material-uniforms-weights-value={selectedGrayscaleEncoding}/> */}
-                {/* <shaderPass attachArray="passes" args={[hGaussianBlur]} 
-                    material-uniforms-kernel-value={getTrunc1DKernel(3, 1.5)} 
-                    material-uniforms-kernelSize-value={() => getTrunc1DKernel(3, 1.5).length}
-                    material-uniforms-dim-value={[ImgContainerRef.current.offsetWidth, ImgContainerRef.current.offsetHeight]}
-                /> */}
-                <shaderPass attachArray="passes" args={[vGaussianBlur]} 
-                    material-uniforms-kernel-value={getTrunc1DKernel(3, 1)}
-                    material-uniforms-kernelSize-value={() => getTrunc1DKernel(3, 1).length}
-                    material-uniforms-dim-value={[ImgContainerRef.current.offsetWidth, ImgContainerRef.current.offsetHeight]}
-                />
+                {getStepShaders(step)}
+
+
+                {/* <glitchPass attachArray="passes" /> */}
+                {/* <filmPass attachArray="passes" args={[0.35, 0.025, 648, false]} renderToScreen /> */}
+                {/* {getStepShaders(step, scene, gl, size, camera)} */}
             </effectComposer>
         )
     }
@@ -136,17 +144,25 @@ const Step1 = () => {
 
                             <Col className="process-preview-grid-col" flex={1}>
                                 <div className="process-preview-container">
-                                    <Canvas className="shader" camera={{fov: 50, position: [0, 0, 30]}} style={{position: "relative", width: shaderDisplayDim.width, height: shaderDisplayDim.height}}>
-                                        <Suspense fallback={null}>
-                                            <ThreeImagePlane img={imgSource} dim={{width: rawInput.width, height: rawInput.height}}/>
-                                        </Suspense>
+                                    <Canvas 
+                                        className="shader"
+                                        camera={{fov: 50, position: [0, 0, 30]}}
+                                        gl={{preserveDrawingBuffer: true}}
+                                        style={{position: "relative", width: shaderDisplayDim.width, height: shaderDisplayDim.height}}
+                                    >
+                                        {console.log("src", imgSource)}{console.log(rawInput)}
+                                        <ThreeImagePlane img={imgSource} dim={{width: rawInput.width, height: rawInput.height}}/>
                                         <Shaders />
                                     </Canvas>
                                 </div>
                             </Col>
 
-                            <Col className="process-preview-grid-col" flex={1}>
-                                {getOptions()}
+                            <Col className="process-preview-grid-col" flex={1} style={{alignSelf: "stretch"}}>
+                                <div style={{paddingBottom: "10px"}}>
+                                    <Button onClick={() => setStep(prev => prev - 1)}>Previous</Button>
+                                    <Button onClick={() => setStep(prev => prev + 1)} style={{float: "right"}}>Next</Button>
+                                </div>
+                                {getOptions(step)}
                             </Col>
                         </Row>
                     </FadeIn>

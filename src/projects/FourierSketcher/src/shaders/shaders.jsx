@@ -1,7 +1,6 @@
 import { Shaders, GLSL } from 'gl-react';
 import { Vector3, Vector2 } from 'three';
 
-
 const GrayscaleShader = {
 
 	uniforms: {
@@ -36,7 +35,7 @@ const hGaussianBlur = {
         'tDiffuse': { value: null },
         'kernelSize': { value: 0 },
         'kernel': { value: new Array(128) },
-        'dim': { value: new Vector2() }
+        'hRes': { value: 0.0 }
     },
 
     vertexShader: /* glsl */`
@@ -47,22 +46,21 @@ const hGaussianBlur = {
         }`,
 
     fragmentShader: /* glsl */`
-        precision highp float;
-            
-        uniform vec2 dim;
+        uniform float hRes;
         uniform int kernelSize;
         uniform float kernel[128];
-        uniform sampler2D t;
+        uniform sampler2D tDiffuse;
+
+        varying vec2 vUv;
 
         void main() {
 
-            vec2 pos = vec2(gl_FragCoord.x/dim.x, gl_FragCoord.y/dim.y);
-            vec4 color = texture2D(t, pos) * kernel[0];
+            vec4 color = texture2D(tDiffuse, vUv) * kernel[0];
 
             for (int i=1; i < 128; i++) {
                 if (i == kernelSize) break;
-                color += texture2D(t, pos + vec2(float(i)/dim.x, 0.0)) * kernel[i];
-                color += texture2D(t, pos - vec2(float(i)/dim.x, 0.0))* kernel[i];
+                color += texture2D(tDiffuse, vUv + vec2(float(i)/hRes, 0.0)) * kernel[i];
+                color += texture2D(tDiffuse, vUv - vec2(float(i)/hRes, 0.0)) * kernel[i];
             }
 
             gl_FragColor = color;
@@ -75,7 +73,7 @@ const vGaussianBlur = {
         'tDiffuse': { value: null },
         'kernelSize': { value: 0 },
         'kernel': { value: new Array(128) },
-        'dim': { value: new Vector2() }
+        'vRes': { value: 0.0 }
     },
 
     vertexShader: /* glsl */`
@@ -85,23 +83,22 @@ const vGaussianBlur = {
             gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
         }`,
 
-    fragmentShader: /* glsl */`
-        precision highp float;
-            
-        uniform vec2 dim;
+    fragmentShader: /* glsl */`            
+        uniform float vRes;
         uniform int kernelSize;
         uniform float kernel[128];
-        uniform sampler2D t;
+        uniform sampler2D tDiffuse;
+        
+        varying vec2 vUv;
 
         void main() {
 
-            vec2 pos = vec2(gl_FragCoord.x/dim.x, gl_FragCoord.y/dim.y);
-            vec4 color = texture2D(t, pos) * kernel[0];
+            vec4 color = texture2D(tDiffuse, vUv) * kernel[0];
 
             for (int i=1; i < 128; i++) {
                 if (i == kernelSize) break;
-                color += texture2D(t, pos + vec2(0.0, float(i)/dim.y)) * kernel[i];
-                color += texture2D(t, pos - vec2(0.0, float(i)/dim.y)) * kernel[i];
+                color += texture2D(tDiffuse, vUv + vec2(0.0, float(i)/vRes)) * kernel[i];
+                color += texture2D(tDiffuse, vUv - vec2(0.0, float(i)/vRes)) * kernel[i];
             }
 
             gl_FragColor = color;
