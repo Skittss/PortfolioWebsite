@@ -1,8 +1,6 @@
 import React, { useRef, useState, useMemo } from 'react';
-import { TextureLoader } from 'three';
+import { TextureLoader, LinearFilter } from 'three';
 import { useLoader, useThree } from 'react-three-fiber';
-
-import test from "../../../content/projects/FourierSketcher/img/back.jpg"
 
 const useAspect = (width, height, factor = 1) => {
     const { viewport: v, aspect } = useThree();
@@ -11,9 +9,12 @@ const useAspect = (width, height, factor = 1) => {
     return [adaptedWidth * factor, adaptedHeight * factor, 1];
 }
 
-const EdgeDetector = ({img, dim}) => {
+const ThreeImagePlane = ({img, dim}) => {
 
     const image = useLoader(TextureLoader, img);
+    image.minFilter = LinearFilter;
+
+
     const [width, height] = useAspect(dim.width, dim.height);
 
     return (
@@ -24,4 +25,4 @@ const EdgeDetector = ({img, dim}) => {
     )
 }
 
-export default EdgeDetector;
+export default ThreeImagePlane;

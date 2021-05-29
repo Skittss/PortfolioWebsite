@@ -1,4 +1,117 @@
 import { Shaders, GLSL } from 'gl-react';
+import { Vector3, Vector2 } from 'three';
+
+
+const GrayscaleShader = {
+
+	uniforms: {
+		'tDiffuse': { value: null },
+        'weights': { value: new Vector3() }
+	},
+
+	vertexShader: /* glsl */`
+		varying vec2 vUv;
+		void main() {
+			vUv = uv;
+			gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+		}`,
+
+	fragmentShader: /* glsl */`
+		uniform float opacity;
+		uniform sampler2D tDiffuse;
+        uniform vec3 weights;
+		varying vec2 vUv;
+
+		void main() {
+			vec4 texel = texture2D( tDiffuse, vUv );
+            float w_a = weights.x * texel.x + weights.y * texel.y + weights.z * texel.z;
+			gl_FragColor = vec4(w_a, w_a, w_a, 1.0);
+		}`
+
+};
+
+const hGaussianBlur = {
+
+    uniforms: {
+        'tDiffuse': { value: null },
+        'kernelSize': { value: 0 },
+        'kernel': { value: new Array(128) },
+        'dim': { value: new Vector2() }
+    },
+
+    vertexShader: /* glsl */`
+        varying vec2 vUv;
+        void main() {
+            vUv = uv;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+        }`,
+
+    fragmentShader: /* glsl */`
+        precision highp float;
+            
+        uniform vec2 dim;
+        uniform int kernelSize;
+        uniform float kernel[128];
+        uniform sampler2D t;
+
+        void main() {
+
+            vec2 pos = vec2(gl_FragCoord.x/dim.x, gl_FragCoord.y/dim.y);
+            vec4 color = texture2D(t, pos) * kernel[0];
+
+            for (int i=1; i < 128; i++) {
+                if (i == kernelSize) break;
+                color += texture2D(t, pos + vec2(float(i)/dim.x, 0.0)) * kernel[i];
+                color += texture2D(t, pos - vec2(float(i)/dim.x, 0.0))* kernel[i];
+            }
+
+            gl_FragColor = color;
+        }`
+};
+
+const vGaussianBlur = { 
+
+    uniforms: {
+        'tDiffuse': { value: null },
+        'kernelSize': { value: 0 },
+        'kernel': { value: new Array(128) },
+        'dim': { value: new Vector2() }
+    },
+
+    vertexShader: /* glsl */`
+        varying vec2 vUv;
+        void main() {
+            vUv = uv;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+        }`,
+
+    fragmentShader: /* glsl */`
+        precision highp float;
+            
+        uniform vec2 dim;
+        uniform int kernelSize;
+        uniform float kernel[128];
+        uniform sampler2D t;
+
+        void main() {
+
+            vec2 pos = vec2(gl_FragCoord.x/dim.x, gl_FragCoord.y/dim.y);
+            vec4 color = texture2D(t, pos) * kernel[0];
+
+            for (int i=1; i < 128; i++) {
+                if (i == kernelSize) break;
+                color += texture2D(t, pos + vec2(0.0, float(i)/dim.y)) * kernel[i];
+                color += texture2D(t, pos - vec2(0.0, float(i)/dim.y)) * kernel[i];
+            }
+
+            gl_FragColor = color;
+        }`
+
+};
+
+export { GrayscaleShader, hGaussianBlur, vGaussianBlur };
+
+
 
 const shaders = Shaders.create({
 

@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { Canvas } from 'react-three-fiber';
+import { Canvas, extend, useFrame, useThree } from 'react-three-fiber';
 import React, { useState, useRef, Suspense, useEffect } from 'react';
 import FadeIn from 'react-fade-in';
 import { Image, Slider, Button, Row, Col, Select } from 'antd';
@@ -7,13 +7,15 @@ import { ArrowLeftOutlined } from '@ant-design/icons';
 import ImageUploader from "./imageUploader";
 import "./main.scss";
 
-import EdgeDetector from "./edgeDetector";
-
-import shaders from "./shaders";
-import { Node } from 'gl-react';
-import { Surface } from 'gl-react-dom';
+import ThreeImagePlane from "./threeImagePlane";
+import { GrayscaleShader, hGaussianBlur, vGaussianBlur } from "./shaders";
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer'
+import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass'
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass'
 
 import {getTrunc1DKernel} from "./gaussianKernel";
+
+extend({ EffectComposer, ShaderPass, RenderPass, GrayscaleShader, hGaussianBlur, vGaussianBlur});
 
 const { Option } = Select;
 
@@ -24,41 +26,36 @@ const grayScaleCoefficients = {
     "Mean" : [0.3333, 0.3333, 0.3333]
 }
 
-const ToGray = ({children: t, colorWeights: weights }) => {
-    return <Node shader={shaders.Grayscale} uniforms={ { weights, t } } />
-}
+// const ToGray = ({children: t, colorWeights: weights }) => {
+//     return <Node shader={shaders.Grayscale} uniforms={ { weights, t } } />
+// }
 
-const ToHorizontalBlur = ({children: t, gaussianKernel: kernel, dimensions: dim}) => {
-    const kernelSize = kernel.length;
-    return <Node shader={shaders.hGaussianBlur} uniforms={ { dim, kernelSize, kernel, t } } />
-}
+// const ToHorizontalBlur = ({children: t, gaussianKernel: kernel, dimensions: dim}) => {
+//     const kernelSize = kernel.length;
+//     return <Node shader={shaders.hGaussianBlur} uniforms={ { dim, kernelSize, kernel, t } } />
+// }
 
-const ToVerticalBlur = ({children: t, gaussianKernel: kernel, dimensions: dim}) => {
-    const kernelSize = kernel.length;
-    return <Node shader={shaders.vGaussianBlur} uniforms={ { dim, kernelSize, kernel, t } } />
-}
+// const ToVerticalBlur = ({children: t, gaussianKernel: kernel, dimensions: dim}) => {
+//     const kernelSize = kernel.length;
+//     return <Node shader={shaders.vGaussianBlur} uniforms={ { dim, kernelSize, kernel, t } } />
+// }
 
-const ToEdgeMagnitudes = ({children: t}) => {
-    return <Node shader={shaders.ShowEdgeMagnitudes} uniforms={ { t } }/>
-}
+// const ToEdgeMagnitudes = ({children: t}) => {
+//     return <Node shader={shaders.ShowEdgeMagnitudes} uniforms={ { t } }/>
+// }
 
-const ToEdgeFinding = ({children: t, hKernel: GX, vKernel: GY, dimensions: dim}) => {
-    return <Node shader={shaders.EdgeFinding} uniforms={ { dim, GX, GY, t } } />
-}
+// const ToEdgeFinding = ({children: t, hKernel: GX, vKernel: GY, dimensions: dim}) => {
+//     return <Node shader={shaders.EdgeFinding} uniforms={ { dim, GX, GY, t } } />
+// }
 
-const ToNMS = ({children: t, dimensions: dim}) => {
-    return <Node shader={shaders.NMS} uniforms={ { dim, t } } />
-}
+// const ToNMS = ({children: t, dimensions: dim}) => {
+//     return <Node shader={shaders.NMS} uniforms={ { dim, t } } />
+// }
 
 const Step1 = () => {
 
-    const ImgContainerRef = useRef(null);
-    const [shaderDisplayHeight, setDisplayHeight] = useState(0);
-
-    useEffect(() => {
-        ImgContainerRef.current ? console.log(ImgContainerRef.current.offsetWidth) : console.log("fuck this shit");
-        if (ImgContainerRef.current) setDisplayHeight(ImgContainerRef.current.offsetHeight );
-    }, [ImgContainerRef.current])
+    const ImgContainerRef = useRef();
+    const [shaderDisplayDim, setDisplayDim] = useState({width: 0, height: 0});
 
     const [rawInput, setRawInput] = useState(null);
     const [processedOutput, setProcessedOutput] = useState(null);
@@ -97,7 +94,32 @@ const Step1 = () => {
         )
     }
 
+    const Shaders = () => {
+        const composer = useRef();
+        const { scene, gl, size, camera } = useThree();
+        useEffect(() => void composer.current.render(), []);
+        useFrame(() => composer.current.render(), 1);
+
+        return (
+            <effectComposer ref={composer} args={[gl]}>
+                <renderPass attachArray="passes" scene={scene} camera={camera} />
+                {/* <shaderPass attachArray="passes" args={[GrayscaleShader]} material-uniforms-weights-value={selectedGrayscaleEncoding}/> */}
+                {/* <shaderPass attachArray="passes" args={[hGaussianBlur]} 
+                    material-uniforms-kernel-value={getTrunc1DKernel(3, 1.5)} 
+                    material-uniforms-kernelSize-value={() => getTrunc1DKernel(3, 1.5).length}
+                    material-uniforms-dim-value={[ImgContainerRef.current.offsetWidth, ImgContainerRef.current.offsetHeight]}
+                /> */}
+                <shaderPass attachArray="passes" args={[vGaussianBlur]} 
+                    material-uniforms-kernel-value={getTrunc1DKernel(3, 1)}
+                    material-uniforms-kernelSize-value={() => getTrunc1DKernel(3, 1).length}
+                    material-uniforms-dim-value={[ImgContainerRef.current.offsetWidth, ImgContainerRef.current.offsetHeight]}
+                />
+            </effectComposer>
+        )
+    }
+
     return (
+
         <div className="fill-container">
 
             <FadeIn visible={uploadVisibility}>
@@ -109,16 +131,16 @@ const Step1 = () => {
                     <FadeIn className="fill-and-vertically-center">
                         <Row gutter={[16,16]} justify="center" align="middle" style={{display: "flex", alignItems: "center"}}>
                             <Col className="process-preview-grid-col" flex={1}>
-                                <div className="process-preview-container" ><div ref={ImgContainerRef}><Image id="preview-before" src={imgSource} /></div></div>
+                                <div className="process-preview-container" ><div ref={ImgContainerRef}><Image id="preview-before" src={imgSource} onLoad={() => setDisplayDim({width: ImgContainerRef.current.offsetWidth, height: ImgContainerRef.current.offsetHeight})} /></div></div>
                             </Col>
 
                             <Col className="process-preview-grid-col" flex={1}>
                                 <div className="process-preview-container">
-                                    {/* <Image id="preview-before" src={imgSource} preview={false} style={{visibility: "hidden"}}/> */}
-                                    <Canvas className="shader" camera={{fov: 50, position: [0, 0, 30]}} style={{position: "relative", height: shaderDisplayHeight}}>
+                                    <Canvas className="shader" camera={{fov: 50, position: [0, 0, 30]}} style={{position: "relative", width: shaderDisplayDim.width, height: shaderDisplayDim.height}}>
                                         <Suspense fallback={null}>
-                                            <EdgeDetector img={imgSource} dim={{width: rawInput.width, height: rawInput.height}}/>
+                                            <ThreeImagePlane img={imgSource} dim={{width: rawInput.width, height: rawInput.height}}/>
                                         </Suspense>
+                                        <Shaders />
                                     </Canvas>
                                 </div>
                             </Col>
