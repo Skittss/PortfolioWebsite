@@ -84,6 +84,9 @@ const Step1 = () => {
     const [selectedEdgeTag, setSelectedEdgeTag] = useState("sobel")
     const [selectedEdgeOperator, setSelectedEdgeOperator] = useState(edgefindingOperators[selectedEdgeTag])
 
+    const [lowThreshold, setLowThreshold] = useState(0.3);
+    const [highThreshold, setHighThreshold] = useState(0.3);
+
     const _getDisplay = ({reverse = false, value = "block"} = {}) => {
         if (reverse) return uploadVisibility ? "none" : value;
         return uploadVisibility ? value : "none";
@@ -108,12 +111,17 @@ const Step1 = () => {
         
         0: (
             <>
-                <Select defaultValue={selectedGrayscaleTag} onChange={v => {setSelectedGrayscaleTag(v); setSelectedGrayscaleEncoding(grayScaleCoefficients[v])}}>
-                    <Option value="BT.601">BT.601</Option>
-                    <Option value="BT.709">BT.709</Option>
-                    <Option value="BT.2100">BT.2100</Option>
-                    <Option value="Mean">Mean</Option>
-                </Select>
+                <Row style={{display: "flex", alignItems: "center", paddingBottom: "10px"}}>
+                    <Col flex="120px">Encoding Type</Col>
+                    <Col flex="auto">
+                        <Select defaultValue={selectedGrayscaleTag} onChange={v => {setSelectedGrayscaleTag(v); setSelectedGrayscaleEncoding(grayScaleCoefficients[v])}}>
+                            <Option value="BT.601">BT.601</Option>
+                            <Option value="BT.709">BT.709</Option>
+                            <Option value="BT.2100">BT.2100</Option>
+                            <Option value="Mean">Mean</Option>
+                        </Select>
+                    </Col>
+                </Row>
             </>
         ),
 
@@ -135,10 +143,41 @@ const Step1 = () => {
 
         2: (
             <>
-                <Select defaultValue={selectedEdgeTag} onChange={v => {setSelectedEdgeTag(v); setSelectedEdgeOperator(edgefindingOperators[v])}}>
-                    <Option value="sobel">Sobel</Option>
-                    <Option value="prewitt">Prewitt</Option>
-                </Select>
+                <Row style={{display: "flex", alignItems: "center", paddingBottom: "10px"}}>
+                    <Col flex="70px">Operator</Col>
+                    <Col flex="auto">
+                        <Select defaultValue={selectedEdgeTag} onChange={v => {setSelectedEdgeTag(v); setSelectedEdgeOperator(edgefindingOperators[v])}}>
+                            <Option value="sobel">Sobel</Option>
+                            <Option value="prewitt">Prewitt</Option>
+                        </Select>
+                    </Col>
+                </Row>
+            </>
+        ),
+
+        4: (
+            <>
+                <Row style={{display: "flex", alignItems: "center", paddingBottom: "10px"}}>
+                    <Col flex="60px">High</Col>
+                    <Col flex="auto"><Slider value={highThreshold} onChange={v => setHighThreshold(v)} min={0} max={1} step={0.01}/></Col>
+                    <Col flex="100px" align="right"><InputNumber value={highThreshold} onChange={v => setHighThreshold(v) } min={0} max={1} step={0.01}/></Col>
+                </Row>
+                
+                <Row style={{display: "flex", alignItems: "center"}}>
+                    <Col flex="60px">Low</Col>
+                    <Col flex="auto"><Slider defaultValue={lowThreshold} onChange={v => setLowThreshold(v)} min={0.01} max={1} step={0.01}/></Col>
+                    <Col flex="100px" align="right"><InputNumber value={lowThreshold} onChange={v => setLowThreshold(v) } min={0} max={1} step={0.01}/></Col>
+                </Row>
+            </>
+        ),
+
+        5: (
+            <>
+                <Row style={{display: "flex", alignItems: "center", paddingBottom: "10px"}}>
+                    <Col flex="100px">Tolerance (px)</Col>
+                    <Col flex="auto"><Slider value={highThreshold} onChange={v => setHighThreshold(v)} min={0} max={5}/></Col>
+                    <Col flex="100px" align="right"><InputNumber value={highThreshold} onChange={v => setHighThreshold(v) } min={0} max={5}/></Col>
+                </Row>
             </>
         )
     }
@@ -162,7 +201,10 @@ const Step1 = () => {
                     <verticalBlurPass attachArray="passes" args={[kernel, kernelSize, ImgContainerRef.current.offsetHeight]} />
                 </>
                 : null}
-                {step >= 2 ? <gpuComputePass attachArray="passes" args={[selectedEdgeOperator.gx, selectedEdgeOperator.gy, [ImgContainerRef.current.offsetWidth, ImgContainerRef.current.offsetHeight], gl]} /> : null}
+                {step == 2 ? <gpuComputePass attachArray="passes" args={[selectedEdgeOperator.gx, selectedEdgeOperator.gy, [ImgContainerRef.current.offsetWidth, ImgContainerRef.current.offsetHeight], gl, false, null]} /> : null}
+                {step == 3 ? <gpuComputePass attachArray="passes" args={[selectedEdgeOperator.gx, selectedEdgeOperator.gy, [ImgContainerRef.current.offsetWidth, ImgContainerRef.current.offsetHeight], gl, true, null]} /> : null}
+                {step >= 4 ? <gpuComputePass attachArray="passes" args={[selectedEdgeOperator.gx, selectedEdgeOperator.gy, [ImgContainerRef.current.offsetWidth, ImgContainerRef.current.offsetHeight], gl, true, {high: highThreshold, low: lowThreshold}]} /> : null}
+
             </>
         )
     }
@@ -214,7 +256,9 @@ const Step1 = () => {
                                         gl={{preserveDrawingBuffer: true}}
                                         style={{position: "relative", width: shaderDisplayDim.width, height: shaderDisplayDim.height}}
                                     >
-                                        <ThreeImagePlane img={imgSource} dim={{width: imgDims.width, height: imgDims.height}}/>
+                                        <Suspense fallback="Loading...">
+                                            <ThreeImagePlane img={imgSource} dim={{width: imgDims.width, height: imgDims.height}}/>
+                                        </Suspense>
                                         <Shaders />
                                     </Canvas>
                                 </div>

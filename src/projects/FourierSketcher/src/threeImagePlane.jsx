@@ -1,4 +1,4 @@
-import React, { useRef, useState, useMemo } from 'react';
+import React from 'react';
 import { TextureLoader, LinearFilter } from 'three';
 import { useLoader, useThree } from 'react-three-fiber';
 
