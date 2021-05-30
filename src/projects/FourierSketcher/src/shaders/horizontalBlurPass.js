@@ -1,5 +1,4 @@
 import { ShaderMaterial, UniformsUtils } from 'three';
-
 import { Pass, FullScreenQuad } from 'three/examples/jsm/postprocessing/Pass';
 import { hGaussianBlur } from './shaders';
 
@@ -19,13 +18,13 @@ class HorizontalBlurPass extends Pass {
             vertexShader: shader.vertexShader,
             fragmentShader: shader.fragmentShader
         
-        })
+        });
 
         if (kernel !== undefined) this.uniforms.kernel.value = kernel;
         if (kernelSize !== undefined) this.uniforms.kernelSize.value = kernelSize;
         if (width !== undefined) this.uniforms.hRes.value = width;
 
-        this.fsQuad = new FullScreenQuad(this.material)
+        this.fsQuad = new FullScreenQuad(this.material);
 
     }
 

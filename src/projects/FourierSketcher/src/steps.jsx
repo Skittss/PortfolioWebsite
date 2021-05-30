@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { Canvas, extend, useFrame, useThree } from 'react-three-fiber';
 import React, { useState, useRef, Suspense, useEffect } from 'react';
 import FadeIn from 'react-fade-in';
-import { Image, Slider, Button, Row, Col, Select } from 'antd';
+import { Image, Slider, InputNumber, Button, Row, Col, Select } from 'antd';
 import { ArrowLeftOutlined } from '@ant-design/icons';
 import ImageUploader from "./imageUploader";
 import "./main.scss";
@@ -12,11 +12,11 @@ import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass';
 
-import { GrayscalePass, HorizontalBlurPass, VerticalBlurPass } from './shaders';
+import { GrayscalePass, HorizontalBlurPass, VerticalBlurPass, SobelPass, GpuComputePass } from './shaders';
 
 import { getSeparableKernel } from "./gaussianKernel";
 
-extend({ EffectComposer, ShaderPass, RenderPass, GrayscalePass, HorizontalBlurPass, VerticalBlurPass });
+extend({ EffectComposer, ShaderPass, RenderPass, GrayscalePass, HorizontalBlurPass, VerticalBlurPass, SobelPass, GpuComputePass });
 
 const { Option } = Select;
 
@@ -27,19 +27,62 @@ const grayScaleCoefficients = {
     "Mean" : [0.3333, 0.3333, 0.3333]
 }
 
+const edgefindingOperators = {
+
+    "sobel" : {
+        gx: [
+            1, 0, -1,
+            2, 0, -2,
+            1, 0, -1
+        ],
+
+        gy: [
+            1, 2, 1,
+            0, 0, 0,
+            -1,-2,-1
+        ]
+    },
+
+    "prewitt" : {
+        gx: [
+            1, 0, -1,
+            1, 0, -1,
+            1, 0, -1
+        ],
+
+        gy: [
+            1, 1, 1,
+            0, 0, 0,
+            -1,-1,-1
+        ]
+    }
+
+}
+
+
 const Step1 = () => {
 
+    const maxStep = 6;
     const [step, setStep] = useState(0);
 
     const ImgContainerRef = useRef();
     const [shaderDisplayDim, setDisplayDim] = useState({width: 0, height: 0});
 
-    const [rawInput, setRawInput] = useState(null);
+    const [imgDims, setImgDims] = useState(null);
     const [imgSource, setImgSource] = useState(null);
+
     const [uploadVisibility, setUploadVisibility] = useState(true);
 
+
+    // Stateful img processing params.
     const [selectedGrayscaleTag, setSelectedGrayscaleTag] = useState("BT.601")
     const [selectedGrayscaleEncoding, setSelectedGrayscaleEncoding] = useState(grayScaleCoefficients[selectedGrayscaleTag]);
+
+    const [gaussRadius, setGaussRadius] = useState(3);
+    const [gaussSigma, setGaussSigma] = useState(1);
+
+    const [selectedEdgeTag, setSelectedEdgeTag] = useState("sobel")
+    const [selectedEdgeOperator, setSelectedEdgeOperator] = useState(edgefindingOperators[selectedEdgeTag])
 
     const _getDisplay = ({reverse = false, value = "block"} = {}) => {
         if (reverse) return uploadVisibility ? "none" : value;
@@ -48,13 +91,17 @@ const Step1 = () => {
 
     const onImageUpload = data => {
         setImgSource(data.src);
-        setRawInput(data.dim);
+        setImgDims(data.dim);
         setUploadVisibility(false);
     }
 
     const goBack = () => {
         setImgSource(null);
         setUploadVisibility(true);
+    }
+
+    const hasNextStep = (step) => {
+        return 0 <= step && step < maxStep;
     }
 
     const stepOptions = {
@@ -72,28 +119,50 @@ const Step1 = () => {
 
         1: (
             <>
-                <Slider />
-                <Slider />
+                <Row style={{display: "flex", alignItems: "center", paddingBottom: "10px"}}>
+                    <Col flex="60px">Radius</Col>
+                    <Col flex="auto"><Slider value={gaussRadius} onChange={v => setGaussRadius(v)} min={0} max={20}/></Col>
+                    <Col flex="100px" align="right"><InputNumber value={gaussRadius} onChange={v => setGaussRadius(v) } min={0} max={20}/></Col>
+                </Row>
+                
+                <Row style={{display: "flex", alignItems: "center"}}>
+                    <Col flex="60px">Sigma (σ)</Col>
+                    <Col flex="auto"><Slider defaultValue={gaussSigma} onChange={v => setGaussSigma(v)} min={0.01} max={15} step={0.01}/></Col>
+                    <Col flex="100px" align="right"><InputNumber value={gaussSigma} onChange={v => setGaussSigma(v) } min={0} max={20} step={0.01}/></Col>
+                </Row>
             </>
         ),
 
         2: (
             <>
+                <Select defaultValue={selectedEdgeTag} onChange={v => {setSelectedEdgeTag(v); setSelectedEdgeOperator(edgefindingOperators[v])}}>
+                    <Option value="sobel">Sobel</Option>
+                    <Option value="prewitt">Prewitt</Option>
+                </Select>
             </>
         )
     }
 
-    const getStepShaders = (step) => {
+    const getStepShaders = (step, gl) => {
+
+        // Do a bit of pre-processing for gaussian kernel.
+        let kernel;
+        let kernelSize;
+        if (step >= 1) {
+            kernel = getSeparableKernel(gaussRadius, gaussSigma);
+            kernelSize = kernel.length;
+        }
 
         return (
             <>
                 {step >= 0 ? <grayscalePass attachArray="passes" args={[selectedGrayscaleEncoding]} /> : null}
                 {step >= 1 ?  
                 <>
-                    <horizontalBlurPass attachArray="passes" args={[getSeparableKernel(10, 100), getSeparableKernel(10, 100).length, ImgContainerRef.current.offsetWidth]} />
-                    <verticalBlurPass attachArray="passes" args={[getSeparableKernel(10, 100), getSeparableKernel(10, 100).length, ImgContainerRef.current.offsetHeight]} />
+                    <horizontalBlurPass attachArray="passes" args={[kernel, kernelSize, ImgContainerRef.current.offsetWidth]} />
+                    <verticalBlurPass attachArray="passes" args={[kernel, kernelSize, ImgContainerRef.current.offsetHeight]} />
                 </>
                 : null}
+                {step >= 2 ? <gpuComputePass attachArray="passes" args={[selectedEdgeOperator.gx, selectedEdgeOperator.gy, [ImgContainerRef.current.offsetWidth, ImgContainerRef.current.offsetHeight], gl]} /> : null}
             </>
         )
     }
@@ -116,12 +185,7 @@ const Step1 = () => {
         return (
             <effectComposer ref={composer} args={[gl]}>
                 <renderPass attachArray="passes" scene={scene} camera={camera} />
-                {getStepShaders(step)}
-
-
-                {/* <glitchPass attachArray="passes" /> */}
-                {/* <filmPass attachArray="passes" args={[0.35, 0.025, 648, false]} renderToScreen /> */}
-                {/* {getStepShaders(step, scene, gl, size, camera)} */}
+                {getStepShaders(step, gl)}
             </effectComposer>
         )
     }
@@ -134,7 +198,7 @@ const Step1 = () => {
                 <ImageUploader onLoadCallback={onImageUpload} style={{display: _getDisplay()}}/>
             </FadeIn>
 
-            {(imgSource != null && rawInput != null) ? (
+            {(imgSource != null && imgDims != null) ? (
                 <div className="fill-container">
                     <FadeIn className="fill-and-vertically-center">
                         <Row gutter={[16,16]} justify="center" align="middle" style={{display: "flex", alignItems: "center"}}>
@@ -150,8 +214,7 @@ const Step1 = () => {
                                         gl={{preserveDrawingBuffer: true}}
                                         style={{position: "relative", width: shaderDisplayDim.width, height: shaderDisplayDim.height}}
                                     >
-                                        {console.log("src", imgSource)}{console.log(rawInput)}
-                                        <ThreeImagePlane img={imgSource} dim={{width: rawInput.width, height: rawInput.height}}/>
+                                        <ThreeImagePlane img={imgSource} dim={{width: imgDims.width, height: imgDims.height}}/>
                                         <Shaders />
                                     </Canvas>
                                 </div>
@@ -159,8 +222,8 @@ const Step1 = () => {
 
                             <Col className="process-preview-grid-col" flex={1} style={{alignSelf: "stretch"}}>
                                 <div style={{paddingBottom: "10px"}}>
-                                    <Button onClick={() => setStep(prev => prev - 1)}>Previous</Button>
-                                    <Button onClick={() => setStep(prev => prev + 1)} style={{float: "right"}}>Next</Button>
+                                    <Button onClick={() => setStep(prev => prev - 1)} disabled={!hasNextStep(step - 1)}>Previous</Button>
+                                    <Button onClick={() => setStep(prev => prev + 1)} disabled={!hasNextStep(step + 1)} style={{float: "right"}}>Next</Button>
                                 </div>
                                 {getOptions(step)}
                             </Col>

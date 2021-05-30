@@ -28,7 +28,6 @@ const ImageUploader = ({onLoadCallback, style}) => {
                     img.onload = () => 
                     {
                         resolve({src: event.target.result, dim: {width: img.width, height: img.height}})
-
                     }
                 }
                 reader.readAsDataURL(file);
@@ -51,7 +50,7 @@ const ImageUploader = ({onLoadCallback, style}) => {
 
     const validateUpload = file => {
         const validFormat = (
-            file.type === "image/png"
+            file.type === "image/png" || file.type ==="image/jpeg"
         );
         if (!validFormat) {
             message.error("Only PNG images are supported")

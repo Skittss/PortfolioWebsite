@@ -106,7 +106,136 @@ const vGaussianBlur = {
 
 };
 
-export { GrayscaleShader, hGaussianBlur, vGaussianBlur };
+const sobelShader = {
+    
+    uniforms: {
+        'tDiffuse': { value: null },
+        'dim': { value: new Vector2() },
+        'GX': { value: new Array(9) },
+        'GY': { value: new Array(9) }
+    },
+
+    vertexShader: /* glsl */`
+        varying vec2 vUv;
+        void main() {
+            vUv = uv;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+        }`,
+
+    fragmentShader: /* glsl */`
+
+        precision highp float;
+
+        uniform vec2 dim;
+        uniform float GX[9];
+        uniform float GY[9];
+        uniform sampler2D tDiffuse;
+
+        void main() {
+            
+            vec4 gx = vec4(0.0);
+            vec4 gy = vec4(0.0);
+            vec4 v;
+
+            for (int j=0; j<3; j++) {
+                for (int i=0; i<3; i++) {
+                    v = texture2D(tDiffuse, vec2(gl_FragCoord.x/dim.x, gl_FragCoord.y/dim.y) + vec2( float(i-1)/dim.x, float(j-1)/dim.y ) );
+                    gx += GX[j * 3 + i] * v;
+                    gy += GY[j * 3 + i] * v;
+                }
+            }
+
+            vec4 mag = sqrt(gx * gx + gy * gy);
+            float arg = atan(gy.x, gx.x);
+
+
+            gl_FragColor = vec4(mag.x, mag.y, mag.z, 1.0);
+        }`
+}
+
+const gradientMagnitudeFragShader = `
+    precision highp float;
+
+    uniform vec2 dim;
+    uniform float GX[9];
+    uniform float GY[9];
+    uniform sampler2D tDiffuse;
+
+    void main() {
+        
+        vec4 gx = vec4(0.0);
+        vec4 gy = vec4(0.0);
+        vec4 v;
+
+        for (int j=0; j<3; j++) {
+            for (int i=0; i<3; i++) {
+                v = texture2D(tDiffuse, vec2(gl_FragCoord.x/dim.x, gl_FragCoord.y/dim.y) + vec2( float(i-1)/dim.x, float(j-1)/dim.y ) );
+                gx += GX[j * 3 + i] * v;
+                gy += GY[j * 3 + i] * v;
+            }
+        }
+
+        vec4 mag = sqrt(gx * gx + gy * gy);
+        gl_FragColor = vec4(mag.x, mag.y, mag.z, 1.0);
+    }`
+
+const gradientArgumentFragShader = `
+    precision highp float;
+
+    uniform vec2 dim;
+    uniform float GX[9];
+    uniform float GY[9];
+    uniform sampler2D tDiffuse;
+
+    void main() {
+        
+        vec4 gx = vec4(0.0);
+        vec4 gy = vec4(0.0);
+        vec4 v;
+
+        for (int j=0; j<3; j++) {
+            for (int i=0; i<3; i++) {
+                v = texture2D(tDiffuse, vec2(gl_FragCoord.x/dim.x, gl_FragCoord.y/dim.y) + vec2( float(i-1)/dim.x, float(j-1)/dim.y ) );
+                gx += GX[j * 3 + i] * v;
+                gy += GY[j * 3 + i] * v;
+            }
+        }
+
+        vec4 mag = sqrt(gx * gx + gy * gy);
+        float arg = atan(gy.x, gx.x);
+
+        gl_FragColor = vec4(arg, arg, arg, arg);
+    }`
+
+const gpuComputeShader = {
+    
+    uniforms: {
+        'tMags': { value: null },
+        'tArgs': { value: null }
+    },
+
+    vertexShader: /* glsl */`
+        varying vec2 vUv;
+        void main() {
+            vUv = uv;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+        }`,
+
+    fragmentShader: /* glsl */`
+
+        uniform sampler2D tMags;
+        uniform sampler2D tArgs;
+
+        varying vec2 vUv;
+
+        void main() {
+
+            gl_FragColor = texture2D(tMags, vUv);
+
+        }`
+}
+
+export { GrayscaleShader, hGaussianBlur, vGaussianBlur, sobelShader, gradientMagnitudeFragShader, gradientArgumentFragShader, gpuComputeShader };
 
 
 

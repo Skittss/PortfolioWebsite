@@ -1,14 +1,14 @@
 import { ShaderMaterial, UniformsUtils } from 'three';
 import { Pass, FullScreenQuad } from 'three/examples/jsm/postprocessing/Pass';
-import { GrayscaleShader } from './shaders';
+import { sobelShader } from './shaders';
 
-class GrayscalePass extends Pass {
+class SobelPass extends Pass {
 
-    constructor ( weights ) {
+    constructor ( gx, gy, dim ) {
 
         super();
 
-        const shader = GrayscaleShader;
+        const shader = sobelShader;
 
         this.uniforms = UniformsUtils.clone( shader.uniforms );
         
@@ -20,7 +20,9 @@ class GrayscalePass extends Pass {
         
         });
 
-        if (weights !== undefined) this.uniforms.weights.value = weights;
+        if (gx !== undefined) this.uniforms.GX.value = gx;
+        if (gy !== undefined) this.uniforms.GY.value = gy;
+        if (dim !== undefined) this.uniforms.dim.value = dim;
 
         this.fsQuad = new FullScreenQuad(this.material);
 
@@ -47,4 +49,4 @@ class GrayscalePass extends Pass {
 
 }
 
-export default GrayscalePass;
+export default SobelPass;

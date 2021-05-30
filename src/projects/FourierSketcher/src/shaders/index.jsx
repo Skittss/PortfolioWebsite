@@ -1,6 +1,7 @@
 import GrayscalePass from './grayscalePass';
 import HorizontalBlurPass from './horizontalBlurPass';
 import VerticalBlurPass from './verticalBlurPass';
-// import vBlurPass from './vBlurPass';
+import SobelPass from './sobelPass';
+import GpuComputePass from './gpuCompute';
 
-export { GrayscalePass, HorizontalBlurPass, VerticalBlurPass};
+export { GrayscalePass, HorizontalBlurPass, VerticalBlurPass, SobelPass, GpuComputePass };

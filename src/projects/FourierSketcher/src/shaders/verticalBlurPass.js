@@ -18,13 +18,13 @@ class HorizontalBlurPass extends Pass {
             vertexShader: shader.vertexShader,
             fragmentShader: shader.fragmentShader
         
-        })
+        });
 
         if (kernel !== undefined) this.uniforms.kernel.value = kernel;
         if (kernelSize !== undefined) this.uniforms.kernelSize.value = kernelSize;
         if (height !== undefined) this.uniforms.vRes.value = height;
 
-        this.fsQuad = new FullScreenQuad(this.material)
+        this.fsQuad = new FullScreenQuad(this.material);
 
     }
 
