@@ -15,7 +15,7 @@ let fillTextureWithZeros = (texture) => {
 // Combines passes for Sobel operator onwards due to dependency on calculated information
 class GpuComputePass extends Pass {
 
-    constructor ( gx, gy, dim, gl, doNMS, threshold ) {
+    constructor ( sobelParams, nmsParams, dim, doNMS, threshold ) {
 
         super();
 
@@ -23,11 +23,18 @@ class GpuComputePass extends Pass {
         this.threshold = threshold;
 
         this.dims = dim;
-    
-        // First compute information about the image gradient (Magnitudes & Angles)
-        this.initComputeRenderer( gx, gy, gl );
 
-        if (doNMS) this.initNMSComputeRenderer( gl );
+        this.gpuCompute = sobelParams.gpuCompute;
+        this.magnitudeVariable = sobelParams.magnitudeVariable;
+        this.magnitudeUniforms = sobelParams.magnitudeUniforms;
+        this.argumentVariable = sobelParams.argumentVariable;
+        this.argumentUniforms = sobelParams.argumentUniforms;
+
+        if (doNMS) {
+            this.nmsGpuCompute = nmsParams.nmsGpuCompute;
+            this.nmsVariable = nmsParams.nmsVariable;
+            this.nmsUniforms = nmsParams.nmsUniforms;
+        }
 
         // Normalize values to range 0 -> 1.
         this.initNormalizeShader();
@@ -63,10 +70,10 @@ class GpuComputePass extends Pass {
         
         // Calculate the max value uniform for the normalize shader.
 
-        const read = new Float32Array( 4 * this.dims[0] * this.dims[1]);
+        let read = new Float32Array( 4 * this.dims[0] * this.dims[1]);
         renderer.readRenderTargetPixels(renderTarget, 0, 0, this.dims[0], this.dims[1], read);
 
-        // O(N) CPU bound search for max - consider moving this to not once-per-frame.
+        // O(N) CPU bound search for max
 
         let max = 0.0;
         for (let i = 0; i < read.length; i+=4) {
@@ -112,7 +119,6 @@ class GpuComputePass extends Pass {
             this.threshFsQuad.render(renderer);
 
         }
-
     
     }
     
@@ -151,83 +157,6 @@ class GpuComputePass extends Pass {
         this.threshFsQuad = new FullScreenQuad(this.threshMaterial);
 
     }
-
-    initComputeRenderer(gx, gy, gl) {
-
-        this.gpuCompute = new GPUComputationRenderer(this.dims[0], this.dims[1], gl);
-
-        const gradMagnitude = this.gpuCompute.createTexture();
-        fillTextureWithZeros( gradMagnitude );
-        this.magnitudeVariable = this.gpuCompute.addVariable( 'textureMagnitude', gradientMagnitudeFragShader, gradMagnitude);
-
-        // Only compute arguments if we are doing NMS - otherwise only Mags are needed.
-        if ( this.doNMS ) {
-
-            const gradArgument = this.gpuCompute.createTexture();
-            fillTextureWithZeros( gradArgument );
-            this.argumentVariable = this.gpuCompute.addVariable( 'textureArgument', gradientArgumentFragShader, gradArgument);
-
-            this.gpuCompute.setVariableDependencies( this.magnitudeVariable, [ this.argumentVariable, this.magnitudeVariable ] );
-            this.gpuCompute.setVariableDependencies( this.argumentVariable, [ this.argumentVariable, this.magnitudeVariable ] );
-    
-
-        } else {
-            
-            this.gpuCompute.setVariableDependencies( this.magnitudeVariable, [ this.magnitudeVariable ] );
-
-        }
-
-        this.magnitudeUniforms = this.magnitudeVariable.material.uniforms;
-    
-        this.magnitudeUniforms[ 'GX' ] = { value: gx }
-        this.magnitudeUniforms[ 'GY' ] = { value: gy }
-        this.magnitudeUniforms[ 'dim' ] = { value: this.dims }
-        this.magnitudeUniforms[ 'tDiffuse' ] = { value: null }
-    
-
-        if ( this.doNMS ) {
-
-            this.argumentUniforms = this.argumentVariable.material.uniforms;
-
-            this.argumentUniforms[ 'GX' ] = { value: gx }
-            this.argumentUniforms[ 'GY' ] = { value: gy }
-            this.argumentUniforms[ 'dim' ] = { value: this.dims }
-            this.argumentUniforms[ 'tDiffuse' ] = { value: null }
-    
-        }
-    
-        const error = this.gpuCompute.init();
-    
-        if (error !== null) {
-            console.error(error);
-        }
-    }
-
-    initNMSComputeRenderer(gl) {
-        
-        this.nmsGpuCompute = new GPUComputationRenderer(this.dims[0], this.dims[1], gl);
-
-        const nms = this.nmsGpuCompute.createTexture();
-        fillTextureWithZeros( nms );
-        this.nmsVariable = this.nmsGpuCompute.addVariable( 'textureNms', nmsFragShader, nms );
-        
-        this.nmsGpuCompute.setVariableDependencies( this.nmsVariable, [this.nmsVariable] );
-
-        this.nmsUniforms = this.nmsVariable.material.uniforms;
-        
-        this.nmsUniforms[ 'dim' ] = { value: this.dims }
-        this.nmsUniforms[ 'tMags' ] = { value: null }
-        this.nmsUniforms[ 'tArgs' ] = { value: null }
-
-        const error = this.nmsGpuCompute.init();
-
-        if (error !== null) { 
-            console.error(error);
-        }
-
-    }
-
-
 }
 
 export default GpuComputePass;

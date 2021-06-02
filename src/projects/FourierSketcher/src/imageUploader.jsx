@@ -19,18 +19,29 @@ const ImageUploader = ({onLoadCallback, style}) => {
 
             setTimeout(() => {
 
-                // Load image as base64 dataURL using FileReader
-                const reader = new FileReader();
-                reader.onload = event => {
-                    
-                    const img = new Image();
-                    img.src = event.target.result;
-                    img.onload = () => 
-                    {
-                        resolve({src: event.target.result, dim: {width: img.width, height: img.height}})
-                    }
+                let src = URL.createObjectURL(file);
+                let img = new Image();
+                img.onload = () => {
+                    resolve({src: src, dim: {width: img.width, height: img.height}})
                 }
-                reader.readAsDataURL(file);
+                img.src = src;
+
+                // // Load image as base64 dataURL using FileReader
+                // const reader = new FileReader();
+                // reader.onload = event => {
+                    
+                //     let img = new Image();
+                //     img.src = event.target.result;
+                //     img.onload = () => 
+                //     {
+                //         let data = {src: event.target.result, dim: {width: img.width, height: img.height}}
+                //         img.src = null;
+                //         img = null;
+                //         //resolve(data)
+                //         resolve({src: URL.createObjectURL(file), dim: {width: 690, height: 690}})
+                //     }
+                // }
+                // reader.readAsDataURL(file);
 
             }, 30);
         }).then(data => onSuccess(data));
@@ -53,7 +64,7 @@ const ImageUploader = ({onLoadCallback, style}) => {
             file.type === "image/png" || file.type ==="image/jpeg"
         );
         if (!validFormat) {
-            message.error("Only PNG images are supported")
+            message.error("Only PNG/JPEG files are supported.")
             return false;
         }
         return true;

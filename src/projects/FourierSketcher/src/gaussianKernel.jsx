@@ -1,6 +1,8 @@
 // Truncate the kernel as it is symmetrical - half of this data is irrelevant.
 const getSeparableKernel = (r, sigma) => {
 
+    console.log("generated kernel")
+
     let sum = 0;
     let arr = [];
     let coefficient = 1/(Math.sqrt(2 * Math.PI) * sigma);

@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { Canvas, extend, useFrame, useThree } from 'react-three-fiber';
-import React, { useState, useRef, Suspense, useEffect } from 'react';
+import React, { useState, useRef, Suspense, useEffect, useMemo } from 'react';
 import FadeIn from 'react-fade-in';
 import { Image, Slider, InputNumber, Button, Row, Col, Select } from 'antd';
 import { ArrowLeftOutlined } from '@ant-design/icons';
@@ -15,6 +15,9 @@ import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass';
 import { GrayscalePass, HorizontalBlurPass, VerticalBlurPass, SobelPass, GpuComputePass } from './shaders';
 
 import { getSeparableKernel } from "./gaussianKernel";
+
+import getComputationRenderers from "./shaders/getComputationRenderers";
+
 
 extend({ EffectComposer, ShaderPass, RenderPass, GrayscalePass, HorizontalBlurPass, VerticalBlurPass, SobelPass, GpuComputePass });
 
@@ -69,7 +72,7 @@ const Step1 = () => {
     const [shaderDisplayDim, setDisplayDim] = useState({width: 0, height: 0});
 
     const [imgDims, setImgDims] = useState(null);
-    const [imgSource, setImgSource] = useState(null);
+    const [imgSource, setImgSourceVar] = useState(null);
 
     const [uploadVisibility, setUploadVisibility] = useState(true);
 
@@ -87,9 +90,20 @@ const Step1 = () => {
     const [lowThreshold, setLowThreshold] = useState(0.3);
     const [highThreshold, setHighThreshold] = useState(0.3);
 
+    const [memoRenderers, setMemoRenderers] = useState(null);
+    const [memoRendererParams, setMemoRendererParams] = useState(null);
+
+    const [memoGaussParams, setMemoGaussParams] = useState(null);
+    const [memoGauss, setMemoGauss] = useState(null);
+
     const _getDisplay = ({reverse = false, value = "block"} = {}) => {
         if (reverse) return uploadVisibility ? "none" : value;
         return uploadVisibility ? value : "none";
+    }
+
+    const setImgSource = (v) => {
+        if (imgSource) URL.revokeObjectURL(imgSource);
+        setImgSourceVar(v);
     }
 
     const onImageUpload = data => {
@@ -100,6 +114,7 @@ const Step1 = () => {
 
     const goBack = () => {
         setImgSource(null);
+        setImgDims(null);
         setUploadVisibility(true);
     }
 
@@ -182,14 +197,86 @@ const Step1 = () => {
         )
     }
 
-    const getStepShaders = (step, gl) => {
+    const disposeRenderers = currentRenderers => {
 
-        // Do a bit of pre-processing for gaussian kernel.
-        let kernel;
-        let kernelSize;
-        if (step >= 1) {
-            kernel = getSeparableKernel(gaussRadius, gaussSigma);
-            kernelSize = kernel.length;
+        console.log(currentRenderers)
+        if (currentRenderers) {
+            if (currentRenderers.sobel) {
+                for (const [k, v] of Object.entries(currentRenderers.sobel)) {
+                    console.log("disposed of :", k);
+                    if (v) {
+                        if (v.dispose) v.dispose();
+                        delete currentRenderers.sobel[k];
+                    };
+                }
+                currentRenderers.sobel = null;
+            }
+
+            if (currentRenderers.nms) {
+                for (const [k, v] of Object.entries(currentRenderers.nms)) {
+                    console.log("disposed of :", k);
+                    if (v) {
+                        if (v.dispose) v.dispose();
+                        delete currentRenderers.nms[k];
+                    };
+                }
+                currentRenderers.nms = null;
+            }
+        }
+
+
+    }
+
+    const GetStepShaders = (step, gl) => {
+
+        // Do manual memoization here of kernel and renderers as useMemo does not have expected performance.
+
+        let currentKernel = memoGauss;
+        let gaussParams = {r: gaussRadius, s: gaussSigma}
+        if (memoGaussParams == null) {
+            setMemoGaussParams(gaussParams);
+
+            currentKernel = getSeparableKernel(gaussParams.r, gaussParams.s);
+            setMemoGauss(currentKernel);
+        }
+
+        else if (gaussParams.r != memoGaussParams.r || gaussParams.s != memoGaussParams.s) {
+
+            setMemoGaussParams(gaussParams);
+
+            currentKernel = getSeparableKernel(gaussParams.r, gaussParams.s);
+            setMemoGauss(currentKernel);
+
+        }
+
+        const kernel = currentKernel;
+        const kernelSize = kernel.length;
+
+        // Memo renderers
+        let currentRenderers = memoRenderers;
+        let renderParams = {gl: gl, dims: [ImgContainerRef.current.offsetWidth, ImgContainerRef.current.offsetHeight], kernel: selectedEdgeOperator, doNMS: (step > 2)}
+
+        if (memoRendererParams == null) {
+            setMemoRendererParams(renderParams);
+
+            currentRenderers = getComputationRenderers(renderParams.gl, renderParams.dims, renderParams.kernel, renderParams.doNMS);
+            setMemoRenderers(currentRenderers)
+            
+        }
+        
+        else if (renderParams.gl != memoRendererParams.gl 
+            || renderParams.dims[0] != memoRendererParams.dims[0]
+            || renderParams.dims[1] != memoRendererParams.dims[1]
+            || renderParams.kernel != memoRendererParams.kernel
+            || renderParams.doNMS != memoRendererParams.doNMS) {
+
+                setMemoRendererParams(renderParams);
+
+                // Before updating the renderers ref, dispose of ALL objects from the custom renderer to avoid HUGE memory leaks (R3F doesn't auto-dispose these ;-;)
+                disposeRenderers(currentRenderers);
+
+                currentRenderers = getComputationRenderers(renderParams.gl, renderParams.dims, renderParams.kernel, renderParams.doNMS);
+                setMemoRenderers(currentRenderers)
         }
 
         return (
@@ -201,9 +288,9 @@ const Step1 = () => {
                     <verticalBlurPass attachArray="passes" args={[kernel, kernelSize, ImgContainerRef.current.offsetHeight]} />
                 </>
                 : null}
-                {step == 2 ? <gpuComputePass attachArray="passes" args={[selectedEdgeOperator.gx, selectedEdgeOperator.gy, [ImgContainerRef.current.offsetWidth, ImgContainerRef.current.offsetHeight], gl, false, null]} /> : null}
-                {step == 3 ? <gpuComputePass attachArray="passes" args={[selectedEdgeOperator.gx, selectedEdgeOperator.gy, [ImgContainerRef.current.offsetWidth, ImgContainerRef.current.offsetHeight], gl, true, null]} /> : null}
-                {step >= 4 ? <gpuComputePass attachArray="passes" args={[selectedEdgeOperator.gx, selectedEdgeOperator.gy, [ImgContainerRef.current.offsetWidth, ImgContainerRef.current.offsetHeight], gl, true, {high: highThreshold, low: lowThreshold}]} /> : null}
+                {step == 2 ? <gpuComputePass attachArray="passes" args={[currentRenderers.sobel, currentRenderers.nms, renderParams.dims, false, null]} /> : null}
+                {step == 3 ? <gpuComputePass attachArray="passes" args={[currentRenderers.sobel, currentRenderers.nms, renderParams.dims, true, null]} /> : null}
+                {step >= 4 ? <gpuComputePass attachArray="passes" args={[currentRenderers.sobel, currentRenderers.nms, renderParams.dims, true, {high: highThreshold, low: lowThreshold}]} /> : null}
 
             </>
         )
@@ -227,7 +314,7 @@ const Step1 = () => {
         return (
             <effectComposer ref={composer} args={[gl]}>
                 <renderPass attachArray="passes" scene={scene} camera={camera} />
-                {getStepShaders(step, gl)}
+                {GetStepShaders(step, gl)}
             </effectComposer>
         )
     }
@@ -277,7 +364,7 @@ const Step1 = () => {
                         <Button id="button"
                             type="link" 
                             style={{fontSize: "15px"}}
-                            onClick={goBack}
+                            onClick={() => {disposeRenderers(memoRenderers); goBack()}}
                         >
                             <ArrowLeftOutlined /> 
                             Change image
