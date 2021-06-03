@@ -1,15 +1,13 @@
-import * as THREE from 'three';
 import { Canvas, extend, useFrame, useThree } from 'react-three-fiber';
-import React, { useState, useRef, Suspense, useEffect, useMemo } from 'react';
+import React, { useState, useRef, Suspense, useEffect } from 'react';
 import FadeIn from 'react-fade-in';
-import { Image, Slider, InputNumber, Button, Row, Col, Select } from 'antd';
-import { ArrowLeftOutlined } from '@ant-design/icons';
+import { Image, Slider, InputNumber, Button, Row, Col, Select, Spin } from 'antd';
+import { ArrowLeftOutlined, LoadingOutlined } from '@ant-design/icons';
 import ImageUploader from "./imageUploader";
 import "./main.scss";
 
 import ThreeImagePlane from "./threeImagePlane";
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer';
-import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass';
 
 import { GrayscalePass, HorizontalBlurPass, VerticalBlurPass, SobelPass, GpuComputePass, HysteresisPass, CopyStrongPass } from './shaders';
@@ -19,8 +17,7 @@ import { getSeparableKernel } from "./gaussianKernel";
 import getComputationRenderers from "./shaders/getComputationRenderers";
 import { WebGLRenderTarget } from 'three';
 
-
-extend({ EffectComposer, ShaderPass, RenderPass, GrayscalePass, HorizontalBlurPass, VerticalBlurPass, SobelPass, GpuComputePass, HysteresisPass, CopyStrongPass });
+extend({ EffectComposer, RenderPass, GrayscalePass, HorizontalBlurPass, VerticalBlurPass, SobelPass, GpuComputePass, HysteresisPass, CopyStrongPass });
 
 const { Option } = Select;
 
@@ -96,11 +93,16 @@ const Step1 = () => {
     const [hysteresisTolerance, setTolerance] = useState(1);
     const [hysteresisIters, setHysteresisIters] = useState(1);
 
+    // Memoization
     const [memoRenderers, setMemoRenderers] = useState(null);
     const [memoRendererParams, setMemoRendererParams] = useState(null);
 
     const [memoGaussParams, setMemoGaussParams] = useState(null);
     const [memoGauss, setMemoGauss] = useState(null);
+
+    // Render reference for saving image.
+    const [rendererRef, setRendererRef] = useState(null);
+    const [savingState, setSavingState] = useState(false);
 
     const _getDisplay = ({reverse = false, value = "block"} = {}) => {
         if (reverse) return uploadVisibility ? "none" : value;
@@ -126,6 +128,16 @@ const Step1 = () => {
 
     const hasNextStep = (step) => {
         return 0 <= step && step < maxStep;
+    }
+
+    const stepTitles = {
+        0: "Grayscale Encoding",
+        1: "Gaussian Blur",
+        2: "Edgefinding Operation",
+        3: "Non-maximum suppression",
+        4: "Double Threshold",
+        5: "Edge-Tracking (Hysteresis)",
+        6: "Final Image"
     }
 
     const stepOptions = {
@@ -176,6 +188,8 @@ const Step1 = () => {
             </>
         ),
 
+        3: (<p><i>(No options available)</i></p>),
+
         4: (
             <>
                 <Row style={{display: "flex", alignItems: "center", paddingBottom: "10px"}}>
@@ -208,6 +222,32 @@ const Step1 = () => {
                 </Row>
             </>
         )
+    }
+
+    const downloadCanvas = async () => {
+        if (rendererRef) {
+
+            setSavingState(true);
+
+            new Promise(resolve => {
+
+                setTimeout(() => {
+
+                    let img = rendererRef.domElement.toDataURL();
+                    resolve(img);
+                    
+                }, 30);
+
+            }).then(img => {
+
+                let link = document.createElement("a");
+                link.download = "Canny_Step_" + step;
+                link.href = img;
+                link.click();
+                setSavingState(false);
+            })
+
+        }
     }
 
     const disposeRenderers = currentRenderers => {
@@ -336,6 +376,11 @@ const Step1 = () => {
     const Shaders = () => {
         const composer = useRef();
         const { scene, gl, size, camera } = useThree();
+
+        if (gl != rendererRef) {
+            setRendererRef(gl);
+        }
+
         useEffect(() => void composer.current.render(), []);
         useFrame(() => composer.current.render(), 1);
 
@@ -380,10 +425,12 @@ const Step1 = () => {
                             </Col>
 
                             <Col className="process-preview-grid-col" flex={1} style={{alignSelf: "stretch"}}>
-                                <div style={{paddingBottom: "10px"}}>
-                                    <Button onClick={() => setStep(prev => prev - 1)} disabled={!hasNextStep(step - 1)}>Previous</Button>
-                                    <Button onClick={() => setStep(prev => prev + 1)} disabled={!hasNextStep(step + 1)} style={{float: "right"}}>Next</Button>
-                                </div>
+                                <Row style={{display: "flex", alignItems: "center", paddingBottom: "10px"}}>
+                                    <Col ><Button onClick={() => setStep(prev => prev - 1)} disabled={!hasNextStep(step - 1)}>Previous</Button></Col>
+                                    <Col flex="auto" align="center"><h1 id="title" style={{display: "inline-block", alignSelf: "center"}}><b>{stepTitles[step]}</b></h1></Col>
+                                    <Col align="right" style={{paddingRight: "5px"}}><Button onClick={() => setStep(prev => prev + 1)} disabled={!hasNextStep(step + 1)} style={{float: "right"}}>Next</Button></Col>
+                                    <Col align="right"><Button type="primary" onClick={downloadCanvas} style={{float: "right"}}>{savingState ? <Spin size="middle" indicator={<LoadingOutlined spin style={{color: "white"}}/>}/> : "Save"}</Button></Col>
+                                </Row>
                                 {getOptions(step)}
                             </Col>
                         </Row>

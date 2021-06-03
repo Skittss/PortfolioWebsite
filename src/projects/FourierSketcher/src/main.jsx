@@ -1,60 +1,13 @@
 import React, { useState } from 'react'
-import FadeIn from 'react-fade-in';
-import { Image, notification, Steps } from 'antd';
-import { UploadOutlined, RightCircleOutlined, WarningTwoTone } from '@ant-design/icons';
+import { notification } from 'antd';
+import { WarningTwoTone } from '@ant-design/icons';
 import { Step1 } from './steps';
 import "./main.scss";
-const { Step } = Steps;
 
 
 const Main = () => {
 
-    const [currentStep, setCurrentStep] = useState(0);
     const [notifSent, setNotifSent] = useState(false);
-
-    const s = [
-        {
-            title: "Upload Source & Grayscale",
-            description: null,
-            icon: <UploadOutlined/>,
-            content: Step1
-        },
-
-        {
-            title: "Gaussian Blur",
-            description: null,
-            icon: <RightCircleOutlined/>,
-            content: null
-        },
-
-        {
-            title: "Sobel Filter",
-            description: "(Image gradient calculation)",
-            icon: <RightCircleOutlined/>,
-            content: null
-        },
-
-        {
-            title: "Non-maximum Suppression",
-            description: "(Edge thinning)",
-            icon: <RightCircleOutlined/>,
-            content: null
-        },
-
-        {
-            title: "Double Thresholding",
-            description: null,
-            icon: <RightCircleOutlined/>,
-            content: null
-        },
-
-        {
-            title: "Edge Tracking",
-            description: "(via hysteresis)",
-            icon: <RightCircleOutlined/>,
-            content: null
-        }
-    ]
 
     const performanceNotification = () => {
         if (notifSent === false) {
@@ -73,12 +26,7 @@ const Main = () => {
 
     return (
         <div className="fill-container">
-            <FadeIn>
-                <Steps className="site-navigations-steps" size="small" type="navigation" current={currentStep}>
-                    {s.map((step, num) => (<Step key={num} title={step.title} description={step.description} icon={step.icon}/>))}
-                </Steps>
-            </FadeIn>
-            {s[currentStep].content()}
+            {Step1()}
         </div>
     );
 }   

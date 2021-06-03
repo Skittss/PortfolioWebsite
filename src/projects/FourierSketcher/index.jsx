@@ -1,10 +1,10 @@
 import img from "../../content/projects/FourierSketcher/img/mononoke.jpg";
 
 const Meta = {
-    title: "Fourier Sketcher",
+    title: "WebGL Canny Edge Detection",
     thumb: img,
-    tags: ["GLSL", "JS", "ReactJS", "~~antd~~", "~~WebGL~~"],
-    route: "/FourierSketcher",
+    tags: ["GLSL", "ThreeJS", "ReactJS", "~~antd~~"],
+    route: "/Webgl-Canny",
 }
 
 export default Meta;

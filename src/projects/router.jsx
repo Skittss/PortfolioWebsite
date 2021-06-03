@@ -6,7 +6,7 @@ const Projects = React.lazy(() => import("../web/projects"));
 
 const routes = [
     {path: "/", component: Projects, exact: true},
-    {path: "/FourierSketcher", component: FourierSketcher, exact: false},
+    {path: "/Webgl-Canny", component: FourierSketcher, exact: false},
 ];
 
 const ProjectsRouter = ({routerDepth}) => {
