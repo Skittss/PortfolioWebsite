@@ -342,4 +342,155 @@ const thresholdShader = {
 
 }
 
-export { normalizeShader, GrayscaleShader, hGaussianBlur, vGaussianBlur, sobelShader, gradientMagnitudeFragShader, gradientArgumentFragShader, nmsFragShader, thresholdShader };
+const dilationShader = {
+
+    uniforms: {
+        'tDiffuse': { value: null },
+        'dims': { value : new Vector2() },
+        'tolerance': { value: 1.0},
+    },
+
+    vertexShader: /* glsl */`
+        varying vec2 vUv;
+        void main() {
+            vUv = uv;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+        }`,
+
+    fragmentShader: /* glsl */`
+
+        precision highp float;
+
+        uniform sampler2D tDiffuse;
+        uniform vec2 dims;
+        uniform int tolerance;
+
+        void main() {
+
+            float v = 0.0;
+            for (int j = -tolerance; j <= tolerance; j++) {
+                for (int i = -tolerance; i <= tolerance; i++) {
+                    
+                    vec2 coord = vec2(gl_FragCoord.x/dims.x, gl_FragCoord.y/dims.y) + vec2( float(i)/dims.x, float(j)/dims.y );
+
+                    if ( texture2D(tDiffuse, coord).x > 0.3) {
+
+                        v = 1.0;
+                        break;
+
+                    }
+
+                }
+            }
+
+            gl_FragColor = vec4(v, v, v, 1.0);
+
+        }`
+
+}
+
+const hysteresisCombineShader = {
+
+    uniforms: {
+        'tDilate': { value: null },
+        'tDiffuse': { value: null },
+    },
+
+    vertexShader: /* glsl */`
+        varying vec2 vUv;
+        void main() {
+            vUv = uv;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+        }`,
+
+    fragmentShader: /* glsl */`
+
+        precision highp float;
+
+        uniform sampler2D tDilate;
+        uniform sampler2D tDiffuse;
+
+        varying vec2 vUv;
+
+        void main() {
+
+            float dilate = texture2D(tDilate, vUv).x;
+            float weak = texture2D(tDiffuse, vUv).x;
+
+            if (weak < 1.0 && weak > 0.0 && dilate > 0.3) {
+
+                weak = 1.0;
+
+            }
+
+            gl_FragColor = vec4(weak, weak, weak, 1.0);
+        }`
+
+}
+
+const copyStrongShader = {
+
+    uniforms: {
+        'tDiffuse': { value: null },
+        'dims': { value: new Vector2() }
+    },
+
+    vertexShader: /* glsl */`
+        varying vec2 vUv;
+        void main() {
+            vUv = uv;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+        }`,
+
+    fragmentShader: /* glsl */`
+
+        precision highp float;
+
+        uniform sampler2D tDiffuse;
+        uniform vec2 dims;
+
+        void main() {
+
+            vec2 coord = vec2(gl_FragCoord.x/dims.x, gl_FragCoord.y/dims.y);
+
+            float v = texture2D(tDiffuse, coord).x;
+            if ( v <= 0.3 ) {
+                v = 0.0;
+            }
+
+            gl_FragColor = vec4(v, v, v, 1.0);
+
+        }`
+
+}
+
+const copyShader = {
+
+    uniforms: {
+        'tDiffuse': { value: null }
+    },
+
+    vertexShader: /* glsl */`
+        varying vec2 vUv;
+        void main() {
+            vUv = uv;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4( position, 1.0 );
+        }`,
+
+    fragmentShader: /* glsl */`
+
+        precision highp float;
+
+        uniform sampler2D tDiffuse;
+
+        varying vec2 vUv;
+
+        void main() {
+
+            gl_FragColor = texture2D(tDiffuse, vUv);
+
+        }`
+
+}
+
+export { normalizeShader, GrayscaleShader, hGaussianBlur, vGaussianBlur, sobelShader, gradientMagnitudeFragShader, gradientArgumentFragShader, nmsFragShader, thresholdShader, copyStrongShader, copyShader, dilationShader, hysteresisCombineShader };

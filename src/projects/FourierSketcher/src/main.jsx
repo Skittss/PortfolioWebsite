@@ -60,7 +60,7 @@ const Main = () => {
         if (notifSent === false) {
             notification.open({
                 message: "This project works best on a powerful machine!",
-                description: <span>A desktop PC is highly recommended. <br />This project makes use of WebGL - a dedicated GPU will speed up processing.</span>,
+                description: <span>This project makes use of WebGL - a dedicated GPU is STRONGLY recommended.<br />Loading images which are too large or updating parameters too quickly <i>may</i> cause the browser to run out of memory.</span>,
                 icon: <WarningTwoTone twoToneColor="#FFA500" />,
                 key: "performance-notif",
                 style: {width: 500}

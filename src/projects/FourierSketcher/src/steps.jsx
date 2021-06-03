@@ -12,14 +12,15 @@ import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass';
 
-import { GrayscalePass, HorizontalBlurPass, VerticalBlurPass, SobelPass, GpuComputePass } from './shaders';
+import { GrayscalePass, HorizontalBlurPass, VerticalBlurPass, SobelPass, GpuComputePass, HysteresisPass, CopyStrongPass } from './shaders';
 
 import { getSeparableKernel } from "./gaussianKernel";
 
 import getComputationRenderers from "./shaders/getComputationRenderers";
+import { WebGLRenderTarget } from 'three';
 
 
-extend({ EffectComposer, ShaderPass, RenderPass, GrayscalePass, HorizontalBlurPass, VerticalBlurPass, SobelPass, GpuComputePass });
+extend({ EffectComposer, ShaderPass, RenderPass, GrayscalePass, HorizontalBlurPass, VerticalBlurPass, SobelPass, GpuComputePass, HysteresisPass, CopyStrongPass });
 
 const { Option } = Select;
 
@@ -65,7 +66,7 @@ const edgefindingOperators = {
 
 const Step1 = () => {
 
-    const maxStep = 6;
+    const maxStep = 7;
     const [step, setStep] = useState(0);
 
     const ImgContainerRef = useRef();
@@ -75,6 +76,8 @@ const Step1 = () => {
     const [imgSource, setImgSourceVar] = useState(null);
 
     const [uploadVisibility, setUploadVisibility] = useState(true);
+
+    const [intermediateRT, setIntermediateRT] = useState(null);
 
 
     // Stateful img processing params.
@@ -89,6 +92,9 @@ const Step1 = () => {
 
     const [lowThreshold, setLowThreshold] = useState(0.3);
     const [highThreshold, setHighThreshold] = useState(0.3);
+
+    const [hysteresisTolerance, setTolerance] = useState(1);
+    const [hysteresisIters, setHysteresisIters] = useState(1);
 
     const [memoRenderers, setMemoRenderers] = useState(null);
     const [memoRendererParams, setMemoRendererParams] = useState(null);
@@ -180,8 +186,9 @@ const Step1 = () => {
                 
                 <Row style={{display: "flex", alignItems: "center"}}>
                     <Col flex="60px">Low</Col>
-                    <Col flex="auto"><Slider defaultValue={lowThreshold} onChange={v => setLowThreshold(v)} min={0.01} max={1} step={0.01}/></Col>
+                    <Col flex="auto"><Slider value={lowThreshold} onChange={v => setLowThreshold(v)} min={0} max={1} step={0.01}/></Col>
                     <Col flex="100px" align="right"><InputNumber value={lowThreshold} onChange={v => setLowThreshold(v) } min={0} max={1} step={0.01}/></Col>
+
                 </Row>
             </>
         ),
@@ -190,8 +197,14 @@ const Step1 = () => {
             <>
                 <Row style={{display: "flex", alignItems: "center", paddingBottom: "10px"}}>
                     <Col flex="100px">Tolerance (px)</Col>
-                    <Col flex="auto"><Slider value={highThreshold} onChange={v => setHighThreshold(v)} min={0} max={5}/></Col>
-                    <Col flex="100px" align="right"><InputNumber value={highThreshold} onChange={v => setHighThreshold(v) } min={0} max={5}/></Col>
+                    <Col flex="auto"><Slider value={hysteresisTolerance} onChange={v => setTolerance(v)} min={0} max={5}/></Col>
+                    <Col flex="100px" align="right"><InputNumber value={hysteresisTolerance} onChange={v => setTolerance(v) } min={0} max={5}/></Col>
+                </Row>
+
+                <Row style={{display: "flex", alignItems: "center"}}>
+                    <Col flex="100px">Iterations</Col>
+                    <Col flex="auto"><Slider value={hysteresisIters} onChange={v => setHysteresisIters(v)} min={0} max={500}/></Col>
+                    <Col flex="100px" align="right"><InputNumber value={hysteresisIters} onChange={v => setHysteresisIters(v) } min={0} max={500}/></Col>
                 </Row>
             </>
         )
@@ -199,11 +212,11 @@ const Step1 = () => {
 
     const disposeRenderers = currentRenderers => {
 
-        console.log(currentRenderers)
+        //console.log(currentRenderers)
         if (currentRenderers) {
             if (currentRenderers.sobel) {
                 for (const [k, v] of Object.entries(currentRenderers.sobel)) {
-                    console.log("disposed of :", k);
+                    //console.log("disposed of :", k);
                     if (v) {
                         if (v.dispose) v.dispose();
                         delete currentRenderers.sobel[k];
@@ -214,7 +227,7 @@ const Step1 = () => {
 
             if (currentRenderers.nms) {
                 for (const [k, v] of Object.entries(currentRenderers.nms)) {
-                    console.log("disposed of :", k);
+                    //console.log("disposed of :", k);
                     if (v) {
                         if (v.dispose) v.dispose();
                         delete currentRenderers.nms[k];
@@ -263,6 +276,10 @@ const Step1 = () => {
             setMemoRenderers(currentRenderers)
             
         }
+
+        if (intermediateRT == null) {
+            setIntermediateRT({tg: new WebGLRenderTarget(renderParams.dims.x, renderParams.dims.y)});
+        }
         
         else if (renderParams.gl != memoRendererParams.gl 
             || renderParams.dims[0] != memoRendererParams.dims[0]
@@ -277,6 +294,16 @@ const Step1 = () => {
 
                 currentRenderers = getComputationRenderers(renderParams.gl, renderParams.dims, renderParams.kernel, renderParams.doNMS);
                 setMemoRenderers(currentRenderers)
+
+                if (renderParams.dims[0] != memoRendererParams.dims[0] || renderParams.dims[1] != memoRendererParams.dims[1]) {
+
+                    if (intermediateRT.tg) {
+                        if (intermediateRT.tg.dispose) intermediateRT.tg.dispose();
+                        delete intermediateRT.tg;
+                    }
+                    
+                    setIntermediateRT({tg: new WebGLRenderTarget(renderParams.dims.x, renderParams.dims.y)});
+                }
         }
 
         return (
@@ -291,7 +318,8 @@ const Step1 = () => {
                 {step == 2 ? <gpuComputePass attachArray="passes" args={[currentRenderers.sobel, currentRenderers.nms, renderParams.dims, false, null]} /> : null}
                 {step == 3 ? <gpuComputePass attachArray="passes" args={[currentRenderers.sobel, currentRenderers.nms, renderParams.dims, true, null]} /> : null}
                 {step >= 4 ? <gpuComputePass attachArray="passes" args={[currentRenderers.sobel, currentRenderers.nms, renderParams.dims, true, {high: highThreshold, low: lowThreshold}]} /> : null}
-
+                {step >= 5 ? <hysteresisPass attachArray="passes" args={[hysteresisTolerance, hysteresisIters, intermediateRT.tg, renderParams.dims]}/> : null}
+                {step >= 6 ? <copyStrongPass attachArray="passes" args={[renderParams.dims]}/> : null}
             </>
         )
     }

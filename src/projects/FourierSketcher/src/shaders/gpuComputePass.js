@@ -92,7 +92,7 @@ class GpuComputePass extends Pass {
 
         } else {
 
-            renderer.setRenderTarget(writeBuffer);
+            renderer.setRenderTarget(readBuffer);
             if (this.clear) renderer.clear();
             this.normFsQuad.render(renderer);
 
@@ -100,26 +100,29 @@ class GpuComputePass extends Pass {
 
         // Render threshold pass in the effects chain.
 
-        if ( this.renderToScreen && this.threshold ) {
-
+        if ( this.threshold ) {
+            
             let hi = this.threshold.high * max;
 
-            this.threshUniforms[ 'tDiffuse' ].value = writeBuffer.texture;
+            this.threshUniforms[ 'tDiffuse' ].value = readBuffer.texture;
             this.threshUniforms[ 'max' ].value = max;
             this.threshUniforms[ 'high' ].value = hi;
             this.threshUniforms[ 'low' ].value = this.threshold.low * hi;
 
-            renderer.setRenderTarget(null);
-            this.threshFsQuad.render(renderer)
+            if (this.renderToScreen) {
 
-        } else if (this.threshold) {
+                renderer.setRenderTarget(null);
+                this.threshFsQuad.render(renderer)
 
-            renderer.setRenderTarget(writeBuffer);
-            if (this.clear) renderer.clear();
-            this.threshFsQuad.render(renderer);
+            } else {
+
+                renderer.setRenderTarget(writeBuffer);
+                if (this.clear) renderer.clear();
+                this.threshFsQuad.render(renderer);
+
+            }
 
         }
-    
     }
     
     initNormalizeShader() {

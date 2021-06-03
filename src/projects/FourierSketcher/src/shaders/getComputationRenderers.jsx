@@ -1,6 +1,4 @@
-import React, { useMemo } from 'react';
 import { GPUComputationRenderer } from 'three/examples/jsm//misc/GPUComputationRenderer';
-import { getSeparableKernel } from '../gaussianKernel';
 import { gradientMagnitudeFragShader, gradientArgumentFragShader, nmsFragShader} from "./shaders";
 
 
@@ -112,15 +110,7 @@ const getNMSComputeRenderer = (gl, dims, doNMS) => {
 
 const getComputationRenderers = (gl, dims, kernel, doNMS) => {
 
-
-    let t1 = performance.now();
-
     let obj = {sobel: getSobelComputeRenderer(gl, dims, kernel, doNMS), nms: getNMSComputeRenderer(gl, dims, doNMS)};
-
-    let t2 = performance.now();
-
-    console.log(`Constructed GPU renderers (${t2 - t1} ms)`)
-
 
     return obj;
 }

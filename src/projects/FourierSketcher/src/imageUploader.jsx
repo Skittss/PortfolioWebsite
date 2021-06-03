@@ -26,23 +26,6 @@ const ImageUploader = ({onLoadCallback, style}) => {
                 }
                 img.src = src;
 
-                // // Load image as base64 dataURL using FileReader
-                // const reader = new FileReader();
-                // reader.onload = event => {
-                    
-                //     let img = new Image();
-                //     img.src = event.target.result;
-                //     img.onload = () => 
-                //     {
-                //         let data = {src: event.target.result, dim: {width: img.width, height: img.height}}
-                //         img.src = null;
-                //         img = null;
-                //         //resolve(data)
-                //         resolve({src: URL.createObjectURL(file), dim: {width: 690, height: 690}})
-                //     }
-                // }
-                // reader.readAsDataURL(file);
-
             }, 30);
         }).then(data => onSuccess(data));
     }
