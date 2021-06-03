@@ -1,6 +1,6 @@
 import { ShaderMaterial, UniformsUtils } from 'three';
 import { Pass, FullScreenQuad } from 'three/examples/jsm/postprocessing/Pass';
-import { copyShader, copyStrongShader } from './shaders';
+import { copyStrongShader } from './shaders';
 
 class CopyStrongPass extends Pass {
 

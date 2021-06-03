@@ -1,4 +1,4 @@
-import img from "../../content/projects/FourierSketcher/img/mononoke.jpg";
+import img from "../../content/projects/Webgl-Canny/Canny-thumbnail.png";
 
 const Meta = {
     title: "WebGL Canny Edge Detection",
