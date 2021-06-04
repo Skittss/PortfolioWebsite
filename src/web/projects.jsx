@@ -21,7 +21,8 @@ const _langTagColours = {
     "JS": "#43FF97",
     "ReactJS": "#EE177C",
     "C++": "#F6B62C",
-    "GLSL": "#00CECB"
+    "GLSL": "#00CECB",
+    "ThreeJS": "#AEF78E"
 }
 
 const _getLangTagStyle = props => {

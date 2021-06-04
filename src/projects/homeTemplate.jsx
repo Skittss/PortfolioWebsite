@@ -13,7 +13,7 @@ const HomeTemplate = ({title, githubURL, projectRoute}) => {
                     {githubURL != undefined ? (
                         <Tooltip title="View on Github" placement="bottom">
                             <a href={githubURL} target="_blank">
-                                <GithubOutlined style={{fontSize: "30px", padding: "0 0.2em"}}/>
+                                <GithubOutlined style={{fontSize: "40px", padding: "0 0.2em"}}/>
                             </a>
                         </Tooltip>
                     ) : null}
@@ -21,7 +21,7 @@ const HomeTemplate = ({title, githubURL, projectRoute}) => {
                     {projectRoute != undefined  ? (
                         <Tooltip title="View project" placement="bottom">
                             <Link to={loc + projectRoute}>
-                                <SendOutlined style={{fontSize: "30px", padding: "0 0.2em"}}/>
+                                <SendOutlined style={{fontSize: "40px", padding: "0 0.2em"}}/>
                             </Link>
                         </Tooltip>
                     ) : null}

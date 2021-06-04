@@ -1,5 +1,4 @@
 import React, { useState } from 'react'
-import { PNG } from 'pngjs';
 import { message, Upload } from 'antd'
 import { InboxOutlined, LoadingOutlined } from '@ant-design/icons';
 const { Dragger } = Upload;
@@ -20,18 +19,13 @@ const ImageUploader = ({onLoadCallback, style}) => {
 
             setTimeout(() => {
 
-                // Load image as base64 dataURL using FileReader
-                const reader = new FileReader();
-                reader.onload = event => {
-                    
-                    // Convert to raw pixel data using PNGjs.
-                    const trunc64 = event.target.result.split(",")[1]
-
-                    const pixelData = PNG.sync.read(Buffer.from(trunc64, 'base64'));
-
-                    resolve({src: event.target.result, raw: pixelData});
+                let src = URL.createObjectURL(file);
+                let img = new Image();
+                img.onload = () => {
+                    resolve({src: src, dim: {width: img.width, height: img.height}})
                 }
-                reader.readAsDataURL(file);
+                img.src = src;
+
             }, 30);
         }).then(data => onSuccess(data));
     }
@@ -50,10 +44,10 @@ const ImageUploader = ({onLoadCallback, style}) => {
 
     const validateUpload = file => {
         const validFormat = (
-            file.type === "image/png"
+            file.type === "image/png" || file.type ==="image/jpeg"
         );
         if (!validFormat) {
-            message.error("Only PNG images are supported")
+            message.error("Only PNG/JPEG files are supported.")
             return false;
         }
         return true;
@@ -69,7 +63,6 @@ const ImageUploader = ({onLoadCallback, style}) => {
             customRequest={loadImageLocally}
             beforeUpload={validateUpload}
             onChange={handleChange}
-            
         >
             <p className="ant-upload-drag-icon">
                 <UploadIcon loading={loadingImage} />

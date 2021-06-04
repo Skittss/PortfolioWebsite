@@ -1,9 +1,9 @@
 import Website from "./Website";
-import FourierSketcher from "./FourierSketcher";
+import WebglCanny from "./Webgl-Canny";
 
 // Newest at the front for now
 const ProjectMetas = [
-    FourierSketcher,
+    WebglCanny,
     Website
 ];
 

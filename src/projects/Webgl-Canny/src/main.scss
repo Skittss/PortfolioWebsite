@@ -1,5 +1,10 @@
 $back-button-height: 32px;
 
+canvas {
+    width: 100% !important;
+    height: 100% !important;
+}
+
 body {
     #root {
 
@@ -64,7 +69,12 @@ body {
                                 }
                             }
                         }
-        
+
+                        .force-fill {
+                            width: 100%;
+                            height: 100%;
+                        }
+                        
                         .processor-options {
                             width: 100%;
                         }

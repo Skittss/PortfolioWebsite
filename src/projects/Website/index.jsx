@@ -1,4 +1,4 @@
-import img from "../../content/projects/FourierSketcher/img/back.jpg"
+import img from "../../content/projects/FourierSketcher/img/mononoke.jpg"
 
 const Meta = {
     title: "This Website!",
