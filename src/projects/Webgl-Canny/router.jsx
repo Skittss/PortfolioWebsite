@@ -1,4 +1,5 @@
 import React from 'react';
+import { Helmet } from 'react-helmet';
 import SubRouter from "../../web/routers/subrouter";
 
 const Home = React.lazy(() => import("./home"));
@@ -12,7 +13,10 @@ const routes = [
 
 const Router = ({routerDepth}) => {
     return (
+        <>
+        <Helmet><title>WebGL Canny Edge Detection</title></Helmet>
         <SubRouter routes={routes} routerDepth={routerDepth} />
+        </>
     );
 }
 
