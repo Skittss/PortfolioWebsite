@@ -162,7 +162,7 @@ const Home = () => {
                     More intuitively, <Latex>{'$r$'}</Latex> is the max distance from the centre pixel which we blend other pixels from.
                     <br /><br />
                     Though the maths here is non-trivial, the actual implementation is quite simple. All of the above can be reduced into ~20 lines of JavaScript. You can find
-                    this in <a href="#bruh">gaussianKernel.jsx</a> in the source code.
+                    this in <a href="https://github.com/Skittss/PortfolioWebsite/blob/main/src/projects/Webgl-Canny/src/gaussianKernel.jsx" target="_blank">gaussianKernel.jsx</a> in the source code.
                 </p>
 
 
