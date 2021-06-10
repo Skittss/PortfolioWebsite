@@ -1,5 +1,5 @@
 import React, { Suspense, useState } from 'react';
-import { Redirect, Route, Switch} from "react-router-dom";
+import { Redirect, Route, Switch, useLocation} from "react-router-dom";
 import Navbar from "../navbar";
 import { Layout } from 'antd';
 import { load } from "../../App";
@@ -8,7 +8,7 @@ const { Header, Content } = Layout;
 const HomePage = React.lazy(() => import("../home"));
 const ProjectRouter = React.lazy(() => import("../../projects/router"));
 
-const baseRoute = "PortfolioWebsite";
+const baseRoute = process.env.PUBLIC_URL;
 
 const routes = [
     { path: baseRoute + "/home", name: "test", component: HomePage, exact: true},
@@ -35,7 +35,7 @@ const Main = props => {
                                 />
                             ) : null;
                         })}
-                        <Redirect exact from={baseRoute+"/"} to="home" />
+                        <Redirect exact from={baseRoute+"/"} to={baseRoute + "home"} />
                     </Switch>
                 </Suspense>
             </Content>
