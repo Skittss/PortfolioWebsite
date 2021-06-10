@@ -11,8 +11,8 @@ const ProjectRouter = React.lazy(() => import("../../projects/router"));
 const baseRoute = process.env.PUBLIC_URL;
 
 const routes = [
-    { path: baseRoute + "/home", name: "test", component: HomePage, exact: true},
-    { path: baseRoute + "/projects", name: "projects", component: ProjectRouter, exact: false}
+    { path: "/home", name: "test", component: HomePage, exact: true},
+    { path: "/projects", name: "projects", component: ProjectRouter, exact: false}
 ];
 
 const Main = props => {
@@ -35,7 +35,7 @@ const Main = props => {
                                 />
                             ) : null;
                         })}
-                        <Redirect exact from={baseRoute+"/"} to={baseRoute + "home"} />
+                        <Redirect exact from="/" to="home" />
                     </Switch>
                 </Suspense>
             </Content>
