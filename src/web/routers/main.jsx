@@ -1,5 +1,5 @@
 import React, { Suspense, useState } from 'react';
-import { Redirect, Route, Switch } from "react-router-dom";
+import { Redirect, Route, Switch, useLocation} from "react-router-dom";
 import Navbar from "../navbar";
 import { Layout } from 'antd';
 import { load } from "../../App";
@@ -14,6 +14,9 @@ const routes = [
 ];
 
 const Main = props => {
+
+    const path = useLocation().pathname;
+    console.log(path)
 
     return (
         <Layout className="main">
