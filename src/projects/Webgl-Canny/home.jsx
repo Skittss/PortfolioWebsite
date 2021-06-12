@@ -1,4 +1,6 @@
 import React from 'react';
+import { useLocation } from 'react-router-dom';
+import { HashLink } from 'react-router-hash-link';
 import { Row, Col, Divider, Image } from 'antd';
 import FadeIn from 'react-fade-in';
 import HomeTemplate from '../homeTemplate';
@@ -10,6 +12,8 @@ import 'katex/dist/katex.min.css'
 import Latex from 'react-latex-next';
 
 const Home = () => {
+
+    const loc = useLocation();
 
     return (
         
@@ -54,13 +58,13 @@ const Home = () => {
                 <br />
                 <p>Canny edge detection is a 6-step process (7 including my own final clean-up):</p>
                 <p style={{paddingLeft: "3em", paddingRight: "3em"}}>
-                    <a href="#grayscale"><b>1. &nbsp; Grayscale Encoding</b></a><br />
-                    <a href="#blur"><b>2. &nbsp; Noise filtering (Gaussian Blur)</b></a><br />
-                    <a href="#sobel"><b>3. &nbsp; Image Gradient Calculation</b></a><br />
-                    <a href="#nms"><b>4. &nbsp; Non-maximum suppression</b></a><br />
-                    <a href="#threshold"><b>5. &nbsp; Double thresholding</b></a><br />
-                    <a href="#hysteresis"><b>6. &nbsp; Edge tracking (via hysteresis)</b></a><br />
-                    <a href="#cleanup"><b><i>7. &nbsp; Final clean-up</i></b></a>
+                    <HashLink smooth to="#grayscale"><b>1. &nbsp; Grayscale Encoding</b></HashLink><br />
+                    <HashLink smooth to="#blur"><b>2. &nbsp; Noise filtering (Gaussian Blur)</b></HashLink><br />
+                    <HashLink smooth to="#sobel"><b>3. &nbsp; Image Gradient Calculation</b></HashLink><br />
+                    <HashLink smooth to="#nms"><b>4. &nbsp; Non-maximum suppression</b></HashLink><br />
+                    <HashLink smooth to="#threshold"><b>5. &nbsp; Double thresholding</b></HashLink><br />
+                    <HashLink smooth to="#hysteresis"><b>6. &nbsp; Edge tracking (via hysteresis)</b></HashLink><br />
+                    <HashLink smooth to="#cleanup"><b><i>7. &nbsp; Final clean-up</i></b></HashLink>
                 </p>
                 <p>Each step is implemented as a Three.js post-processing shader pass.</p>
 
@@ -359,7 +363,7 @@ const Home = () => {
                     <br /><br />
                     We can therefore iteratively grow the strong pixels in the image, outputting new strong pixels wherever there is an overlap with weak pixels, until all desired weak pixels have been changed to strong pixels. This closely resembles a fixed-point iteration.
                     In this implementation, the number of iterations is set by a slider and not determined automatically for two reasons: 1) It is difficult to output when there have been no changes made in a pass of this process as it isn't possible to output
-                    a single value from a shader - the same problem as that encountered at the end of <a href="#step3end">step 3</a>. And 2) If the number of passes is automatically determined, this might lead to a large performance drop if there are too many passes.
+                    a single value from a shader - the same problem as that encountered at the end of <HashLink smooth to="#step3end">step 3</HashLink>. And 2) If the number of passes is automatically determined, this might lead to a large performance drop if there are too many passes.
                     <br /><br />
                     Finally, I also added a pixel threshold variable for this process which determines how much the strong pixels grow, or in other words how close weak pixels have to be to strong pixels to be converted. This allows for a little better control of
                     the output for this step.
