@@ -102,9 +102,9 @@ const Home = () => {
                 </div>
                 <p>
                     <br />
-                    This can be easily achieved in a fragment shader with a uniform vec4 (weights) of these coefficients:
+                    This can be easily achieved in a fragment shader with a uniform vec3 (weights) of these coefficients:
                     <br />
-                    <Latex>{'$gl\\_FragCoord=vec4(weights.r \\cdot texel.r, \\\ weights.g\\cdot texel.g, \\\ weights.b\\cdot texel.b )$'}</Latex>
+                    <Latex>{'$gl\\_FragColor=vec4(weights.r \\cdot texel.r, \\\ weights.g\\cdot texel.g, \\\ weights.b\\cdot texel.b, texel.a )$'}</Latex>
                 </p>
 
                 <br />
