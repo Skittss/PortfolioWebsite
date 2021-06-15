@@ -5,6 +5,7 @@ const Meta = {
     thumb: img,
     tags: ["ReactJS", "~~antd~~"],
     route: null,
+    tooltip: "This page is part of this project!"
 }
 
 export default Meta;

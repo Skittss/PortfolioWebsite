@@ -13,7 +13,7 @@ const routes = [
 const Router = ({routerDepth}) => {
     return (
         <>
-        <Helmet><title>WebGL Canny Edge Detection</title></Helmet>
+        <Helmet><title>Q-Learning Tetris NN</title></Helmet>
         <SubRouter routes={routes} routerDepth={routerDepth} />
         </>
     );

@@ -77,10 +77,11 @@ const projects = () => {
                 <Row gutter={[16,16]} justify="center" align="middle">
                     {
                         ProjectMetas.map(pMeta => {
+                            console.log(pMeta);
                             if (pMeta.route === null) {
                                 return (
                                     <Col>
-                                        <Tooltip title="This project has no page yet." placement="bottom">
+                                        <Tooltip title={pMeta.tooltip ? pMeta.tooltip : "This project has no page yet."} placement="bottom">
                                             {_getProjectCard(pMeta)}
                                         </Tooltip>
                                     </Col>
