@@ -1,6 +1,7 @@
 import React from 'react';
 import { Helmet } from 'react-helmet';
 import SubRouter from "../../web/routers/subrouter";
+import Meta from '.'
 
 const Home = React.lazy(() => import("./home"));
 const Main = React.lazy(() => import("./src/main"));
@@ -13,7 +14,7 @@ const routes = [
 const Router = ({routerDepth}) => {
     return (
         <>
-        <Helmet><title>WebGL Canny Edge Detection</title></Helmet>
+        <Helmet><title>{Meta.title}</title></Helmet>
         <SubRouter routes={routes} routerDepth={routerDepth} />
         </>
     );

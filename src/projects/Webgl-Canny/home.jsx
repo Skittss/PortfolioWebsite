@@ -18,13 +18,12 @@ const Home = () => {
     
         <>
         <FadeIn>
-            <HomeTemplate title={Meta.title} projectRoute="/main" githubURL="https://github.com/Skittss/PortfolioWebsite/tree/main/src/projects/Tetnet"></HomeTemplate>
+            <HomeTemplate title={Meta.title} projectRoute="/main" githubURL="https://github.com/Skittss/PortfolioWebsite/tree/main/src/projects/Webgl-Canny"></HomeTemplate>
             <div className="project-content-wrapper">
 
-                <h1 className="raleway-title">
+                <h1 id="overview" className="raleway-title">
                     Overview
                 </h1>
-                <br />
                 <div style={{paddingBottom: "20px", textAlign: "center"}}>
                     <Image src={processImg} fallback="Canny Process Image"/>
                     <p style={{fontSize: "0.75em"}}><i>(Canny Edge Detection Steps) </i></p>
@@ -33,8 +32,8 @@ const Home = () => {
                 <p>
                     Canny edge detection is a quintessential image processing algorithm which finds edges in images using a multi-stage process.
                     <br /><br />
-                    This project was created off the back of a similar (prototype) project of mine which drew images via a complex fourier series. You can find that project on GitHub 
-                    <a href="https://github.com/Skittss/FourierSketcher" target="_blank"> here</a>. 
+                    This project was created off the back of a similar (prototype) project of mine which drew images via a complex fourier series. You can find that project as "Fourier Sketcher" in the projects tab
+                    or the page itself <a href="https://skittss.github.io/FourierSketcher/" target="_blank"> here</a>. 
                      My implementation of edge detection in this prototype was <i>painfully</i> slow, being CPU bound, and only running on a single core! :( 
                     <br /><br />
                     This project is my attempt to make a faster (real-time!) canny edge detection implementation which runs in parallel, on a GPU!

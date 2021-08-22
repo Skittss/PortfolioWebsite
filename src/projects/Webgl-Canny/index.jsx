@@ -5,6 +5,7 @@ const Meta = {
     title: "WebGL Canny Edge Detection",
     thumb: img,
     tags: ["GLSL", "ThreeJS", "ReactJS", "~~antd~~"],
+    legacy: false,
     route: "/Webgl-Canny",
     router: router
 }
