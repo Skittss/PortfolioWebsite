@@ -1,7 +1,7 @@
 import React from 'react';
 import FadeIn from 'react-fade-in';
 import { Link, useLocation } from 'react-router-dom';
-import { Card, Tooltip, Grid, Row, Col, Image } from 'antd';
+import { Card, Tooltip, Grid, Row, Col, Image, Divider } from 'antd';
 import ProjectMetas from "../projects";
 
 
@@ -20,7 +20,8 @@ const CoverImage = props => {
 const _langTagColours = {
     "JavaScript": "#43FF97",
     "ReactJS": "#EE177C",
-    "C++": "#F6B62C",
+    "NodeJS": "#F15156",
+    "C#": "#04724D",
     "GLSL": "#00CECB",
     "ThreeJS": "#AEF78E",
     "Python": "#F5BB00",
@@ -76,6 +77,11 @@ const projects = () => {
     return (
         <div className="project-view">
             <FadeIn>
+                <h1 className="raleway-title" align="middle" style={{padding: "20px 0", marginBottom: 0}}>
+                    <Tooltip title="These projects have an associated home page explaining the process of creating the project." placement="bottom">
+                        PROJECTS WITH BLOG POSTS:
+                    </Tooltip>
+                </h1>
                 <Row gutter={[16,16]} justify="center" align="middle">
                     {
                         ProjectMetas.map(pMeta => {
@@ -102,11 +108,12 @@ const projects = () => {
                         })
                     }
                 </Row>
+                <Divider style={{borderTopWidth: "1px", borderTopColor: "#000000", opacity: 0.5, marginBottom: 0}}/>
                 <h1 className="raleway-title" align="middle" style={{padding: "20px 0", marginBottom: 0}}>
-                    <Tooltip title="These are some of my older ones, and are generally less polished." placement="bottom">
-                        LEGACY PROJECTS:
+                    <Tooltip title="These projects do not have an associated home page." placement="bottom">
+                        OTHER PROJECTS:
                     </Tooltip>
-                    </h1>
+                </h1>
                 <Row gutter={[16,16]} justify="center" align="middle">
                     {
                         ProjectMetas.map(pMeta => {
@@ -116,17 +123,25 @@ const projects = () => {
                             if (pMeta.route === null) {
                                 return (
                                     <Col>
-                                        <Tooltip title={pMeta.tooltip ? pMeta.tooltip : "This project has no page yet."} placement="bottom">
+                                        <Tooltip title={pMeta.tooltip ? pMeta.tooltip : "This project has no link yet."} placement="bottom">
                                             {_getProjectCard(pMeta)}
                                         </Tooltip>
                                     </Col>
                                 );
                             } else {
                                 return (
-                                    <Col>   
-                                        <Link to={useLocation().pathname + pMeta.route}>
-                                            {_getProjectCard(pMeta)}                                
-                                        </Link>
+                                    <Col>
+                                        {pMeta.tooltip ? (
+                                            <Tooltip title={pMeta.tooltip} placement="bottom">
+                                                <a href={pMeta.route}>
+                                                    {_getProjectCard(pMeta)}                                
+                                                </a>
+                                            </Tooltip>
+                                        ) : (
+                                            <a href={pMeta.route}>
+                                                {_getProjectCard(pMeta)}                                
+                                            </a>
+                                        )}
                                     </Col>
                                 );
                             }
