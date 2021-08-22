@@ -18,11 +18,13 @@ const CoverImage = props => {
 }
 
 const _langTagColours = {
-    "JS": "#43FF97",
+    "JavaScript": "#43FF97",
     "ReactJS": "#EE177C",
     "C++": "#F6B62C",
     "GLSL": "#00CECB",
-    "ThreeJS": "#AEF78E"
+    "ThreeJS": "#AEF78E",
+    "Python": "#F5BB00",
+    "TensorFlow": "#F95738"
 }
 
 const _getLangTagStyle = props => {
@@ -77,7 +79,40 @@ const projects = () => {
                 <Row gutter={[16,16]} justify="center" align="middle">
                     {
                         ProjectMetas.map(pMeta => {
-                            console.log(pMeta);
+                            if (pMeta.legacy) {
+                                return null
+                            }
+                            if (pMeta.route === null) {
+                                return (
+                                    <Col>
+                                        <Tooltip title={pMeta.tooltip ? pMeta.tooltip : "This project has no page yet."} placement="bottom">
+                                            {_getProjectCard(pMeta)}
+                                        </Tooltip>
+                                    </Col>
+                                );
+                            } else {
+                                return (
+                                    <Col>   
+                                        <Link to={useLocation().pathname + pMeta.route}>
+                                            {_getProjectCard(pMeta)}                                
+                                        </Link>
+                                    </Col>
+                                );
+                            }
+                        })
+                    }
+                </Row>
+                <h1 className="raleway-title" align="middle" style={{padding: "20px 0", marginBottom: 0}}>
+                    <Tooltip title="These are some of my older ones, and are generally less polished." placement="bottom">
+                        LEGACY PROJECTS:
+                    </Tooltip>
+                    </h1>
+                <Row gutter={[16,16]} justify="center" align="middle">
+                    {
+                        ProjectMetas.map(pMeta => {
+                            if (!pMeta.legacy) {
+                                return null
+                            }
                             if (pMeta.route === null) {
                                 return (
                                     <Col>
