@@ -1,9 +1,10 @@
-import img from "../../content/projects/Webgl-Canny/Canny-thumbnail.png";
+import img from "../../content/projects/Tetnet/thumb.png";
 
 const Meta = {
-    title: "Q-Learning Tetris NN",
+    title: "Tensorflow Tetris (WIP)",
     thumb: img,
-    tags: ["TensorFlow", "ReactJS"],
+    tags: ["Python", "TensorFlow"],
+    legacy: false,
     route: "/tetnet",
 }
 
