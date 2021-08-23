@@ -86,7 +86,7 @@ void main()
     vUV = uv;
 
     // The heightmap data at those coordinates
-    vec2 pos = zoom * (uv + vec2(noisePos, 0));
+    vec2 pos = (zoom * uv + vec2(noisePos, 0));
     float bumpData = (snoise(pos) + 0.5 * snoise(2.0 * pos) + 0.25 * snoise(4.0 * pos) + 0.125 * snoise(8.0 * pos));
 
     // height map is grayscale, so it doesn't matter if you use r, g, or b.

@@ -5,7 +5,7 @@ import { Layout } from 'antd';
 import { load } from "../../App";
 const { Header, Content } = Layout;
 
-const HomePage = React.lazy(() => import("../home"));
+const HomePage = React.lazy(() => import("../home/home"));
 const ProjectRouter = React.lazy(() => import("../../projects/router"));
 
 const routes = [
