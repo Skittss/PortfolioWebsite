@@ -117,6 +117,7 @@ const HomePage = () => {
 
     return (
       <> 
+        <div style={{position: "absolute", top: 0, left: 0, height: "100vh", width: "100vw", backgroundColor: "black"}}/>
         <Canvas
           style={{position: "absolute", top: 0, left: 0, height: "100vh", width: "100vw"}}
         >
@@ -128,8 +129,9 @@ const HomePage = () => {
             makeDefault
           />
           {/* <OrbitControls screenSpacePanning={false} /> */}
-          <Suspense>
-            <color attach="background" args={['#000']} />
+          <color attach="background" args={['#000']} />
+          <Suspense fallback>
+            
             <Terrain noisePos={noisePos} clock={clock} callback={setNoisePos}/>
             <ambientLight />
           </Suspense>
