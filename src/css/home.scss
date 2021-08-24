@@ -1,0 +1,43 @@
+@import "./_fonts.scss";
+
+@keyframes blink {
+    50% {
+      opacity: 0;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+
+#root {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.fill-content {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  justify-content: center;
+}
+
+.title-card {
+  font-family: 'Roboto Mono', monospace;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+  justify-content: center;
+}
+
+.animated-cursor {
+  height: 1em;
+  margin-bottom: -0.2em;
+  width: 0.07em;
+  margin-left: 0.2em;
+  background: white;
+  opacity: 0;
+  display: inline-block;
+  animation: blink 1s step-start infinite alternate;
+}

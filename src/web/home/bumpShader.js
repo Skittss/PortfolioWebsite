@@ -101,11 +101,14 @@ void main()
 `;
 
 export const fragmentShader = `
+
+uniform float opacity;
+
 varying vec2 vUV;
 varying float vAmount;
 
 void main()
 {
-    gl_FragColor = vec4(0.0, vAmount, 0.0, 1.0);
+    gl_FragColor = vec4(0.0, vAmount * opacity, 0.0, 1.0);
 }
 `;

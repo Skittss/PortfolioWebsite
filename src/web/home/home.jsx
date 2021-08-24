@@ -10,6 +10,9 @@ import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass';
 import { copyShader } from "./shaders/copyPass";
 
+import FadeIn from 'react-fade-in';
+import "../../css/home.scss";
+
 extend({ EffectComposer, ShaderPass, RenderPass });
 
 const Water = () => {
@@ -66,10 +69,10 @@ const Terrain = ({noisePos, clock, callback}) => {
   const uniforms = useMemo(() => ({
     noisePos: { value: 0.0 },
     bumpScale: { value: 100 },
-    zoom: { value: 4 }
+    zoom: { value: 4 },
+    opacity: { value: 0.0 }
   }), [])
 
-  const { gl, size, scene, camera } = useThree();
 
   // const material = museRef()
   // if (material.current) aterial.current.uniforms.noisePos.value = noisePos;
@@ -77,8 +80,10 @@ const Terrain = ({noisePos, clock, callback}) => {
   useFrame(state => {
 
     let speed = 0.5
+    let threshold = 1.5
     let delta = clock.getDelta()
     uniforms.noisePos.value = noisePos + speed * delta
+    uniforms.opacity.value = Math.min(1, noisePos / threshold)
     callback(previous => previous + speed * delta);
     
   })
@@ -116,7 +121,7 @@ const HomePage = () => {
     const [clock, setClock] = useState(new Clock())
 
     return (
-      <> 
+      <div className="fill-content"> 
         <div style={{position: "absolute", top: 0, left: 0, height: "100vh", width: "100vw", backgroundColor: "black"}}/>
         <Canvas
           style={{position: "absolute", top: 0, left: 0, height: "100vh", width: "100vw"}}
@@ -139,8 +144,22 @@ const HomePage = () => {
           {/* <Water /> */}
 
         </Canvas>
-        <p style={{position: "absolute", color: "white"}}>Nothing here for now. See projects tab</p>
-      </>
+        <div className="title-card center-vertically" style={{position: "relative", color: "white", margin: "2em 1em"}}>
+          <p style={{fontSize: "2vw", margin: "0 2em", padding: "0 20px", background: "rgba(0,0,0,0.75)"}}>
+            <span style={{color: "#569cd6"}}>const</span> <span style={{color: "#fcfc9f"}}>Info</span> = () <span style={{color: "#569cd6"}}>=></span> {"{"}<span style={{color: "#ce9178"}}>{"\""}</span>
+            <div style={{margin: "0 2em", color: "#ce9178"}}>
+                <br />
+                <span style={{color: "#ce9178"}}>I'm Henry, a computer science student studying at the University of Bath.</span>
+                <br />
+                I'm particularly interested in machine learning and graphics.
+                <br /><br />
+                You can find my projects <a href="https://skittss.github.io/PortfolioWebsite/#/projects">here</a>.
+                <br /><br />
+            </div>
+            <span style={{color: "#ce9178"}}>{"\""}</span>{"};"}<span className="animated-cursor" />
+          </p>
+        </div>
+      </div>
     );
 }
 
