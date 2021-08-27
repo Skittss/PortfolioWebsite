@@ -1,5 +1,7 @@
 import { Vector3, Vector2 } from 'three';
 
+// Fragment and vertex shaders for postprocessing passes.
+
 const GrayscaleShader = {
 
 	uniforms: {

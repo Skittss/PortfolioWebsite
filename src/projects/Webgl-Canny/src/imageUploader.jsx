@@ -13,6 +13,8 @@ const ImageUploader = ({onLoadCallback, style}) => {
 
     const [loadingImage, setLoadingImage] = useState(false);
 
+    // Load image from the uploaded file.
+    // Antd usually expects an API call for uploading files, so this works the same way as an API call.
     const loadImageLocally = async ({ file, onSuccess }) => {
 
         new Promise(resolve => {
@@ -30,6 +32,7 @@ const ImageUploader = ({onLoadCallback, style}) => {
         }).then(data => onSuccess(data));
     }
 
+    // Handle status of uploading file from antd component.
     const handleChange = info => {
         if (info.file.status === "uploading") {
             setLoadingImage(true);
@@ -43,6 +46,7 @@ const ImageUploader = ({onLoadCallback, style}) => {
     }
 
     const validateUpload = file => {
+        // TODO: I *think* more than these file formats can be handled as well, but they should be tested individually to check.
         const validFormat = (
             file.type === "image/png" || file.type ==="image/jpeg"
         );
@@ -71,7 +75,7 @@ const ImageUploader = ({onLoadCallback, style}) => {
                 {"Click or drag an image to this area to begin"}
             </p>
             <p className="ant-upload-hint">
-                (large images may take a very long time to process)
+                (large images may take a long time to process)
             </p>
         </Dragger>
     );

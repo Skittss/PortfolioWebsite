@@ -1,12 +1,13 @@
 import React, { useState } from 'react'
 import { notification } from 'antd';
 import { WarningTwoTone } from '@ant-design/icons';
-import { Step1 } from './steps';
+import { Steps } from './steps';
 import "./main.scss";
 
 
 const Main = () => {
 
+    // Only send notif once per acces to this route - not using state would make this notif appear on every re-render.
     const [notifSent, setNotifSent] = useState(false);
 
     const performanceNotification = () => {
@@ -26,7 +27,7 @@ const Main = () => {
 
     return (
         <div className="fill-container">
-            {Step1()}
+            {Steps()}
         </div>
     );
 }   

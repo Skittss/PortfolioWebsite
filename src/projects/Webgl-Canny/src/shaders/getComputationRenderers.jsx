@@ -1,7 +1,7 @@
 import { GPUComputationRenderer } from 'three/examples/jsm//misc/GPUComputationRenderer';
 import { gradientMagnitudeFragShader, gradientArgumentFragShader, nmsFragShader} from "./shaders";
 
-
+// Helper func to init empty computation matrix as a texture.
 const fillTextureWithZeros = (texture) => {
     let arr = texture.image.data;
 
@@ -77,6 +77,7 @@ const getSobelComputeRenderer = (gl, dims, kernel, doNMS) => {
 
 const getNMSComputeRenderer = (gl, dims, doNMS) => {
 
+    // Don't necessarily want to init NMS renderer as sobel comes before NMS in canny steps. (Saves computation time).
     if (!doNMS) return null;
 
     let nmsGpuCompute = new GPUComputationRenderer(dims[0], dims[1], gl);

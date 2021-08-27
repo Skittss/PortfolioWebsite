@@ -6,21 +6,24 @@ import { ArrowLeftOutlined, LoadingOutlined } from '@ant-design/icons';
 import ImageUploader from "./imageUploader";
 import "./main.scss";
 
+// Shader-related imports
 import ThreeImagePlane from "./threeImagePlane";
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer';
 import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass';
-
 import { GrayscalePass, HorizontalBlurPass, VerticalBlurPass, SobelPass, GpuComputePass, HysteresisPass, CopyStrongPass } from './shaders';
-
-import { getSeparableKernel } from "./gaussianKernel";
-
 import getComputationRenderers from "./shaders/getComputationRenderers";
 import { WebGLRenderTarget } from 'three';
 
+import { getSeparableKernel } from "./gaussianKernel";
+
+// Make sure to extend shader components so they work with three-fiber
 extend({ EffectComposer, RenderPass, GrayscalePass, HorizontalBlurPass, VerticalBlurPass, SobelPass, GpuComputePass, HysteresisPass, CopyStrongPass });
 
 const { Option } = Select;
 
+// Constants used for parameter selection:
+
+// Grayscale r, g, b channel weightings.
 const grayScaleCoefficients = {
     "BT.601" : [0.299, 0.587, 0.114],
     "BT.709" : [0.2126, 0.7152, 0.0722],
@@ -28,6 +31,7 @@ const grayScaleCoefficients = {
     "Mean" : [0.3333, 0.3333, 0.3333]
 }
 
+// Edge detection kernels.
 const edgefindingOperators = {
 
     "sobel" : {
@@ -61,23 +65,26 @@ const edgefindingOperators = {
 }
 
 
-const Step1 = () => {
+const Steps = () => {
 
+    // Store the step in the canny process that is currently shown.
     const maxStep = 7;
     const [step, setStep] = useState(0);
 
+    // Set a ref to the container of the processed image so it can be centered.
     const ImgContainerRef = useRef();
     const [shaderDisplayDim, setDisplayDim] = useState({width: 0, height: 0});
 
+    // Data about the uploaded image (dimensions and pixel content).
     const [imgDims, setImgDims] = useState(null);
     const [imgSource, setImgSourceVar] = useState(null);
 
+    // Whether or not to display the image uploader.
     const [uploadVisibility, setUploadVisibility] = useState(true);
 
     const [intermediateRT, setIntermediateRT] = useState(null);
 
-
-    // Stateful img processing params.
+    // Canny algorithm parameters.
     const [selectedGrayscaleTag, setSelectedGrayscaleTag] = useState("BT.601")
     const [selectedGrayscaleEncoding, setSelectedGrayscaleEncoding] = useState(grayScaleCoefficients[selectedGrayscaleTag]);
 
@@ -94,13 +101,16 @@ const Step1 = () => {
     const [hysteresisIters, setHysteresisIters] = useState(1);
 
     // Memoization
+
+    // Setting up make-shift compute shaders is quite time costly hence the memoization
     const [memoRenderers, setMemoRenderers] = useState(null);
     const [memoRendererParams, setMemoRendererParams] = useState(null);
 
+    // Calculating gaussian kernel is quite fast but for larger kernels this will improve the framerate.
     const [memoGaussParams, setMemoGaussParams] = useState(null);
     const [memoGauss, setMemoGauss] = useState(null);
 
-    // Render reference for saving image.
+    // WebGL reference for saving image (cannot be done through Canvas obj itself).
     const [rendererRef, setRendererRef] = useState(null);
     const [savingState, setSavingState] = useState(false);
 
@@ -110,6 +120,7 @@ const Step1 = () => {
     }
 
     const setImgSource = (v) => {
+        // Revoke previous img URL if exists to prevent memory leaks.
         if (imgSource) URL.revokeObjectURL(imgSource);
         setImgSourceVar(v);
     }
@@ -120,12 +131,14 @@ const Step1 = () => {
         setUploadVisibility(false);
     }
 
+    // Return to upload screen.
     const goBack = () => {
         setImgSource(null);
         setImgDims(null);
         setUploadVisibility(true);
     }
 
+    // Ensure step counter increments and decrements in range 0 -> {maxSteps}
     const hasNextStep = (step) => {
         return 0 <= step && step < maxStep;
     }
@@ -140,6 +153,7 @@ const Step1 = () => {
         6: "Final Image"
     }
 
+    // Map for option UI (React components) per step No.
     const stepOptions = {
         
         0: (
@@ -227,8 +241,10 @@ const Step1 = () => {
     const downloadCanvas = async () => {
         if (rendererRef) {
 
+            // Set a flag to indicate saving has begun.
             setSavingState(true);
 
+            // Put img conversion in promise to make asynchronous.
             new Promise(resolve => {
 
                 setTimeout(() => {
@@ -240,10 +256,12 @@ const Step1 = () => {
 
             }).then(img => {
 
+                // Automatically download image from created data URL.
                 let link = document.createElement("a");
                 link.download = "Canny_Step_" + step;
                 link.href = img;
                 link.click();
+                // Set flag to indicate saving has finished.
                 setSavingState(false);
             })
 
@@ -252,11 +270,11 @@ const Step1 = () => {
 
     const disposeRenderers = currentRenderers => {
 
-        //console.log(currentRenderers)
+        // Go through each attribute of the renderers and dispose of them manually if applicable. Three fiber does not automatically dispose these renderers.
         if (currentRenderers) {
+            // Separation of sobel and nms renderers here as same obj structure is used for both i.e {sobel: ..., nms: none} for a sobel computation renderer.
             if (currentRenderers.sobel) {
                 for (const [k, v] of Object.entries(currentRenderers.sobel)) {
-                    //console.log("disposed of :", k);
                     if (v) {
                         if (v.dispose) v.dispose();
                         delete currentRenderers.sobel[k];
@@ -267,7 +285,6 @@ const Step1 = () => {
 
             if (currentRenderers.nms) {
                 for (const [k, v] of Object.entries(currentRenderers.nms)) {
-                    //console.log("disposed of :", k);
                     if (v) {
                         if (v.dispose) v.dispose();
                         delete currentRenderers.nms[k];
@@ -282,7 +299,8 @@ const Step1 = () => {
 
     const GetStepShaders = (step, gl) => {
 
-        // Do manual memoization here of kernel and renderers as useMemo does not have expected performance.
+        // Do manual memoization here of kernel and renderers as useMemo() does not have expected performance
+        // (Unsure why as of now, though this works fine. Just a little more verbose).
 
         let currentKernel = memoGauss;
         let gaussParams = {r: gaussRadius, s: gaussSigma}
@@ -302,10 +320,11 @@ const Step1 = () => {
 
         }
 
+        // Use most recent kernel from after memoization.
         const kernel = currentKernel;
         const kernelSize = kernel.length;
 
-        // Memo renderers
+        // Memo renderers & their parameters in the same fashion as the kernel.
         let currentRenderers = memoRenderers;
         let renderParams = {gl: gl, dims: [ImgContainerRef.current.offsetWidth, ImgContainerRef.current.offsetHeight], kernel: selectedEdgeOperator, doNMS: (step > 2)}
 
@@ -317,26 +336,32 @@ const Step1 = () => {
             
         }
 
+        // An intermediate Render Target is needed to transfer information from one computation renderer to the next; this is essentially a replacement for the render buffer.
         if (intermediateRT == null) {
             setIntermediateRT({tg: new WebGLRenderTarget(renderParams.dims.x, renderParams.dims.y)});
         }
         
+        // TODO: This is verbose, ensure obj comparison i.e. (renderParams != memoRendererParams) has expected behaviour to reduce this if statement.
         else if (renderParams.gl != memoRendererParams.gl 
             || renderParams.dims[0] != memoRendererParams.dims[0]
             || renderParams.dims[1] != memoRendererParams.dims[1]
             || renderParams.kernel != memoRendererParams.kernel
             || renderParams.doNMS != memoRendererParams.doNMS) {
 
+                // Update the current memoized parameters.
                 setMemoRendererParams(renderParams);
 
-                // Before updating the renderers ref, dispose of ALL objects from the custom renderer to avoid HUGE memory leaks (R3F doesn't auto-dispose these ;-;)
+                // Before updating the renderers ref, dispose of ALL objects from the custom renderer to avoid HUGE memory leaks (three-fiber doesn't auto-dispose these).
                 disposeRenderers(currentRenderers);
 
+                // Create new renderers (costly, hence memoization).
                 currentRenderers = getComputationRenderers(renderParams.gl, renderParams.dims, renderParams.kernel, renderParams.doNMS);
                 setMemoRenderers(currentRenderers)
-
+                
+                // If the image dimensions have changed (due to screen resize, etc.), the shape of the make-shift render buffer (render target) must be changed accordingly.
                 if (renderParams.dims[0] != memoRendererParams.dims[0] || renderParams.dims[1] != memoRendererParams.dims[1]) {
-
+                    
+                    // Manual dispose of previous render target.
                     if (intermediateRT.tg) {
                         if (intermediateRT.tg.dispose) intermediateRT.tg.dispose();
                         delete intermediateRT.tg;
@@ -346,6 +371,8 @@ const Step1 = () => {
                 }
         }
 
+        // Sequence of shaders to be put into the post-processing passes (Threejs EffectComposer).
+        // only include shaders up to the current step to enable each step of the process to be previewed.
         return (
             <>
                 {step >= 0 ? <grayscalePass attachArray="passes" args={[selectedGrayscaleEncoding]} /> : null}
@@ -364,6 +391,7 @@ const Step1 = () => {
         )
     }
 
+    // Wrap options in container for css styling.
     const getOptions = (step) => {
 
         return (
@@ -377,11 +405,14 @@ const Step1 = () => {
         const composer = useRef();
         const { scene, gl, size, camera } = useThree();
 
+        // Save GL environment to state to allow downloading of the canvas.
         if (gl != rendererRef) {
             setRendererRef(gl);
         }
 
-        useEffect(() => void composer.current.render(), []);
+        // Render post-processing once on mount.
+        useEffect(() => composer.current.render(), []);
+        // Render on each frame thereafter.
         useFrame(() => composer.current.render(), 1);
 
         return (
@@ -403,11 +434,15 @@ const Step1 = () => {
             {(imgSource != null && imgDims != null) ? (
                 <div className="fill-container">
                     <FadeIn className="fill-and-vertically-center">
+
                         <Row gutter={[16,16]} justify="center" align="middle" style={{display: "flex", alignItems: "center"}}>
+
+                            {/* Input image */}
                             <Col className="process-preview-grid-col" flex={1}>
                                 <div className="process-preview-container" ><div ref={ImgContainerRef}><Image id="preview-before" src={imgSource} onLoad={() => setDisplayDim({width: ImgContainerRef.current.offsetWidth, height: ImgContainerRef.current.offsetHeight})} /></div></div>
                             </Col>
 
+                            {/* Processed Image */}
                             <Col className="process-preview-grid-col" flex={1}>
                                 <div className="process-preview-container">
                                     <Canvas 
@@ -423,7 +458,8 @@ const Step1 = () => {
                                     </Canvas>
                                 </div>
                             </Col>
-
+                            
+                            {/* Processing parameters */}
                             <Col className="process-preview-grid-col" flex={1} style={{alignSelf: "stretch"}}>
                                 <Row style={{display: "flex", alignItems: "center", paddingBottom: "10px"}}>
                                     <Col ><Button onClick={() => setStep(prev => prev - 1)} disabled={!hasNextStep(step - 1)}>Previous</Button></Col>
@@ -433,8 +469,10 @@ const Step1 = () => {
                                 </Row>
                                 {getOptions(step)}
                             </Col>
+
                         </Row>
                     </FadeIn>
+                    
                     <FadeIn className="back-overlay" visible={!uploadVisibility}>
                         <Button id="button"
                             type="link" 
@@ -452,4 +490,4 @@ const Step1 = () => {
     )
 }
 
-export {Step1}; 
+export {Steps}; 

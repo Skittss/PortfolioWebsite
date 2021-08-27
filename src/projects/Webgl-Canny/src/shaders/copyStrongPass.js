@@ -2,6 +2,8 @@ import { ShaderMaterial, UniformsUtils } from 'three';
 import { Pass, FullScreenQuad } from 'three/examples/jsm/postprocessing/Pass';
 import { copyStrongShader } from './shaders';
 
+// Copy only pixels above a threshold.
+// Value is currently hard-coded into the shader, could add as a uniform and pass in as an arg here.
 class CopyStrongPass extends Pass {
 
     constructor ( dims ) {

@@ -1,16 +1,6 @@
 import { ShaderMaterial, UniformsUtils } from 'three';
 import { Pass, FullScreenQuad } from 'three/examples/jsm/postprocessing/Pass';
-import { normalizeShader, gradientMagnitudeFragShader, gradientArgumentFragShader, nmsFragShader, thresholdShader } from './shaders';
-import { GPUComputationRenderer } from 'three/examples/jsm//misc/GPUComputationRenderer';
-
-
-let fillTextureWithZeros = (texture) => {
-    const arr = texture.image.data;
-
-    for (let i = 0; i < arr.length; i++) {
-        arr[i] = 0;
-    }
-}
+import { normalizeShader, thresholdShader } from './shaders';
 
 // Combines passes for Sobel operator onwards due to dependency on calculated information
 class GpuComputePass extends Pass {

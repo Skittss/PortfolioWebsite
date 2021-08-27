@@ -2,6 +2,9 @@ import React from 'react';
 import { TextureLoader, LinearFilter } from 'three';
 import { useLoader, useThree } from 'react-three-fiber';
 
+// Custom Three.js component - Image projected onto plane which fills the entirety of the viewport.
+
+// Calculates necessary width/height to be projected fully (factor = 1) onto threejs camera.
 const useAspect = (width, height, factor = 1) => {
     const { viewport: v, aspect } = useThree();
     const adaptedHeight = height * (aspect > width / height ? v.width / width : v.height / height);
@@ -12,6 +15,7 @@ const useAspect = (width, height, factor = 1) => {
 const ThreeImagePlane = ({img, dim}) => {
 
     const image = useLoader(TextureLoader, img);
+    // Use a linear filter to avoid sharp edges in the preview from the camera.
     image.minFilter = LinearFilter;
 
 
