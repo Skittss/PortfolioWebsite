@@ -147,7 +147,7 @@ const HomePage = () => {
         <FadeIn>
         <div className="title-card center-vertically" style={{position: "relative", color: "white", margin: "2em 1em"}}>
           <p style={{fontSize: "2vw", margin: "0 2em", padding: "0 20px", background: "rgba(0,0,0,0.75)"}}>
-            <span style={{color: "#569cd6"}}>const</span> <span style={{color: "#fcfc9f"}}>Info</span> = () <span style={{color: "#569cd6"}}>=></span> {"{"}<span style={{color: "#ce9178"}}>{"\""}</span>
+            <span style={{color: "#569cd6"}}>const</span> <span style={{color: "#fcfc9f"}}>Info</span> = () <span style={{color: "#569cd6"}}>{"=>"}</span> {"{"}<span style={{color: "#ce9178"}}>{"\""}</span>
             <div style={{margin: "0 2em", color: "#ce9178"}}>
                 <br />
                 <span style={{color: "#ce9178"}}>I'm Henry, a computer science student studying at the University of Bath.</span>
