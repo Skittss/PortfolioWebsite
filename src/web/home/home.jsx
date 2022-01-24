@@ -152,7 +152,7 @@ const HomePage = () => {
                 <br />
                 <span style={{color: "#ce9178"}}>I'm Henry, a computer science student studying at the University of Bath.</span>
                 <br />
-                I'm particularly interested in machine learning and graphics.
+                I'm particularly interested in machine learning, computer vision, and graphics.
                 <br /><br />
                 You can find my projects <a href="https://skittss.github.io/PortfolioWebsite/#/projects">here</a>.
                 <br /><br />

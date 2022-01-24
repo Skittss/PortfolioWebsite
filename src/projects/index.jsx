@@ -5,10 +5,12 @@ import MLPNN from "./MLP Neural Network";
 import FourierSketcher from "./FourierSketcher";
 import Disharmony from "./Disharmony";
 import Hex from "./Hex";
+import FFTOcean from "./FFTOcean";
 
 // Newest at the front for now
 const ProjectMetas = [
     Tetnet,
+    FFTOcean,
     WebglCanny,
     FourierSketcher,
     MLPNN,
