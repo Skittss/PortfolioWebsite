@@ -1,11 +1,29 @@
 @import "./_fonts.scss";
 
-$bg: #f0f2f5;
-$bg2: #ffffff;
+// $bg: #f0f2f5;
+// $bg2: #ffffff;
+
+$bg: #15191f;
+$textcol: whitesmoke;
+
+h1, h2, h3, h4, h5, h6 {
+    color: $textcol;
+}
+
+.ant-layout {
+    background: transparent;
+}
+
+.ant-divider {
+    color: $textcol;
+    border-top-color: #F0F0F4 !important;
+    border-left-color: #F0F0F4 !important;
+}
 
 body {
 
     background-color: $bg;
+    color: $textcol;
 
     .loadingPage {
         text-align: center;
@@ -16,6 +34,7 @@ body {
     }
 
     .navigation {
+        background: transparent;
         font-family: "Raleway", sans-serif !important;
         letter-spacing: 0.2em;
         height: 50px;
@@ -113,7 +132,7 @@ body {
             }
 
             a {
-                color: #000000;
+                color: $textcol;
             }
 
             a:hover {

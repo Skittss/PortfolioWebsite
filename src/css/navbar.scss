@@ -1,0 +1,31 @@
+$col: whitesmoke;
+$grad: #15191f;
+
+.navigation {
+    background: transparent;
+    position: sticky;
+    top: 0px; 
+    transition-property: all; 
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 500ms;
+}
+
+.navigation.hidden {
+    top: -3.1rem;
+}
+
+
+.ant-menu {
+    background: rgb(21,25,31);
+    background: linear-gradient(0deg, rgba(21,25,31,0) 0%, rgba(21,25,31,0.6054622532606793) 17%, rgba(21,25,31,0.8491597322522759) 35%, rgba(21,25,31,0.9415967070421919) 52%, rgba(21,25,31,1) 89%, rgba(21,25,31,1) 100%); 
+    position: sticky;
+    border-bottom-color: transparent;
+    border-bottom: none;
+    color: $col
+}
+
+.ant-menu-horizontal {
+    .ant-menu-item a {
+        color: $col
+    }
+}

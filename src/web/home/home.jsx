@@ -1,5 +1,5 @@
 import React, { Suspense, useEffect, useState, useRef, useCallback , useMemo} from 'react';
-import { Button } from 'antd'
+import { Button, Image, Row, Col, Grid, Divider } from 'antd'
 import { Canvas, useFrame, useThree, extend } from 'react-three-fiber';
 import { DoubleSide, Clock, DepthTexture, LinearFilter, RGBFormat, WebGLRenderTarget, NearestFilter, UnsignedShortType } from 'three';
 import { OrbitControls, PerspectiveCamera } from '@react-three/drei'
@@ -13,6 +13,7 @@ import { copyShader } from "./shaders/copyPass";
 import FadeIn from 'react-fade-in';
 import "../../css/home.scss";
 
+const { useBreakpoint } = Grid
 extend({ EffectComposer, ShaderPass, RenderPass });
 
 const Water = () => {
@@ -119,32 +120,87 @@ const HomePage = () => {
 
     const [noisePos, setNoisePos] = useState(0)
     const [clock, setClock] = useState(new Clock())
+    const screens = useBreakpoint();
 
     return (
-      <div className="fill-content"> 
-        <div style={{position: "absolute", top: 0, left: 0, height: "100vh", width: "100vw", backgroundColor: "black"}}/>
-        <Canvas
-          style={{position: "absolute", top: 0, left: 0, height: "100vh", width: "100vw"}}
-        >
-          <PerspectiveCamera
-            position={[0.05896666849764306, 1.0630507657317696, 0.9790701530639065]}
-            rotation={[-0.8264992153403403, 0.040778606785100945, 0.04423528266176858]}
-            near={0.01}
-            far={1000}
-            makeDefault
-          />
-          {/* <OrbitControls screenSpacePanning={false} /> */}
-          <color attach="background" args={['#000']} />
-          <Suspense fallback>
+      // <div className="fill-content"> 
+      //   <div style={{position: "absolute", top: 0, left: 0, height: "100vh", width: "100vw", backgroundColor: "black"}}/>
+      //   <Canvas
+      //     style={{position: "absolute", top: 0, left: 0, height: "100vh", width: "100vw"}}
+      //   >
+      //     <PerspectiveCamera
+      //       position={[0.05896666849764306, 1.0630507657317696, 0.9790701530639065]}
+      //       rotation={[-0.8264992153403403, 0.040778606785100945, 0.04423528266176858]}
+      //       near={0.01}
+      //       far={1000}
+      //       makeDefault
+      //     />
+      //     {/* <OrbitControls screenSpacePanning={false} /> */}
+      //     <color attach="background" args={['#000']} />
+      //     <Suspense fallback>
             
-            <Terrain noisePos={noisePos} clock={clock} callback={setNoisePos}/>
-            <ambientLight />
-          </Suspense>
+      //       <Terrain noisePos={noisePos} clock={clock} callback={setNoisePos}/>
+      //       <ambientLight />
+      //     </Suspense>
 
-          {/* <Water /> */}
+      //     {/* <Water /> */}
 
-        </Canvas>
+      //   </Canvas>
         <FadeIn>
+        <Row gutter={[16, 16]}>
+          <Col xs={24} md={12} style={{textAlign: screens.md ? "right" : "center"}}>
+            <Image
+              preview={false} 
+              fallback="Github profile picture" 
+              src="https://github.com/Skittss.png" 
+              width="300px"
+              style={{borderRadius: "50%", border: "solid 2px", borderColor: "whitesmoke"}}
+            />
+          </Col>
+          <Col xs={24} md={12} style={{textAlign: screens.md ? "left" : "center", verticalAlign: screens.md? "middle" : "top"}}>
+            <div style={{height: "100%", display: "flex", alignItems: "center", justifyContent: screens.md ? "left" : "center"}}>
+              <div>
+                <p style={{fontSize: 30, marginBottom: "5px", fontFamily: "'Raleway-Bold', sans-serif"}}>Hey there! 👋</p>
+                <p style={{marginBottom: "5px"}}>I'm Henry <span style={{color: 'gray'}}>(Github - Skittss)</span></p>
+                <p style={{marginBottom: "5px"}}>I'm into Machine Learning, Computer Vision, and Graphics.</p>
+                <p style={{marginBottom: "5px"}}>I also like a little bit of WebDev!!</p>
+                <Divider style={{marginTop: "12px", marginBottom: "12px"}} />
+                <div>
+                  <Row wrap={false}>
+                    <Col flex={1}>
+                      <Row>
+                        <Col>
+                        <div style={{height: "100%", display: "flex", alignItems: "center", justifyContent: screens.md ? "left" : "center"}}>
+                          <span style={{fontSize: 40, lineHeight: "10px"}}>🎓</span>
+                        </div>
+                        </Col>
+                        <Col>
+                          <Row align="middle">
+                            The University of Bath
+                          </Row>
+                          <Row align="middle">
+                            <span style={{fontSize: 10, color: 'gray'}}>BSc Computer Science (Year 3)</span>
+                          </Row>
+                        </Col>
+                      </Row>
+                    </Col>
+                    <Col flex="none">
+                      <Divider type="vertical" style={{height: "100%", borderLeftWidth: "2px"}}/>
+                    </Col>
+                    <Col flex={1}>
+                    <div style={{height: "100%", display: "flex", alignItems: "center", justifyContent: screens.md ? "left" : "center"}}>
+                    <span style={{color: 'orange'}}>Status: &nbsp;</span>
+                    <span style={{background: "rgba(0,0,0,0.5)", borderRadius: "0.4em", padding: "2px 5px 2px 5px", fontFamily: "'Roboto Mono', monospace"}}>&gt; Graduating 😎<span className="animated-cursor" /></span>
+                    </div>
+                    </Col>
+                  </Row>
+                </div>
+              </div>
+            </div>
+          </Col>
+
+        </Row>
+
         <div className="title-card center-vertically" style={{position: "relative", color: "white", margin: "2em 1em"}}>
           <p style={{fontSize: "2vw", margin: "0 2em", padding: "0 20px", background: "rgba(0,0,0,0.75)"}}>
             <span style={{color: "#569cd6"}}>const</span> <span style={{color: "#fcfc9f"}}>Info</span> = () <span style={{color: "#569cd6"}}>{"=>"}</span> {"{"}<span style={{color: "#ce9178"}}>{"\""}</span>
@@ -161,7 +217,7 @@ const HomePage = () => {
           </p>
         </div>
         </FadeIn>
-      </div>
+      // </div>
     );
 }
 
