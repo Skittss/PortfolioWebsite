@@ -18,8 +18,8 @@ $textcol: whitesmoke;
     font-family: "Raleway";
     font-size: 16.5px;
     padding: 1em;
+    padding-left: 4.5em;
     padding-top: 3rem;
-    margin-left: 2em;
     max-height: 100vh;
     text-align: left;
     position: sticky;
@@ -67,8 +67,13 @@ $textcol: whitesmoke;
         #title {
             text-transform: uppercase;
             letter-spacing: 0.12em;
-            font-size: 3.5em;
+            font-size: max(2em, calc(2vw + 1.1vw));
             margin-bottom: 0.25em;
+        }
+
+        .title-icon {
+            font-size: max(2em, calc(2vw + 1.1vw));
+            padding: 0 0.2em
         }
 
         a {

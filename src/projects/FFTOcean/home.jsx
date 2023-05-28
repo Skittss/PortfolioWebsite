@@ -33,12 +33,6 @@ const Home = () => {
                 <h1 id="overview" className="raleway-title">
                     Overview
                 </h1>
-                <h2 id="Atest2" className="raleway-title">
-                    A Test H2
-                </h2>
-                <h3 id="Atest3" className="raleway-title">
-                    A Test H3
-                </h3>
                 <div style={{paddingBottom: "20px", textAlign: "center"}}>
                     <video style={{objectFit: "cover", width: "50%", minWidth: "300px"}}  autoPlay loop muted>
                         <source src={waves} type='video/mp4' />
@@ -54,17 +48,6 @@ const Home = () => {
                     the focus of this project.
                 </p>
                 <br />
-                <Divider style={{borderTopWidth: "1px", borderTopColor: "#000000", opacity: 0.5}}/>
-                <h1 id="contents" className="raleway-title">
-                    Contents
-                </h1>
-                <p style={{paddingLeft: "3em", paddingRight: "3em"}}>
-                    <HashLink smooth to="#gerstner"><b>1. &nbsp; Gerstner Waves</b></HashLink><br />
-                    <HashLink smooth to="#displacement"><b>2. &nbsp; Calculating Displacement Maps</b></HashLink><br />
-                    <HashLink smooth to="#ifft"><b>3. &nbsp; IFFT on a GPU</b></HashLink><br />
-                    <HashLink smooth to="#lighting"><b>4. &nbsp; Lighting and Fog</b></HashLink><br />
-                    <HashLink smooth to="#improvements"><b>5. &nbsp; Improvements</b></HashLink><br />
-                </p>
                 <Divider style={{borderTopWidth: "1px", borderTopColor: "#000000", opacity: 0.5}}/>
                 <h1 id="gerstner" className="raleway-title">
                     Gerstner Waves

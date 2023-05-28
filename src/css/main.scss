@@ -24,6 +24,39 @@ h1, h2, h3, h4, h5, h6 {
     border-left-color: #F0F0F4 !important;
 }
 
+.ant-breadcrumb {
+
+    a {
+        color: rgba($textcol, 0.5);
+    }
+
+    a:hover {
+        color: #1677ff;
+        background-color: rgba($textcol, 0.03);
+    }
+
+    li:last-child {
+        color: $textcol;
+    }
+    
+    .ant-breadcrumb-separator {
+        color: rgba($textcol, 0.5);
+    }
+}
+
+.ant-anchor-link-title {
+    color: $textcol !important;
+
+}
+
+.ant-anchor-link-title-active {
+    color: #1677ff !important;
+}
+
+.ant-anchor::before {
+    border-inline-start-color: rgba($textcol, 0.25) !important;
+}
+
 body {
 
     background-color: $bg;
@@ -31,7 +64,7 @@ body {
 
     .loadingPage {
         text-align: center;
-        min-height: 100vh;
+        min-height: 90vh;
         display: flex;
         align-items: center;
         justify-content: center;

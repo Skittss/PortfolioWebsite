@@ -73,7 +73,7 @@ const Navbar = () => {
     }, [screenSize.height]);
 
     return (
-        <Header className={`navigation ${hidden ? "hidden" : ""}`} style={{zIndex: 1, width: '100%', paddingLeft: 0, paddingRight: 0}}>
+        <Header id="main-navbar" className={`navigation ${hidden ? "hidden" : ""}`} style={{zIndex: 1, width: '100%', paddingLeft: 0, paddingRight: 0}}>
             <Menu theme="light" mode="horizontal" defaultSelectedKeys={[menuKey]}
                 selectedKeys={[menuKey]}
                 onClick={({key}) => setMenuKey(key)}

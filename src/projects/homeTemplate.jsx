@@ -23,14 +23,14 @@ const HomeTemplate = ({title, githubURL, projectRoute, projectLink, thumb}) => {
             height: '100vh',
             zIndex: -1,
         }} />
-        <div className="project-home-wrapper" style={{position: "absolute", width: "100vw", top: "101vh", left: "0px", transform: "translate(0, -100%)"}}>
+        <div className="project-home-wrapper" style={{position: "absolute", width: "100%", top: "101vh", left: "0px", transform: "translate(0, -100%)"}}>
             <header className="home-header">
                 <h1 id="title" style={{display: 'inline-block'}}>{title}</h1>
                 <span style={{padding: "0 1em", display: 'inline-block'}}>
                     {githubURL != undefined ? (
                         <Tooltip title="View on Github" placement="bottom">
                             <a href={githubURL} target="_blank">
-                                <GithubOutlined style={{fontSize: "40px", padding: "0 0.2em"}}/>
+                                <GithubOutlined className="title-icon"/>
                             </a>
                         </Tooltip>
                     ) : null}
@@ -38,7 +38,7 @@ const HomeTemplate = ({title, githubURL, projectRoute, projectLink, thumb}) => {
                     {projectRoute != undefined  ? (
                         <Tooltip title="View project" placement="bottom">
                             <Link to={loc + projectRoute}>
-                                <SendOutlined style={{fontSize: "40px", padding: "0 0.2em"}}/>
+                                <SendOutlined className="title-icon"/>
                             </Link>
                         </Tooltip>
                     ) : null}
@@ -46,7 +46,7 @@ const HomeTemplate = ({title, githubURL, projectRoute, projectLink, thumb}) => {
                     {projectLink != undefined  ? (
                         <Tooltip title="View project" placement="bottom">
                             <a href={projectLink} target="_blank">
-                                <SendOutlined style={{fontSize: "40px", padding: "0 0.2em"}}/>
+                                <SendOutlined className="title-icon"/>
                             </a>
                         </Tooltip>
                     ) : null}
