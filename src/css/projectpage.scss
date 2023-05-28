@@ -26,6 +26,10 @@ $textcol: whitesmoke;
     top: 0;
 }
 
+.hint-text {
+    color: rgba($textcol, 0.5);
+}
+
 .project-content-wrapper {
     font-family: "Raleway";
     font-size: 16.5px;

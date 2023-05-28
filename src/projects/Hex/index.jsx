@@ -5,7 +5,8 @@ const Meta = {
     thumb: img,
     tags: ["C#"],
     legacy: true,
-    tooltip: "An autochess game & basic game engine built from the ground up.",
+    abstract: "An autochess game & basic game engine built from the ground up.",
+    date: "2020",
     route: "https://github.com/Skittss/Hex",
 }
 

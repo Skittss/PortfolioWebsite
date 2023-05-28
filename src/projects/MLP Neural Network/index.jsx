@@ -5,7 +5,8 @@ const Meta = {
     thumb: img,
     tags: ["Python"],
     legacy: true,
-    tooltip: "An MLP neural network built in python from first principles for supervised learning.",
+    abstract: "An MLP neural network built in python from first principles.",
+    date: "2022",
     route: "https://github.com/Skittss/MLPNeuralNet",
 }
 

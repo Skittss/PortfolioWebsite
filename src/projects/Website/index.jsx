@@ -4,9 +4,11 @@ const Meta = {
     title: "This Website!",
     thumb: img,
     tags: ["ReactJS", "~~antd~~"],
+    abstract: "This page is part of this project!",
+    date: "2021 -> Present",
     legacy: false,
     route: null,
-    tooltip: "This page is part of this project!"
+    tooltip: "Take a look around!"
 }
 
 export default Meta;

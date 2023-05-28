@@ -5,7 +5,8 @@ const Meta = {
     thumb: img,
     tags: ["ReactJS", "NodeJS", "~~Spotify API~~"],
     legacy: true,
-    tooltip: "A web-based multiplayer rhythm game developed in 24 hours for Bath Hack 2021",
+    abstract: "A web-based multiplayer rhythm game developed in 24 hours for Bath Hack 2021",
+    date: "2021",
     route: "https://devpost.com/software/disharmony",
 }
 

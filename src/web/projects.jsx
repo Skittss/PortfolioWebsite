@@ -4,7 +4,9 @@ import { Link, useLocation } from 'react-router-dom';
 import { Card, Tooltip, Grid, Row, Col, Image, Divider } from 'antd';
 import ProjectMetas from "../projects";
 
+import "../css/projectpage.scss";
 
+const { useBreakpoint } = Grid
 
 const { Meta } = Card;
 
@@ -44,7 +46,7 @@ const _getLangTagStyle = props => {
     }
 
     return {
-        color: _langTagColours[txt] === undefined ? "#000000" : _langTagColours[txt],
+        color: _langTagColours[txt] === undefined ? "whitesmoke" : _langTagColours[txt],
         border: brdr,
         text: txt,
         opacity: op
@@ -65,43 +67,145 @@ const LangTag = props => {
     );
 }
 
-const _getProjectCard = (pMeta) => {
+const _getCard = (pMeta, large, screens) => {
+    if (screens.sm) return _getProjectCard(pMeta, large);
+    return _getProjectCardVertical(pMeta, large)
+}
+
+const _getProjectCardVertical = (pMeta, large) => {
+
     return (
-        <Card hoverable style={{width: 300}} cover={<CoverImage alt={pMeta.title} src={pMeta.thumb}/>}>
-            <Meta title={pMeta.title} description={<LangTags tags={pMeta.tags}/>} />
-        </Card>
+        <Col span={24} style={{
+            padding: 0,
+            boxShadow: "0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19)"
+        }}>
+            <Row>
+                <div style={{
+                    aspectRatio: "1 / 1",
+                    backgroundImage: `url(${pMeta.thumb})`,
+                    backgroundPosition: 'center',
+                    backgroundSize: 'cover',
+                    backgroundRepeat: 'no-repeat',
+                    width: "100%",
+                }}/>
+                <div style={{
+                    position: 'absolute',
+                    aspectRatio: "1 / 1",
+                    top: 0,
+                    left: 0,
+                    width: "100%",
+                    background: "linear-gradient(180deg, rgba(21,25,31,0) 0%, rgba(21,25,31,1) 100%)"
+                }} />
+            </Row>
+            <Row>
+                <div className="project-content-wrapper" style={{
+                    marginLeft: "20px", marginRight: "10px", width: "100%",
+                    paddingTop: "10px", textAlign: "center"
+                }}>
+                    <h1 style={{marginBottom: "5px", fontSize: large ? "calc(2.5em + 0.2vw)" : "calc(1.5em + 0.2vw)"}}>{pMeta.title}</h1>
+                    {pMeta.date ? (
+                        <p className="hint-text" style={{marginBottom: "15px"}}>{pMeta.date}</p>
+                    ) : null}
+                    <LangTags tags={pMeta.tags}/>
+                    <p style={{marginTop: "10px"}}>
+                        {pMeta.abstract ? pMeta.abstract : ""}
+                    </p>
+
+                </div>
+            </Row>
+        </Col>
+    )
+
+}
+
+
+const _getProjectCard = (pMeta, large, screens) => {
+
+    return (
+        <Row style={{
+            boxShadow: "0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19)"
+        }}>
+        <Col span={8} style={{position: "relative"}}>
+            <div style={{
+                aspectRatio: "1 / 1",
+                backgroundImage: `url(${pMeta.thumb})`,
+                backgroundPosition: 'center',
+                backgroundSize: 'cover',
+                backgroundRepeat: 'no-repeat',
+                width: "100%"
+            }}/>
+            <div style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: "100%",
+                height: "100%",
+                background: "linear-gradient(90deg, rgba(21,25,31,0) 0%, rgba(21,25,31,1) 100%)"
+            }} />
+        </Col>
+        <Col span={16} style={{contain: "size"}}>
+            <div className="project-content-wrapper" style={{
+                marginLeft: "20px", marginRight: "10px",
+                paddingTop: "10px",
+            }}>
+                <h1 style={{marginBottom: "5px", fontSize: large ? "calc(2.5em + 0.2vw)" : "calc(1.5em + 0.2vw)"}}>{pMeta.title}</h1>
+                {pMeta.date ? (
+                    <p className="hint-text" style={{marginBottom: "15px"}}>{pMeta.date}</p>
+                ) : null}
+                <LangTags tags={pMeta.tags}/>
+                <p style={{marginTop: "10px"}}>
+                    {pMeta.abstract ? pMeta.abstract : ""}
+                </p>
+
+            </div>
+        </Col>
+        </Row>
     );
 }
 
-const projects = () => {
+const Projects = () => {
+
+    const screens = useBreakpoint();
+    const loc = useLocation();
+
+    const primaryColSpan = screens.xl ? 12 : 24;
+    const primaryColProjIdxStart = screens.xl ? 1 : 0;
+    const primaryColGutter = screens.sm ? [16, 16] : [0, 16];
+
     return (
-        <div className='padded-main'>
+        <div className={screens.xl ? 'padded-main' : 'unpadded-main'}>
         <div className="project-view">
             <FadeIn>
-                <h1 className="raleway-title" align="middle" style={{padding: "20px 0", marginBottom: 0}}>
-                    <Tooltip title="These projects have an associated home page explaining the process of creating the project." placement="bottom">
-                        PROJECTS WITH BLOG POSTS:
-                    </Tooltip>
-                </h1>
-                <Row gutter={[16,16]} justify="center" align="middle">
+
+                {screens.xl ? (
+                    <Row style={{paddingBottom: 16}} justify="center">
+                        <Col span={16}>
+                            <Link to={loc.pathname + ProjectMetas[0].route}>
+                                {_getCard(ProjectMetas[0], true, screens)}                                
+                            </Link>
+                        </Col>
+                    </Row>
+                ) : null}
+
+                <Row gutter={primaryColGutter} justify="center" align="middle">
                     {
-                        ProjectMetas.map(pMeta => {
+                        ProjectMetas.slice(primaryColProjIdxStart).map(pMeta => {
                             if (pMeta.legacy) {
                                 return null
                             }
                             if (pMeta.route === null) {
                                 return (
-                                    <Col>
+                                    <Col span={primaryColSpan}>
                                         <Tooltip title={pMeta.tooltip ? pMeta.tooltip : "This project has no page yet."} placement="bottom">
-                                            {_getProjectCard(pMeta)}
+                                            {_getCard(pMeta, false, screens)}
                                         </Tooltip>
                                     </Col>
                                 );
                             } else {
                                 return (
-                                    <Col>   
-                                        <Link to={useLocation().pathname + pMeta.route}>
-                                            {_getProjectCard(pMeta)}                                
+                                    <Col span={primaryColSpan}>   
+                                        <Link to={loc.pathname + pMeta.route}>
+                                            {_getCard(pMeta, false, screens)}                                
                                         </Link>
                                     </Col>
                                 );
@@ -109,13 +213,13 @@ const projects = () => {
                         })
                     }
                 </Row>
-                <Divider style={{borderTopWidth: "1px", borderTopColor: "#000000", opacity: 0.5, marginBottom: 0}}/>
-                <h1 className="raleway-title" align="middle" style={{padding: "20px 0", marginBottom: 0}}>
-                    <Tooltip title="These projects do not have an associated home page." placement="bottom">
-                        OTHER PROJECTS:
-                    </Tooltip>
-                </h1>
-                <Row gutter={[16,16]} justify="center" align="middle">
+                <Divider style={{borderTopWidth: "1px", borderTopColor: "#000000", opacity: 0.5, marginBottom: 0, marginTop: "10vh"}}/>
+                <div className="project-content-wrapper" style={{paddingTop: 0}}>
+                    <h1 align="middle" style={{fontSize: "2.5em", padding: "30px 0", marginBottom: "5vh"}}>
+                        MISC. PROJECTS (LINK ONLY)
+                    </h1>
+                </div>
+                <Row gutter={primaryColGutter} justify="center" align="middle">
                     {
                         ProjectMetas.map(pMeta => {
                             if (!pMeta.legacy) {
@@ -123,24 +227,24 @@ const projects = () => {
                             }
                             if (pMeta.route === null) {
                                 return (
-                                    <Col>
+                                    <Col span={primaryColSpan}>
                                         <Tooltip title={pMeta.tooltip ? pMeta.tooltip : "This project has no link yet."} placement="bottom">
-                                            {_getProjectCard(pMeta)}
+                                            {_getCard(pMeta, false, screens)}
                                         </Tooltip>
                                     </Col>
                                 );
                             } else {
                                 return (
-                                    <Col>
+                                    <Col span={primaryColSpan}>
                                         {pMeta.tooltip ? (
                                             <Tooltip title={pMeta.tooltip} placement="bottom">
                                                 <a href={pMeta.route}>
-                                                    {_getProjectCard(pMeta)}                                
+                                                    {_getCard(pMeta, false, screens)}                                
                                                 </a>
                                             </Tooltip>
                                         ) : (
                                             <a href={pMeta.route}>
-                                                {_getProjectCard(pMeta)}                                
+                                                {_getCard(pMeta, false, screens)}                                
                                             </a>
                                         )}
                                     </Col>
@@ -151,8 +255,14 @@ const projects = () => {
                 </Row>
             </FadeIn>
         </div>
+        <div className="project-footer-wrapper" style={{
+            display: "flex", justifyContent: "center", 
+            marginTop: "4vh", marginBottom: "3vh",
+        }}>
+            That's all for now!
+        </div>
         </div>
     );
 }
 
-export default projects;
+export default Projects;
