@@ -30,7 +30,6 @@ $textcol: whitesmoke;
     font-family: "Raleway";
     font-size: 16.5px;
     text-align: left;
-    margin-right: 17.5vw;
     padding-top: 3rem;
 
     h1 {
@@ -84,4 +83,8 @@ $textcol: whitesmoke;
             color: #61dafb;
         }
     }
+}
+
+.project-footer-wrapper {
+    color: rgba($textcol, 0.5);
 }

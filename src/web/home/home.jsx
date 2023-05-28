@@ -3,6 +3,7 @@ import { Button, Image, Row, Col, Grid, Divider } from 'antd'
 import { Canvas, useFrame, useThree, extend } from 'react-three-fiber';
 import { DoubleSide, Clock, DepthTexture, LinearFilter, RGBFormat, WebGLRenderTarget, NearestFilter, UnsignedShortType } from 'three';
 import { OrbitControls, PerspectiveCamera } from '@react-three/drei'
+import { Link } from 'react-router-dom'
 import { fragmentShader, vertexShader } from './bumpShader';
 
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer';
@@ -12,6 +13,7 @@ import { copyShader } from "./shaders/copyPass";
 
 import FadeIn from 'react-fade-in';
 import "../../css/home.scss";
+import { HashLink } from 'react-router-hash-link';
 
 const { useBreakpoint } = Grid
 extend({ EffectComposer, ShaderPass, RenderPass });
@@ -162,9 +164,10 @@ const HomePage = () => {
             <div style={{height: "100%", display: "flex", alignItems: "center", justifyContent: screens.md ? "left" : "center"}}>
               <div>
                 <p style={{fontSize: 30, marginBottom: "5px", fontFamily: "'Raleway-Bold', sans-serif"}}>Hey there! 👋</p>
-                <p style={{marginBottom: "5px"}}>I'm Henry <span style={{color: 'gray'}}>(Github - Skittss)</span></p>
+                <p style={{marginBottom: "15px"}}>I'm Henry <span style={{color: 'gray'}}>(Github - Skittss)</span></p>
                 <p style={{marginBottom: "5px"}}>I'm into Machine Learning, Computer Vision, and Graphics.</p>
-                <p style={{marginBottom: "5px"}}>I also like a little bit of WebDev!!</p>
+                <p style={{marginBottom: "15px"}}>I also like a little bit of WebDev!</p>
+                <p style={{marginBottom: "5px"}}>Check out my projects <Link to="/projects"> here. </Link></p>
                 <Divider style={{marginTop: "12px", marginBottom: "12px"}} />
                 <div>
                   <Row wrap={false}>
