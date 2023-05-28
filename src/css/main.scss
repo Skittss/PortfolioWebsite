@@ -10,6 +10,10 @@ h1, h2, h3, h4, h5, h6 {
     color: $textcol;
 }
 
+// li {
+//     color: $textcol !important;
+// }
+
 .ant-layout {
     background: transparent;
 }
@@ -41,10 +45,13 @@ body {
         line-height: 50px;
     }
 
-    .main-content {
-        background-color: $bg;
+    .padded-main {
         margin-top: 50px;
         padding: 1em;
+    }
+
+    .main-content {
+        background-color: $bg;
     }
 
     .project-view {
@@ -102,44 +109,7 @@ body {
         }
     }
 
-    .raleway-title {
-        font-family: "Raleway-bold", sans-serif !important;
-        text-transform: uppercase;
-        letter-spacing: 0.1em;
-        font-size: 2.2rem !important;
-    }
-
-    .project-content-wrapper {
-        font-family: "Raleway";
-        font-size: 1.5em;
-        padding: 0 4.5em;
-        text-align: left;
-    }
     
-
-    .project-home-wrapper {
-        padding: 4.5em 4.5em 1em 4.5em;
-        font-family: "Raleway-bold", sans-serif !important;
-
-        .home-header {
-            text-align: center;
-
-            #title {
-                text-transform: uppercase;
-                letter-spacing: 0.12em;
-                font-size: 3.5em;
-                margin-bottom: 0.25em;
-            }
-
-            a {
-                color: $textcol;
-            }
-
-            a:hover {
-                color: #61dafb;
-            }
-        }
-    }
 
     .App {
         text-align: center;

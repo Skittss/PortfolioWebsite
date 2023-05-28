@@ -147,7 +147,8 @@ const HomePage = () => {
 
       //   </Canvas>
         <FadeIn>
-        <Row gutter={[16, 16]}>
+        <div className='padded-main'>
+        <Row gutter={[20, 16]}>
           <Col xs={24} md={12} style={{textAlign: screens.md ? "right" : "center"}}>
             <Image
               preview={false} 
@@ -185,7 +186,7 @@ const HomePage = () => {
                       </Row>
                     </Col>
                     <Col flex="none">
-                      <Divider type="vertical" style={{height: "100%", borderLeftWidth: "2px"}}/>
+                      <Divider type="vertical" style={{height: "100%", borderLeftWidth: "2px", marginLeft: "10px", marginRight: "10px"}}/>
                     </Col>
                     <Col flex={1}>
                     <div style={{height: "100%", display: "flex", alignItems: "center", justifyContent: screens.md ? "left" : "center"}}>
@@ -201,7 +202,7 @@ const HomePage = () => {
 
         </Row>
 
-        <div className="title-card center-vertically" style={{position: "relative", color: "white", margin: "2em 1em"}}>
+        {/* <div className="title-card center-vertically" style={{position: "relative", color: "white", margin: "2em 1em"}}>
           <p style={{fontSize: "2vw", margin: "0 2em", padding: "0 20px", background: "rgba(0,0,0,0.75)"}}>
             <span style={{color: "#569cd6"}}>const</span> <span style={{color: "#fcfc9f"}}>Info</span> = () <span style={{color: "#569cd6"}}>{"=>"}</span> {"{"}<span style={{color: "#ce9178"}}>{"\""}</span>
             <div style={{margin: "0 2em", color: "#ce9178"}}>
@@ -215,6 +216,7 @@ const HomePage = () => {
             </div>
             <span style={{color: "#ce9178"}}>{"\""}</span>{"};"}<span className="animated-cursor" />
           </p>
+        </div> */}
         </div>
         </FadeIn>
       // </div>

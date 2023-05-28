@@ -14,19 +14,31 @@ import 'katex/dist/katex.min.css'
 import Latex from 'react-latex-next';
 
 import Meta from '.';
+import TableOfContents from '../tableofcontents';
 
 const Home = () => {
-
     return (
     
         <>
         <FadeIn>
-            <HomeTemplate title={Meta.title} projectLink="https://skittss.github.io/FFTOcean/" githubURL="https://github.com/Skittss/FFTOcean"></HomeTemplate>
+            <HomeTemplate title={Meta.title} thumb={Meta.thumb} projectLink="https://skittss.github.io/FFTOcean/" githubURL="https://github.com/Skittss/FFTOcean"></HomeTemplate>
+            <Row gutter={0}>
+            <Col xs={5}>
+            <div className='project-toc-wrapper'>
+                <TableOfContents {...Meta}/> 
+            </div>
+            </Col>
+            <Col xs={19}>
             <div className="project-content-wrapper">
-
                 <h1 id="overview" className="raleway-title">
                     Overview
                 </h1>
+                <h2 id="Atest2" className="raleway-title">
+                    A Test H2
+                </h2>
+                <h3 id="Atest3" className="raleway-title">
+                    A Test H3
+                </h3>
                 <div style={{paddingBottom: "20px", textAlign: "center"}}>
                     <video style={{objectFit: "cover", width: "50%", minWidth: "300px"}}  autoPlay loop muted>
                         <source src={waves} type='video/mp4' />
@@ -195,6 +207,9 @@ const Home = () => {
                 </div>
                 <br />
             </div>
+            
+            </Col>
+            </Row>
         </FadeIn>
         </>
     );

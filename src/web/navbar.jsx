@@ -62,7 +62,6 @@ const Navbar = () => {
             }
 
             if (previousScrollPosition - currentScrollPosition < 0) {
-            console.log("Hiding...")
             setHidden(true);
             } else if (previousScrollPosition - currentScrollPosition > 0) {
             setHidden(false);
@@ -71,7 +70,7 @@ const Navbar = () => {
             // Update the previous value
             previousScrollPosition = currentScrollPosition;
         });
-    }, []);
+    }, [screenSize.height]);
 
     return (
         <Header className={`navigation ${hidden ? "hidden" : ""}`} style={{zIndex: 1, width: '100%', paddingLeft: 0, paddingRight: 0}}>
@@ -79,7 +78,7 @@ const Navbar = () => {
                 selectedKeys={[menuKey]}
                 onClick={({key}) => setMenuKey(key)}
             >
-                <Menu.Item key="/home" style={{float: 'left', opacity: menuKey === "/home" ? 0 : 1, visibility: menuKey === "/home" ? "hidden" : "visible", transition: "all 0.3s ease-in"}} hidden={hidden}>
+                <Menu.Item key="/home" style={{opacity: menuKey === "/home" ? 0 : 1, visibility: menuKey === "/home" ? "hidden" : "visible", transition: "all 0.3s ease-in"}} hidden={hidden}>
                     HOME
                     <Link to="/home" />
                 </Menu.Item>

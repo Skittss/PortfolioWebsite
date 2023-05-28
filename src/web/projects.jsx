@@ -75,6 +75,7 @@ const _getProjectCard = (pMeta) => {
 
 const projects = () => {
     return (
+        <div className='padded-main'>
         <div className="project-view">
             <FadeIn>
                 <h1 className="raleway-title" align="middle" style={{padding: "20px 0", marginBottom: 0}}>
@@ -149,6 +150,7 @@ const projects = () => {
                     }
                 </Row>
             </FadeIn>
+        </div>
         </div>
     );
 }
