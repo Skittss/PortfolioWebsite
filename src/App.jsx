@@ -8,7 +8,7 @@ const load = () => (
   <div className = "loadingPage"><Spin size="large"/></div>
 )
 
-const pageTitle = "Portfolio"
+const pageTitle = "Skittss"
 
 const Main = React.lazy(() => import("./web/routers/main"));
 

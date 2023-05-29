@@ -6,11 +6,14 @@ import { load } from "../../App";
 const { Header, Content } = Layout;
 
 const HomePage = React.lazy(() => import("../home/home"));
+const AboutPage = React.lazy(() => import("../about"))
 const ProjectRouter = React.lazy(() => import("../../projects/router"));
 
 const routes = [
     { path: "/home", name: "test", component: HomePage, exact: true},
+    { path: "/about", name: "about", component: AboutPage, exact: true},
     { path: "/projects", name: "projects", component: ProjectRouter, exact: false}
+
 ];
 
 const Main = props => {

@@ -23,6 +23,7 @@ const _langTagColours = {
     "JavaScript": "#43FF97",
     "ReactJS": "#EE177C",
     "NodeJS": "#F15156",
+    "C++": "#b83dff",
     "C#": "#04724D",
     "GLSL": "#00CECB",
     "ThreeJS": "#AEF78E",
@@ -102,7 +103,7 @@ const _getProjectCardVertical = (pMeta, large) => {
                     marginLeft: "20px", marginRight: "10px", width: "100%",
                     paddingTop: "10px", textAlign: "center"
                 }}>
-                    <h1 style={{marginBottom: "5px", fontSize: large ? "calc(2.5em + 0.2vw)" : "calc(1.5em + 0.2vw)"}}>{pMeta.title}</h1>
+                    <h1 style={{marginBottom: "5px", fontSize: large ? "calc(2.4em + 0.2vw)" : "calc(1.4em + 0.2vw)"}}>{pMeta.title}</h1>
                     {pMeta.date ? (
                         <p className="hint-text" style={{marginBottom: "15px"}}>{pMeta.date}</p>
                     ) : null}
@@ -148,7 +149,7 @@ const _getProjectCard = (pMeta, large, screens) => {
                 marginLeft: "20px", marginRight: "10px",
                 paddingTop: "10px",
             }}>
-                <h1 style={{marginBottom: "5px", fontSize: large ? "calc(2.5em + 0.2vw)" : "calc(1.5em + 0.2vw)"}}>{pMeta.title}</h1>
+                <h1 style={{marginBottom: "5px", fontSize: large ? "calc(2.4em + 0.2vw)" : "calc(1.4em + 0.2vw)"}}>{pMeta.title}</h1>
                 {pMeta.date ? (
                     <p className="hint-text" style={{marginBottom: "15px"}}>{pMeta.date}</p>
                 ) : null}
@@ -259,7 +260,7 @@ const Projects = () => {
             display: "flex", justifyContent: "center", 
             marginTop: "4vh", marginBottom: "3vh",
         }}>
-            That's all for now!
+            ❋ That's all for now! ❋
         </div>
         </div>
     );

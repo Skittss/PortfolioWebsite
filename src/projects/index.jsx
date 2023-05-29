@@ -1,15 +1,19 @@
 import Website from "./Website";
 import WebglCanny from "./Webgl-Canny";
-import Tetnet from "./Tetnet";
 import MLPNN from "./MLP Neural Network";
 import FourierSketcher from "./FourierSketcher";
 import Disharmony from "./Disharmony";
 import Hex from "./Hex";
 import FFTOcean from "./FFTOcean";
+import CarRacing from "./CarRacing";
+import RayTracer from "./RayTracer";
+import ODST from "./ODST";
 
 // Newest at the front for now
 const ProjectMetas = [
-    Tetnet,
+    ODST,
+    CarRacing,
+    RayTracer,
     FFTOcean,
     WebglCanny,
     FourierSketcher,

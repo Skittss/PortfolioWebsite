@@ -68,7 +68,7 @@ const TableOfContents = ({ title }) => {
 
 	return (
 		<>
-			<Breadcrumb style={{paddingBottom: "14px"}}
+			<Breadcrumb style={{paddingBottom: "14px", position: "sticky"}}
 				items={[
 					{
 						title: <a href="#home">Portfolio</a>,
@@ -82,6 +82,7 @@ const TableOfContents = ({ title }) => {
 				]}
 			/>
 			<Anchor
+				style={{maxHeight: "85vh", overflow: "auto"}}
 				targetOffset={navHeight}
 				onClick={(e, l) => {
 					// I have no idea why this works in hash router link... but sure

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Helmet } from 'react-helmet';
 import SubRouter from "../../web/routers/subrouter";
-import Meta from '.';
+import Meta from '.'
 
 const Home = React.lazy(() => import("./home"));
 

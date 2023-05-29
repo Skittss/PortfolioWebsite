@@ -88,6 +88,7 @@ const Navbar = () => {
                 </Menu.Item>
                 <Menu.Item>
                     ABOUT
+                    <Link to="/about"/>
                 </Menu.Item>
                 <Menu.Item key="github">                    
                     <a href={"https://github.com/Skittss"}>

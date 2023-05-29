@@ -39,13 +39,13 @@ const Home = () => {
 
             <div style={{paddingLeft: "3em", paddingRight: "3em"}}>
                 <Row style={{display: "flex", alignItems: "center", paddingBottom: "10px"}}>
-                    <Col flex="200px"><b>Three.js</b></Col>
-                    <Col flex="1vw">A WebGL wrapper which allows for easy writing of fragment shaders. Each step of the process below was written as a fragment shader in some capacity.</Col>
+                    <Col flex="1" style={{paddingRight: "10px"}}><b>Three.js</b></Col>
+                    <Col flex="4">A WebGL wrapper which allows for easy writing of fragment shaders. Each step of the process below was written as a fragment shader in some capacity.</Col>
                 </Row>
                 
                 <Row style={{display: "flex", alignItems: "center"}}>
-                    <Col flex="200px"><b>React-three-fiber</b></Col>
-                    <Col flex="1vw">An interface between <i>Three.js</i> and <i>React</i> which facilitates creating Three canvases in jsx/ts syntax.</Col>
+                    <Col flex="1" style={{paddingRight: "10px"}}><b>React-three-fiber</b></Col>
+                    <Col flex="4">An interface between <i>Three.js</i> and <i>React</i> which facilitates creating Three canvases in jsx/ts syntax.</Col>
                 </Row>
             </div>
             <br />
@@ -97,7 +97,7 @@ const Home = () => {
                 <br />
                 This can be easily achieved in a fragment shader with a uniform vec3 (weights) of these coefficients:
                 <br />
-                <Latex>{'$gl\\_FragColor=vec4(weights.r \\cdot texel.r, \\\ weights.g\\cdot texel.g, \\\ weights.b\\cdot texel.b, texel.a )$'}</Latex>
+                <Latex>{'$\\text{gl\\_FragColor}=\\text{vec4}(\\text{weights}.r \\cdot \\text{texel}.r, \\\ \\text{weights}.g\\cdot \\text{texel}.g, \\\ \\text{weights}.b\\cdot \\text{texel}.b, \\text{texel}.a )$'}</Latex>
             </p>
 
             <br />
@@ -125,26 +125,29 @@ const Home = () => {
                 <br /><br />
             </p>
             <div style={{paddingLeft: "3em", paddingRight: "3em"}}>
-                <Row style={{display: "flex", alignItems: "center", paddingBottom: "10px"}}>
-                    <Col><b>1. &nbsp; &nbsp; &nbsp;</b><Latex>{'$\\displaystyle\\sum_{x,y}G(x,y) = 1$'}</Latex></Col>
+                <Row style={{display: "flex", paddingBottom: "10px"}}>
+                    <Col style={{paddingTop: "2px"}}><b>1. &nbsp; &nbsp; &nbsp;</b></Col>
                     <Col flex="1vw" style={{paddingLeft: "20px"}}>
+                        <Latex>{'$\\displaystyle\\sum_{x,y}G(x,y) = 1$'}</Latex><br/><br/>
                         The sum of the entire kernel <i>must</i> be one. If it were not, we would be brightening or dimming the image with each pass.
                         To ensure this is true, we multiply the entire kernel by a normalization coefficient, which is simply one over the sum of the non-normalized kernel.
                     </Col>
                 </Row>
                 <br /><br />
-                <Row style={{display: "flex", alignItems: "center", paddingBottom: "10px"}}>
-                    <Col><b>2. &nbsp; &nbsp; &nbsp;</b><Latex>{'$\\large G(x,y)= G(x)=\\frac{1}{\\sqrt{2\\pi}\\sigma}e^{-\\frac{x^2}{2\\sigma^2}} \\cdot G(y)=\\frac{1}{\\sqrt{2\\pi}\\sigma}e^{-\\frac{y^2}{2\\sigma^2}}$'}</Latex></Col>
+                <Row style={{display: "flex", paddingBottom: "10px"}}>
+                    <Col style={{paddingTop: "10px"}}><b>2. &nbsp; &nbsp; &nbsp;</b></Col>
                     <Col flex="1vw" style={{paddingLeft: "20px"}}>
+                    <Latex>{'$\\large G(x,y)= G(x)=\\frac{1}{\\sqrt{2\\pi}\\sigma}e^{-\\frac{x^2}{2\\sigma^2}} \\cdot G(y)=\\frac{1}{\\sqrt{2\\pi}\\sigma}e^{-\\frac{y^2}{2\\sigma^2}}$'}</Latex><br/><br/>
                         The kernel is separable. This means that we can achieve the same convolution as the full kernel by sequentially passing two one-dimensional 'kernels'
                         instead <Latex>{'$\\big[G(x) \\\ \\& \\\ G(y)\\big]$'}</Latex>. This proves very useful, as it allows the time complexity of the pass to
                             be reduced from <Latex>{'$O(N^2)$'}</Latex> to <Latex>{'$O(N)$'}</Latex>. This is quite a substantial improvement!
                     </Col>
                 </Row>
                 <br /><br />
-                <Row style={{display: "flex", alignItems: "center", paddingBottom: "10px"}}>
-                    <Col><b>3. &nbsp; &nbsp; &nbsp;</b><Latex>{'$G(x) = G(y)^T, \\\ G(n) = G(-n)$'}</Latex></Col>
+                <Row style={{display: "flex", paddingBottom: "10px"}}>
+                    <Col><b>3. &nbsp; &nbsp; &nbsp;</b></Col>
                     <Col flex="1vw" style={{paddingLeft: "20px"}}>
+                        <Latex>{'$G(x) = G(y)^T, \\\ G(n) = G(-n)$'}</Latex><br/><br/>
                         These are properties which allow us to store only <i>parts</i> of the entire kernel to save on memory. These are both derrived from the fact that
                         the gaussian distribution which the kernel is generated from is symmetrical about <Latex>{'$0$'}</Latex> in both the <Latex>{'$x$'}</Latex> and <Latex>{'$y$'}</Latex> axes, 
                         and has rotational symmetry when mapping one axis to the other.
