@@ -19,7 +19,7 @@ const AboutPage = () => {
             <Seigaiha />
             <div className='padded-main' style={{display: "flex", justifyContent: "center"}}>
                 <p style={{margin: "0 auto"}}>
-                    In construction 😉
+                    Under construction 😉
                 </p>
             </div>
         </FadeIn>
