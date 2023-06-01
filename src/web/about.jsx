@@ -7,22 +7,21 @@ import { Link } from 'react-router-dom'
 
 import FadeIn from 'react-fade-in';
 import "../css/home.scss";
+import Seigaiha from './seigaiha/seigaiha';
 
 const { useBreakpoint } = Grid
 
 const AboutPage = () => {
 
-    const [noisePos, setNoisePos] = useState(0)
-    const [clock, setClock] = useState(new Clock())
-    const screens = useBreakpoint();
 
     return (
         <FadeIn>
-        <div className='padded-main' style={{display: "flex", justifyContent: "center"}}>
-            <p style={{margin: "0 auto"}}>
-                In construction 😉
-            </p>
-        </div>
+            <Seigaiha />
+            <div className='padded-main' style={{display: "flex", justifyContent: "center"}}>
+                <p style={{margin: "0 auto"}}>
+                    In construction 😉
+                </p>
+            </div>
         </FadeIn>
     );
 }

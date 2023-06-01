@@ -25,6 +25,9 @@ $textcol: whitesmoke;
     text-align: left;
     position: sticky;
     top: 0;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
 }
 
 .hint-text {

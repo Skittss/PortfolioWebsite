@@ -66,9 +66,18 @@ const TableOfContents = ({ title }) => {
 	const { nestedHeadings } = useHeadingsData();
 	const { navHeight } = useNavHeight();
 
+	const [anchorHeight, setAnchorHeight] = useState("85vh");
+
+	useEffect(() => {
+		const breadcrumbRef = document.getElementById("toc-breadcrumb");
+		if (breadcrumbRef) {
+			setAnchorHeight(`calc(100vh - 6rem - ${breadcrumbRef.offsetHeight}px)`)
+		}
+	}, [])
+
 	return (
 		<>
-			<Breadcrumb style={{paddingBottom: "14px", position: "sticky"}}
+			<Breadcrumb id="toc-breadcrumb" style={{paddingBottom: "14px", position: "sticky"}}
 				items={[
 					{
 						title: <a href="#home">Portfolio</a>,
@@ -82,7 +91,7 @@ const TableOfContents = ({ title }) => {
 				]}
 			/>
 			<Anchor
-				style={{maxHeight: "85vh", overflow: "auto"}}
+				style={{maxHeight: anchorHeight, overflow: "auto"}}
 				targetOffset={navHeight}
 				onClick={(e, l) => {
 					// I have no idea why this works in hash router link... but sure
