@@ -1,11 +1,17 @@
 import React from 'react';
 import { HashLink } from 'react-router-hash-link';
-import { Row, Col, Divider, Image, Carousel } from 'antd';
+import { Row, Col, Divider, Image, Carousel, Grid } from 'antd';
 
 import f_img_direct from '../../content/projects/RayTracer/tea_cerem_direct.png'
 import f_img_indirect from '../../content/projects/RayTracer/tea_cerem_indirect.png'
+import f_img_specular from '../../content/projects/RayTracer/tea_cerem_specular.png'
 import f_img_caustic from '../../content/projects/RayTracer/tea_cerem_caustic.png'
 import f_img from '../../content/projects/RayTracer/tea_cerem_2048.png'
+
+import csg_completed from '../../content/projects/RayTracer/csg/csg_completed_brighter-crop.png'
+import csg_breakdown from '../../content/projects/RayTracer/csg/csg-breakdown.png'
+import csg_t_values from '../../content/projects/RayTracer/csg/t-value-operations.png'
+import csg_fsm from '../../content/projects/RayTracer/csg/csg-fsm.png'
 
 import quad_cone from '../../content/projects/RayTracer/quadratics/cone.png'
 import quad_cylinder from '../../content/projects/RayTracer/quadratics/cylinder.png'
@@ -43,11 +49,24 @@ import ssaa_10 from '../../content/projects/RayTracer/ssaa/10xSSAA-crop.png'
 import ssaa_25 from '../../content/projects/RayTracer/ssaa/25xSSAA-crop.png'
 import ssaa_50 from '../../content/projects/RayTracer/ssaa/50xSSAA-crop.png'
 
+import photon_map_direct from '../../content/projects/RayTracer/photonmap/cornell-wi.png'
+import photon_map_global from '../../content/projects/RayTracer/photonmap/cornell-pm.png'
+import photon_map_global_vis from '../../content/projects/RayTracer/photonmap/global_photon_map_visualisation.png'
+import photon_map_caustic_vis from '../../content/projects/RayTracer/photonmap/caustic_photon_map_visualisation.png'
+
+import c_img_direct from '../../content/projects/RayTracer/photonmap/cornell-wi-512.png'
+import c_img_indirect from '../../content/projects/RayTracer/photonmap/indirect_illum_1035313n.png'
+import c_img_specular from '../../content/projects/RayTracer/photonmap/specular_glossy.png'
+import c_img_caustic from '../../content/projects/RayTracer/photonmap/caustics_filter_1024162.png'
+import c_img from '../../content/projects/RayTracer/photonmap/cornell-pm-512.png'
+
 import 'katex/dist/katex.min.css'
 import Latex from 'react-latex-next';
 
 import Meta from '.';
 import ProjectPage from '../projectPage';
+
+const { useBreakpoint } = Grid;
 
 const AnnotatedImage = ({annotation, fontSize, ...props}) => {
 
@@ -76,6 +95,8 @@ const AnnotatedImage = ({annotation, fontSize, ...props}) => {
 }
 
 const Home = () => {
+    const screens = useBreakpoint();
+
     return (
     
         <ProjectPage title={Meta.title} thumb={Meta.thumb} >
@@ -86,44 +107,87 @@ const Home = () => {
                 <AnnotatedImage preview={false} src={f_img} annotation={"Example render with global illumination"}/>
                 <AnnotatedImage preview={false} src={f_img_direct} annotation={"Stage 1: Direct illumination"}/>
                 <AnnotatedImage preview={false} src={f_img_indirect} annotation={"Stage 2: Indirect illumination (diffuse)"} />
-                <AnnotatedImage preview={false} src={f_img_caustic} annotation={"Stage 3: Indirect illumination (caustics)"} />
+                <AnnotatedImage preview={false} src={f_img_specular} annotation={"Stage 3: Specular and Glossy"} />
+                <AnnotatedImage preview={false} src={f_img_caustic} annotation={"Stage 4: Indirect illumination (caustics)"} />
             </Carousel>
             <p>
                 In this project, I will be doing a whistlestop tour of the basics of raytracing - as well as a select few more advanced features.
-                There are many resources out there explaining raytracing better than I can here (See Ray tracing in one weekend) but I hope to give
+                There are many resources out there explaining raytracing better than I can here (See Ray tracing in one weekend for example) but I hope to give
                 an intuitive overview nonetheless.
+                <br/><br/>
+                This post is not entirely designed as a zero-knowledge read, and instead is probably best utilised as supplementary material when   
+                you have the basic concepts of 3D rendering and raytracing pinned down.
                 <br /><br />
                 This post is a work-in-progress. For now, enjoy some nice picutres :)
             </p>
             <br />
             <Divider style={{borderTopWidth: "1px", borderTopColor: "#000000", opacity: 0.5}}/>
             <h1 id="int-raycast" className="raleway-title">
-                Rendering Objects with Raycasting
+                Rendering Objects by Casting Rays
             </h1>
+            <p>
+                Consider a 3D scene. At its simplest, we have lights, objects, and a virtual camera. How do we generate an image of the objects, given
+                the lights, from the viewpoint of the camera? In games and alike, perspective projection is used to map each object onto the image plane of the
+                camera as the intrinsic properties of the camera are known, as well as the geometric information of all objects. This has the benefit of being
+                fast to run, but in doing so we ommit detail. For example, it might not be immediately obvious how we produce shadows using projection. Or a bigger challenge - 
+                how would we render a mirror, or transparent objects such as glass? Rendering these phenomena is an inherit challenge with projection-based rendering, and
+                thus sets the stage for raytracing. Raytracing is a light transport technique; it accurately simulates how light in the scene interacts with objects and eventually makes its
+                way to a virtual camera, producing an image. The simulation of the light itself allows for physically accurate renders to be produced, contrary to projection-based rendering
+                which employs auxilliary techniques to mimic physical phenomena.
+                <br/><br />
+                Light travels in straight lines. This makes rays an appropriate data structure to keep track of how light travels throughout a scene.
+                Rays are vectors in 3D space, defined by an origin point <Latex>{`$O$`}</Latex> and direction <Latex>{`$D$`}</Latex>. From this, we can identify every point that falls upon
+                the ray with a line defined by a 'distance' parameter <Latex>{`$t$`}</Latex>:
+                <div style={{paddingLeft: "3em", paddingRight: "3em", textAlign: "center"}}>
+                    <Latex>
+                        {`$R=O+Dt$`}
+                    </Latex>
+                </div>
+                <br />
+                In other words, we can find any point along the line by starting at the origin of the ray, and traversing <Latex>{`$t$`}</Latex> distance
+                along the line in the direction of the ray.
+                <br /><br />
+                But how do we render objects using rays? The basic idea is to cast a ray for each pixel in your target image, and find where each ray intersects an object
+                in the scene. We calculate the lighting and the intersection point, which determines the pixel colour. Repeating this process for each pixel gives us the final
+                render. From this brief description, it should be apparent why raytracing on GPUs has been a recent topic of interest - the process is <i>extremely</i> parallelisable,
+                allowing GPU acceleration to push render times into realtime.
+            </p>
             <h1 id="core-concept" className="raleway-title">
                 An Overview of Lighting Calculations
             </h1>
             <p>
-                3D rendering deals with simulating light phonemena. 
-            </p>
-            <h2 id="direct-illum" className="raleway-title">
-                Direct Illumination
-            </h2>
-            <p>
-                Direct illumination refers to light which is immediately visible.
+                How do we calculate lighting at intersection points? This process is variable depending on the specific raytracing technique used,
+                but in general, we calculate a <i>Bidirectional Reflectance Distribution Function</i> (BRDF) at each intersection. This function defines
+                the characteristics of an objects material. At its most basic, this is colour, but may also incorporate other properties such as specular highlight approximations (e.g. in Phong materials).
+                This function can be defined in any way you see fit, and may not necessarily be physically accurate.
+                <br /><br />
+                The BRDF is defined as <Latex>{`$f_r(\\textbf x, \\omega_i, \\omega_r)$`}</Latex>, a function of the intersection point <Latex>{`$\\textbf x$`}</Latex> in local coordinate space of the object,
+                incident light direction <Latex>{`$\\omega_i$`}</Latex>, and reflected light direction <Latex>{`$\\omega_r$`}</Latex>.
+                Typically, <Latex>{`$\\omega_r$`}</Latex> is simply <Latex>{`$-D$`}</Latex>, i.e. the vector from the intersection point towards the camera, and <Latex>{`$\\omega_i$`}</Latex> can 
+                be calculated by assuming light has come from a light in the scene, i.e. <Latex>{`$\\textbf x - O_\\text{light}$`}</Latex>.
             </p>
             <h2 id="global-illum" className="raleway-title">
                 Global Illumination
             </h2>
+            <p>
+                The main benefit of raytacing is that we can simulate many light bounces and BRDF interactions from each ray cast, aggregating them to produce a final colour.
+                These light bounces might not come directly from a light therefore. This is called <b>global illumination</b>. We consider light from all sources, including that which has been indirectly bounced
+                around the scene. We need extra algorithms and data structures to support this kind of bouncing however, so at its simplest we can not allow bouncing, giving only <b>direct illumination</b>.
+            </p>
             <h3 id="rendering-eq" className="raleway-title">
                 The Rendering Equation
-            </h3>
-            <br />
+            </h3>            <p>
+                The rendering equation, introduced by James T. Kajiya, mathematically formalises the calculation of lighting, or 'reflected radiance'. 
+                I find it beneficial to keep this equation in mind, as it exactly defines what calculations we should do at each intersection and can make organising
+                code a lot easier.
+                <br /><br />
+                The rendering equation is defined as
+            </p>
             <p>
                 <div style={{paddingLeft: "3em", paddingRight: "3em", textAlign: "center"}}>
                     <Latex>
                         {`$L_r(\\textbf{x}, \\omega_i, \\omega_r) =
-                        L_e \\displaystyle\\int_\\Omega f_r(\\textbf{x}, \\omega_i, \\omega_r) L_i(\\textbf{x}, \\omega_i)(\\omega_i \\cdot \\textbf n)\\ d\\omega_i $`
+                        L_e + \\displaystyle\\int_\\Omega f_r(\\textbf{x}, \\omega_i, \\omega_r) L_i(\\textbf{x}, \\omega_i)(\\omega_i \\cdot \\textbf n)\\ d\\omega_i $`
                         }
                     </Latex>
                 </div>
@@ -136,7 +200,7 @@ const Home = () => {
                 and other visible light sources (e.g. an area light).
                 <br /><br />
                 The integral component states that at point <Latex>{`$\\textbf x$`}</Latex>, we gather all the incident radiance from all possible incident directions (<Latex>{`$\\omega_i$`}</Latex>) in a
-                hemisphere above <Latex>{`$\\textbf x$`}</Latex> (<Latex>{`$\\Omega$`}</Latex>). We multiply each incident ray by the BDRF for its given direction to determine how much of the incident
+                hemisphere above <Latex>{`$\\textbf x$`}</Latex> (<Latex>{`$\\Omega$`}</Latex>). We multiply each incident ray by the BDRF <Latex>{`$f_r$`}</Latex> for its given direction to determine how much of the incident
                 light is reflected along <Latex>{`$\\omega_r$`}</Latex> - thus giving reflected radiance. 
                 We also apply Lambert's cosine law via <Latex>{`$(\\omega_i \\cdot x)$`}</Latex>.
                 <br /><br />
@@ -144,7 +208,8 @@ const Home = () => {
                 We are able to fit global illumination models and direct-illumination models (roughly) under this definition. For example, the basic
                 direct-illumination ray tracing model can be described as approximating the integral by taking <Latex>{`$\\Omega$`}</Latex> as the set of directions to visible
                 lights from <Latex>{`$\\textbf x$`}</Latex>. Monte Carlo Ray Tracing makes use of Monte Carlo techniques to approximate the integral with a large number of
-                importance sampled <Latex>{`$\\omega_i $`}</Latex> rays. 
+                importance sampled <Latex>{`$\\omega_i $`}</Latex> rays. And in similar fashion, photon mapping uses light bounce caching via the photon map to provide an estimate of <Latex>{`$L_i$`}</Latex> for all
+                directions <Latex>{`$\\omega_i \\in \\Omega$`}</Latex>.
             </p>
             <br />
             <Divider style={{borderTopWidth: "1px", borderTopColor: "#000000", opacity: 0.5}}/>
@@ -157,8 +222,8 @@ const Home = () => {
             <h2 id="int-sphere" className="raleway-title">
                 Spheres
             </h2>
-            <h2 id="int-cube" className="raleway-title">
-                Cubes
+            <h2 id="int-cuboid" className="raleway-title">
+                Cuboids
             </h2>
             <h2 id="int-quadratic" className="raleway-title">
                 Quadratic Surfaces
@@ -179,8 +244,8 @@ const Home = () => {
                 calculated using the quadratic equation after performing the substitution <Latex>{`$\\begin{pmatrix} x & y & z\\end{pmatrix} = O + Dt$`}</Latex>  on
                 the above equation where <Latex>{`$O$`}</Latex> and <Latex>{`$D$`}</Latex> are the ray origin and direction respectively.
                 The only remaining task is calculating the surface normals, which is again no different than
-                for any other continuous implicit surface; the partial derivative of Equation 5 in <Latex>{`$x$`}</Latex>, <Latex>{`$y$`}</Latex> and <Latex>{`$z$`}</Latex>. 
-                Below are the different normal form quadric surfaces capable of being created via the above equation.
+                for any other continuous implicit surface; the partial derivative of the quadratic surface equation in <Latex>{`$x$`}</Latex>, <Latex>{`$y$`}</Latex> and <Latex>{`$z$`}</Latex>. 
+                Below are the different normal form quadratic surfaces capable of being created via the above equation.
                 <br /><br />
                 <Carousel autoplay autoplaySpeed={3000} effect="fade" style={{margin: "0 auto", paddingBottom: "20px", width: "100%", maxWidth: "600px"}}>
                     <AnnotatedImage src={quad_ellipse} annotation={<>Ellipse <Latex>{`$(C=0.5)$`}</Latex></>} />
@@ -193,12 +258,75 @@ const Home = () => {
                     <AnnotatedImage src={quad_hyp_paraboloid} annotation={<>Hyperbolic Paraboloid <Latex>{`$(B,J=0,\\ C,H=-1)$`}</Latex></>} />
                 </Carousel>
                 <br />
-                In order to visualise these quadrics properly, an axis-aligned bounding box (AABB) is used to bound any
+                In order to visualise these quadratic surfaces properly, an axis-aligned bounding box (AABB) is used to bound any
                 intersection points (i.e. they must be inside the AABB to be valid hits) so that they do not display indefinitely into the distance.
             </p>
             <h2 id="csg" className="raleway-title">
                 Constructive Solid Geometry
             </h2>
+            <Row gutter={[16, 0]} style={{margin: "0 auto", width: "100%", maxWidth: "1000px"}}>
+                <Col span={screens.sm ? 12 : 24}>
+                    <Image src={csg_completed}/>
+                </Col>
+                <Col span={screens.sm ? 12 : 24}>
+                    <Image src={csg_breakdown}/>
+                </Col>
+            </Row>
+            <br />
+            <p>
+                Constructive solid geometry is a technique which allows solids to be combined via boolean operations, allowing more complex geometry to be constructed
+                from basic primitives. The basic three operations we will be working with here are union, intersection, and difference. For example, we could create a disc
+                via calculating the intersection of a sphere and a cuboid.
+                <br /><br />
+                Constructive solid geometry is implemented as the post-order traversal of a binary tree of 3D objects under elementary set
+                operations. We organise objects in a tree as we want to be able to calculate boolean operations between multiple objects, not just between a pair.
+                Post order traversal ensures the lowest-level intersections are calculated first and allows them be combined via set
+                operations as the traversal moves up the tree. Nodes of the CSG tree are created by providing pairs of other CSG nodes or just
+                basic 3D objects. The tricky part of implementing CSG comes down to calculating the intersection, union, and difference of two
+                sets of ray-intersections (hits). Luckily, this problem can be visualised and reduced to calculating these operations on two 1D number
+                lines:
+            </p>
+            <div style={{margin: "0 auto", paddingBottom: "20px", width: "100%", maxWidth: "600px"}}>
+                <AnnotatedImage src={csg_t_values}/>
+            </div>
+            <p>
+                Calculating the union is rather straight forward. The problem can be thought of the same as matching parentheses. The two
+                sets of hits are merged into one and a depth <Latex>{`$d$`}</Latex> is defined. The merged set of hits is iterated over, with <Latex>{`$d$`}</Latex> denoting how many objects
+                we are in at each iteration. <Latex>{`$d$`}</Latex> is initialised at 0, 1, or 2 depending on if the first hits for the two objects were entering or exiting
+                hits. Upon entering an object, <Latex>{`$d$`}</Latex> is incremented, and upon exiting an object, <Latex>{`$d$`}</Latex> is decremented. Under this algorithm, the set of
+                union points is just the set of points at which <Latex>{`$d=0$`}</Latex> before entering, or <Latex>{`$d=0$`}</Latex> after exiting.
+                <br /><br />
+                Calculating the difference and intersection is slightly more complicated, but they both follow a similar approach. Again, the
+                sets of hits are merged into one, and are iterated over. Instead of keeping track of a depth value, the booleans <Latex>{`$L_\\text{prev},L_\\text{curr}$`}</Latex> and <Latex>{`$R_\\text{prev},R_\\text{curr}$`}</Latex> are
+                defined which denote if we were in object <Latex>{`$L$`}</Latex> or <Latex>{`$R$`}</Latex> after the last hit, and if we are in them after the current hit that
+                is being iterated over. This is easy to keep track of by checking if a hit is entering or exiting at each iteration. For the hit that
+                is currently being iterated over, the equation below can be evaluated to check for intersection
+                <br /><br />
+                <div style={{paddingLeft: "3em", paddingRight: "3em", textAlign: "center"}}>
+                    <Latex>
+                        {`$I=((R_\\text{prev}\\ne R_\\text{curr})\\land (L_\\text{prev}\\lor L_\\text{curr}))\\lor((L_\\text{prev}\\ne L_\\text{curr})\\land(R_\\text{prev}\\lor R_\\text{curr}))$`}
+                    </Latex>
+                </div>
+                <br />
+                and the following for difference
+                <br /><br />
+                <div style={{paddingLeft: "3em", paddingRight: "3em", textAlign: "center"}}>
+                    <Latex>
+                        {`$I=((L_\\text{prev}\\ne L_\\text{curr})\\land (\\lnot R_\\text{prev}\\land \\lnot R_\\text{curr}))\\lor((R_\\text{prev}\\ne R_\\text{curr})\\land(L_\\text{prev}\\lor L_\\text{curr}))$`}
+                    </Latex>
+                </div>
+                <br />
+                The intuition for these equations can be thought of as a finite state machine, shown below. Intersection hits
+                are the edges to and from state '<Latex>{`$L\\land R$`}</Latex>', and difference hits are the edges to and from '<Latex>{`$L$`}</Latex>'. It is worth noting that union could also
+                be calculated in a similar fashion, however the depth approach above is more succinct.
+            </p>
+            <div style={{margin: "0 auto", paddingBottom: "20px", width: "100%", maxWidth: "600px"}}>
+                <AnnotatedImage src={csg_fsm}/>
+            </div>
+            <p>
+                The only real technical consideration remaining is that the normals of any hits selected from object <Latex>{`$R$`}</Latex> during a difference
+                operation must be negated as they create a negative surface imprint.
+            </p>
             <h2 id="acceleration" className="raleway-title">
                 Acceleration Structures
             </h2>
@@ -257,6 +385,11 @@ const Home = () => {
                     <AnnotatedImage preview={false} src={mirror_bounce_5} annotation={"Mirrors with 5 bounces calculated"}/>
                     <AnnotatedImage preview={false} src={mirror_bounce_8} annotation={"Mirrors with 8 bounces calculated"}/>
                 </Carousel>
+                The implementation of mirrors outlined is a basic one - more complex mirrors such as 'fuzzy mirrors' can also be implemented by changing the
+                BRDF. With fuzzy mirrors for example, instead of deterministically calculating the reflected ray <Latex>{`$\\omega_r$`}</Latex>, we can sample 
+                from a cone centered about the perfect reflection angle. This way, we mimick the scattering of light rays on an imperfect reflective
+                surface. A simple way of implementing this is to choose a random position on a sphere centered about
+                a point on the true reflected ray. A higher radius sphere means more fuzz.
             </p>
             <h2 id="dielectrics" className="raleway-title">
                 Dielectrics
@@ -332,6 +465,9 @@ const Home = () => {
             <h2 id="distributed-raytracing" className="raleway-title">
                 Distributed Raytracing
             </h2>
+            <p>
+                Required for rendering of soft shadows and proper emissive materials.
+            </p>
             <Carousel autoplay autoplaySpeed={2000} effect="fade" style={{margin: "0 auto", paddingBottom: "20px", width: "100%"}}>
                 <AnnotatedImage preview={false} src={shadows_1} annotation={"Shadows rendering with only 1 deterministic ray (no distributed raytracing)."}/>
                 <AnnotatedImage preview={false} src={shadows_5} annotation={"Shadows rendered with 5 sample rays."}/>
@@ -356,15 +492,30 @@ const Home = () => {
             <h1 id="photon-map" className="raleway-title">
                 Photon Mapping
             </h1>
+            <Carousel autoplay autoplaySpeed={3000} effect="fade" style={{margin: "0 auto", paddingBottom: "20px", width: "100%", maxWidth: "600px"}}>
+                <AnnotatedImage preview={false} src={photon_map_direct} annotation={"Cornell box rendered with direct illumination only."} />
+                <AnnotatedImage preview={false} src={photon_map_global} annotation={"Cornell box rendered with global illumination."}/>
+            </Carousel>
             <h2 id="photon-trace" className="raleway-title">
                 Photon Tracing and Storage
             </h2>
+            <Carousel autoplay autoplaySpeed={3000} effect="fade" style={{margin: "0 auto", paddingBottom: "20px", width: "100%", maxWidth: "600px"}}>
+                <AnnotatedImage preview={false} src={photon_map_global_vis} annotation={"Visualisation of global photon map (~1M Photons)."} />
+                <AnnotatedImage preview={false} src={photon_map_caustic_vis} annotation={"Visualisation of caustic photon map (~1M Photons)."}/>
+            </Carousel>
             <h3 id="photon-scatter" className="raleway-title">
                 Scattering and Russian Roulette
             </h3>
             <h2 id="photon-gather" className="raleway-title">
                 Radiance Gathering
             </h2>
+            <Carousel autoplay autoplaySpeed={5000} effect="fade" style={{margin: "0 auto", paddingBottom: "20px", width: "100%", maxWidth: "512px"}}>
+                <AnnotatedImage preview={false} src={c_img} annotation={"All illumination combined: global illumination"}/>
+                <AnnotatedImage preview={false} src={c_img_direct} annotation={"Direct illumination"}/>
+                <AnnotatedImage preview={false} src={c_img_indirect} annotation={"Indirect illumination (diffuse)"} />
+                <AnnotatedImage preview={false} src={c_img_specular} annotation={"Specular and Glossy"} />
+                <AnnotatedImage preview={false} src={c_img_caustic} annotation={"Indirect illumination (caustics)"} />
+            </Carousel>
             <h3 id="li-approx" className="raleway-title">
                 Incident Radiance Approximation
             </h3>

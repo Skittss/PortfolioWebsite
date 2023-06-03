@@ -17,7 +17,7 @@ import ProjectPage from '../projectPage';
 const Home = () => {
     return (
     
-        <ProjectPage title={Meta.title} thumb={Meta.teaser} projectLink="https://skittss.github.io/FFTOcean/" githubURL="https://github.com/Skittss/FFTOcean">
+        <ProjectPage title={Meta.title} thumb={Meta.teaser}>
             <h1 id="overview" className="raleway-title">
                 Overview
             </h1>
