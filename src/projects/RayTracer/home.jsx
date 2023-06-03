@@ -414,19 +414,19 @@ const Home = () => {
                 the enclosed expressed should be checked for negativity beforehand. Figure 6 shows spheres with varying indices of refraction.
             </p>
             <Carousel autoplay autoplaySpeed={2000} effect="fade" style={{margin: "0 auto", paddingBottom: "20px", width: "100%", maxWidth: "600px"}}>
-                <AnnotatedImage src={dielectric_refract_1_0} 
+                <AnnotatedImage preview={false} src={dielectric_refract_1_0} 
                     annotation={<>Hollow dielectric sphere <Latex>{`$(\\eta_2=1.0)$`}</Latex></>}
                 />
-                <AnnotatedImage src={dielectric_refract_2_5} 
+                <AnnotatedImage preview={false} src={dielectric_refract_2_5} 
                     annotation={<>Refraction only sphere <Latex>{`$(\\eta_2=1.1)$`}</Latex></>}
                 />
-                <AnnotatedImage src={dielectric_refract_1_7} 
+                <AnnotatedImage preview={false} src={dielectric_refract_1_7} 
                     annotation={<>Refraction only sphere <Latex>{`$(\\eta_2=1.3)$`}</Latex></>}
                 />
-                <AnnotatedImage src={dielectric_refract_1_5}
+                <AnnotatedImage preview={false} src={dielectric_refract_1_5}
                     annotation={<>Refraction only sphere <Latex>{`$(\\eta_2=1.5)$`}</Latex></>}
                 />
-                <AnnotatedImage src={dielectric_refract_1_3} 
+                <AnnotatedImage preview={false} src={dielectric_refract_1_3} 
                     annotation={<>Refraction only sphere <Latex>{`$(\\eta_2=1.7)$`}</Latex></>}
                 />
             </Carousel>
@@ -449,11 +449,11 @@ const Home = () => {
                 another, <Latex>{`$T = 1-R$`}</Latex>. The full Fresnel term is also included
                 for completeness, and is more accurate at the cost of render time. A comparison is shown below.
             </p>
-            <Carousel autoplay autoplaySpeed={3000} effect="fade" style={{margin: "0 auto", paddingBottom: "20px", width: "100%"}}>
-                <AnnotatedImage preview={false} src={dielectric_fresnel_f} 
+            <Carousel autoplay autoplaySpeed={3000} effect="fade" style={{margin: "0 auto", paddingBottom: "20px", width: "100%", maxWidth: "2048px"}}>
+                <AnnotatedImage src={dielectric_fresnel_f} 
                     annotation={"Example dielectric sphere rendered with full Fresnel effect (left) and its reflectivity visualised (right)."}
                 />
-                <AnnotatedImage preview={false} src={dielectric_fresnel_s} 
+                <AnnotatedImage src={dielectric_fresnel_s} 
                     annotation={"Example dielectric sphere rendered with Schlick Approximation (left) and its reflectivity visualised (right)."}
                 />
             </Carousel>
@@ -468,7 +468,7 @@ const Home = () => {
             <p>
                 Required for rendering of soft shadows and proper emissive materials.
             </p>
-            <Carousel autoplay autoplaySpeed={2000} effect="fade" style={{margin: "0 auto", paddingBottom: "20px", width: "100%"}}>
+            <Carousel autoplay autoplaySpeed={2000} effect="fade" style={{margin: "0 auto", paddingBottom: "20px", width: "100%", maxWidth: "1370px"}}>
                 <AnnotatedImage src={shadows_1} annotation={"Shadows rendering with only 1 deterministic ray (no distributed raytracing)."}/>
                 <AnnotatedImage src={shadows_5} annotation={"Shadows rendered with 5 sample rays."}/>
                 <AnnotatedImage src={shadows_10} annotation={"Shadows rendered with 10 sample rays."}/>
