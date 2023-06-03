@@ -49,6 +49,32 @@ import Latex from 'react-latex-next';
 import Meta from '.';
 import ProjectPage from '../projectPage';
 
+const AnnotatedImage = ({annotation, fontSize, ...props}) => {
+
+    const paddingBottom = props.paddingBottom ? props.paddingBottom : "20px"
+
+    return (
+        <div style={{position: "relative"}}>
+            <Image {...props} />
+            {annotation ? (
+                <div className="styled-text" style={{
+                    position: "absolute", 
+                    bottom: 0, 
+                    left: 0, 
+                    backgroundColor: 'rgba(21, 25, 31, 0.65)',
+                    width: "100%", 
+                    fontSize: fontSize && fontSize,
+                    textAlign: 'center',
+                    padding: "10px 5px",
+                    paddingBottom: paddingBottom
+                }}>
+                    {annotation}
+                </div>
+            ) : null}
+        </div>
+    );
+}
+
 const Home = () => {
     return (
     
@@ -57,10 +83,10 @@ const Home = () => {
                 Overview
             </h1>
             <Carousel autoplay autoplaySpeed={5000} effect="fade" style={{margin: "0 auto", paddingBottom: "20px", width: "100%", maxWidth: "600px"}}>
-                <Image preview={false} src={f_img} />
-                <Image preview={false} src={f_img_direct} />
-                <Image preview={false} src={f_img_indirect} />
-                <Image preview={false} src={f_img_caustic} />
+                <AnnotatedImage preview={false} src={f_img} annotation={"Example render with global illumination"}/>
+                <AnnotatedImage preview={false} src={f_img_direct} annotation={"Stage 1: Direct illumination"}/>
+                <AnnotatedImage preview={false} src={f_img_indirect} annotation={"Stage 2: Indirect illumination (diffuse)"} />
+                <AnnotatedImage preview={false} src={f_img_caustic} annotation={"Stage 3: Indirect illumination (caustics)"} />
             </Carousel>
             <p>
                 In this project, I will be doing a whistlestop tour of the basics of raytracing - as well as a select few more advanced features.
@@ -71,8 +97,11 @@ const Home = () => {
             </p>
             <br />
             <Divider style={{borderTopWidth: "1px", borderTopColor: "#000000", opacity: 0.5}}/>
+            <h1 id="int-raycast" className="raleway-title">
+                Rendering Objects with Raycasting
+            </h1>
             <h1 id="core-concept" className="raleway-title">
-                Lighting Calculations, Conceptually
+                An Overview of Lighting Calculations
             </h1>
             <p>
                 3D rendering deals with simulating light phonemena. 
@@ -109,7 +138,7 @@ const Home = () => {
                 The integral component states that at point <Latex>{`$\\textbf x$`}</Latex>, we gather all the incident radiance from all possible incident directions (<Latex>{`$\\omega_i$`}</Latex>) in a
                 hemisphere above <Latex>{`$\\textbf x$`}</Latex> (<Latex>{`$\\Omega$`}</Latex>). We multiply each incident ray by the BDRF for its given direction to determine how much of the incident
                 light is reflected along <Latex>{`$\\omega_r$`}</Latex> - thus giving reflected radiance. 
-                We also apply Lambert’s cosine law via <Latex>{`$(\\omega_i \\cdot x)$`}</Latex>.
+                We also apply Lambert's cosine law via <Latex>{`$(\\omega_i \\cdot x)$`}</Latex>.
                 <br /><br />
                 The method by which this integral is approximated depends on the specific lighting implementation we are wishing to achieve.
                 We are able to fit global illumination models and direct-illumination models (roughly) under this definition. For example, the basic
@@ -153,32 +182,16 @@ const Home = () => {
                 for any other continuous implicit surface; the partial derivative of Equation 5 in <Latex>{`$x$`}</Latex>, <Latex>{`$y$`}</Latex> and <Latex>{`$z$`}</Latex>. 
                 Below are the different normal form quadric surfaces capable of being created via the above equation.
                 <br /><br />
-                <Row>
-                    <Col span={6}>
-                        <Image src={quad_ellipse} fallback={"quadratic surface ellipse"}></Image>
-                    </Col>
-                    <Col span={6}>
-                        <Image src={quad_cone} fallback={"quadratic surface cone"}></Image>
-                    </Col>
-                    <Col span={6}>
-                        <Image src={quad_cylinder} fallback={"quadratic surface cylinder"}></Image>
-                    </Col>
-                    <Col span={6}>
-                        <Image src={quad_paraboloid} fallback={"quadratic surface paraboloid"}></Image>
-                    </Col>
-                    <Col span={6}>
-                        <Image src={quad_hyp_one_sheet} fallback={"quadratic surface hyperboloid 1 sheet"}></Image>
-                    </Col>
-                    <Col span={6}>
-                        <Image src={quad_hyp_two_sheet} fallback={"quadratic surface hyperboloid 2 sheet"}></Image>
-                    </Col>
-                    <Col span={6}>
-                        <Image src={quad_hyp_cylinder} fallback={"quadratic surface hyperbolic cylinder"}></Image>
-                    </Col>
-                    <Col span={6}>
-                        <Image src={quad_hyp_paraboloid} fallback={"quadratic surface hyperbolic paraboloid"}></Image>
-                    </Col>
-                </Row>
+                <Carousel autoplay autoplaySpeed={3000} effect="fade" style={{margin: "0 auto", paddingBottom: "20px", width: "100%", maxWidth: "600px"}}>
+                    <AnnotatedImage src={quad_ellipse} annotation={<>Ellipse <Latex>{`$(C=0.5)$`}</Latex></>} />
+                    <AnnotatedImage src={quad_cone} annotation={<>Cone <Latex>{`$(B=-1,\\ J=0)$`}</Latex></>} />
+                    <AnnotatedImage src={quad_cylinder} annotation={<>Cylinder <Latex>{`$(B=0)$`}</Latex></>} />
+                    <AnnotatedImage src={quad_paraboloid} annotation={<>Paraboloid <Latex>{`$(B,J=0,\\ H=-1)$`}</Latex></>} />
+                    <AnnotatedImage src={quad_hyp_one_sheet} annotation={<>Hyperboloid of 1 sheet <Latex>{`$(B=-1)$`}</Latex></>} />
+                    <AnnotatedImage src={quad_hyp_two_sheet} annotation={<>Hyperboloid of 2 sheets <Latex>{`$(B=-1,\\ J=1)$`}</Latex></>} />
+                    <AnnotatedImage src={quad_hyp_cylinder} annotation={<>Hyperbolic Cylinder <Latex>{`$(B=0,\\ C=-1)$`}</Latex></>} />
+                    <AnnotatedImage src={quad_hyp_paraboloid} annotation={<>Hyperbolic Paraboloid <Latex>{`$(B,J=0,\\ C,H=-1)$`}</Latex></>} />
+                </Carousel>
                 <br />
                 In order to visualise these quadrics properly, an axis-aligned bounding box (AABB) is used to bound any
                 intersection points (i.e. they must be inside the AABB to be valid hits) so that they do not display indefinitely into the distance.
@@ -239,10 +252,10 @@ const Home = () => {
                 with multiple participating mirror surfaces.
                 <br /><br />
                 <Carousel autoplay autoplaySpeed={2000} effect="fade" style={{margin: "0 auto", paddingBottom: "20px", width: "100%", maxWidth: "600px"}}>
-                    <Image preview={false} src={mirror_bounce_1} />
-                    <Image preview={false} src={mirror_bounce_3} />
-                    <Image preview={false} src={mirror_bounce_5} />
-                    <Image preview={false} src={mirror_bounce_8} />
+                    <AnnotatedImage preview={false} src={mirror_bounce_1} annotation={"Mirrors with 1 bounce calculated"}/>
+                    <AnnotatedImage preview={false} src={mirror_bounce_3} annotation={"Mirrors with 3 bounces calculated"}/>
+                    <AnnotatedImage preview={false} src={mirror_bounce_5} annotation={"Mirrors with 5 bounces calculated"}/>
+                    <AnnotatedImage preview={false} src={mirror_bounce_8} annotation={"Mirrors with 8 bounces calculated"}/>
                 </Carousel>
             </p>
             <h2 id="dielectrics" className="raleway-title">
@@ -261,17 +274,28 @@ const Home = () => {
                 A few technical considerations here are that when light exits a medium, the normal of the medium should be flipped if necessary
                 to face the incident specular ray (i.e. <Latex>{`$\\omega_i\\cdot \\textbf n \\lt 0$`}</Latex>) as Equation 3 only deals light incident to the normal. 
                 In a similar manner, <Latex>{`$\\eta_1$`}</Latex> should
-                always be the index of refraction of the material the light is transmitting <i>from</i> and <Latex>{`$\\eta_2$`}</Latex> that of the material transmitting <i>into</i>. Thus
-                if making the assumption that light goes from material to air or vice versa (which is true for this implementation), r must be flipped.
+                always be the index of refraction of the material the light is transmitting <i>from</i> and <Latex>{`$\\eta_2$`}</Latex> that of the material transmitting <i>into</i>. 
+                Typically, we only consider cases of refraction where one material is air. The refractive index of air is 1.0003, which can be approximated as 1, 
+                making refractive index calculations a lot nicer under this assumption.
                 Lastly, total internal reflection must be considered as it causes the expression within the square root to become negative. Therefore
                 the enclosed expressed should be checked for negativity beforehand. Figure 6 shows spheres with varying indices of refraction.
             </p>
             <Carousel autoplay autoplaySpeed={2000} effect="fade" style={{margin: "0 auto", paddingBottom: "20px", width: "100%", maxWidth: "600px"}}>
-                <Image preview={false} src={dielectric_refract_1_0} />
-                <Image preview={false} src={dielectric_refract_1_3} />
-                <Image preview={false} src={dielectric_refract_1_5} />
-                <Image preview={false} src={dielectric_refract_1_7} />
-                <Image preview={false} src={dielectric_refract_2_5} />
+                <AnnotatedImage preview={false} src={dielectric_refract_1_0} 
+                    annotation={<>Hollow dielectric sphere <Latex>{`$(\\eta_2=1.0)$`}</Latex></>}
+                />
+                <AnnotatedImage preview={false} src={dielectric_refract_2_5} 
+                    annotation={<>Refraction only sphere <Latex>{`$(\\eta_2=1.1)$`}</Latex></>}
+                />
+                <AnnotatedImage preview={false} src={dielectric_refract_1_7} 
+                    annotation={<>Refraction only sphere <Latex>{`$(\\eta_2=1.3)$`}</Latex></>}
+                />
+                <AnnotatedImage preview={false} src={dielectric_refract_1_5}
+                    annotation={<>Refraction only sphere <Latex>{`$(\\eta_2=1.5)$`}</Latex></>}
+                />
+                <AnnotatedImage preview={false} src={dielectric_refract_1_3} 
+                    annotation={<>Refraction only sphere <Latex>{`$(\\eta_2=1.7)$`}</Latex></>}
+                />
             </Carousel>
             <p>
                 Refraction alone isn't quite the full picture though. Dielectrics are materials which both reflect <i>and</i> refract. Common real-life
@@ -293,8 +317,12 @@ const Home = () => {
                 for completeness, and is more accurate at the cost of render time. A comparison is shown below.
             </p>
             <Carousel autoplay autoplaySpeed={3000} effect="fade" style={{margin: "0 auto", paddingBottom: "20px", width: "100%"}}>
-                <Image preview={false} src={dielectric_fresnel_f} />
-                <Image preview={false} src={dielectric_fresnel_s} />
+                <AnnotatedImage preview={false} src={dielectric_fresnel_f} 
+                    annotation={"Example dielectric sphere rendered with full Fresnel effect (left) and its reflectivity visualised (right)."}
+                />
+                <AnnotatedImage preview={false} src={dielectric_fresnel_s} 
+                    annotation={"Example dielectric sphere rendered with Schlick Approximation (left) and its reflectivity visualised (right)."}
+                />
             </Carousel>
             <br />
             <Divider style={{borderTopWidth: "1px", borderTopColor: "#000000", opacity: 0.5}}/>
@@ -305,23 +333,23 @@ const Home = () => {
                 Distributed Raytracing
             </h2>
             <Carousel autoplay autoplaySpeed={2000} effect="fade" style={{margin: "0 auto", paddingBottom: "20px", width: "100%"}}>
-                <Image preview={false} src={shadows_1} />
-                <Image preview={false} src={shadows_5} />
-                <Image preview={false} src={shadows_10} />
-                <Image preview={false} src={shadows_25} />
-                <Image preview={false} src={shadows_50} />
-                <Image preview={false} src={shadows_100} />
-                <Image preview={false} src={shadows_200} />
+                <AnnotatedImage preview={false} src={shadows_1} annotation={"Shadows rendering with only 1 deterministic ray (no distributed raytracing)."}/>
+                <AnnotatedImage preview={false} src={shadows_5} annotation={"Shadows rendered with 5 sample rays."}/>
+                <AnnotatedImage preview={false} src={shadows_10} annotation={"Shadows rendered with 10 sample rays."}/>
+                <AnnotatedImage preview={false} src={shadows_25} annotation={"Shadows rendered with 25 sample rays."}/>
+                <AnnotatedImage preview={false} src={shadows_50} annotation={"Shadows rendered with 50 sample rays."}/>
+                <AnnotatedImage preview={false} src={shadows_100} annotation={"Shadows rendered with 100 sample rays."}/>
+                <AnnotatedImage preview={false} src={shadows_200} annotation={"Shadows rendered with 200 sample rays."}/>
             </Carousel>
             <h2 id="ssaa" className="raleway-title">
                 Super-Sampling Anti-Aliasing (SSAA)
             </h2>
             <Carousel autoplay autoplaySpeed={2000} effect="fade" style={{margin: "0 auto", paddingBottom: "20px", width: "100%", maxWidth: "600px"}}>
-                <Image preview={false} src={ssaa_0} />
-                <Image preview={false} src={ssaa_5} />
-                <Image preview={false} src={ssaa_10} />
-                <Image preview={false} src={ssaa_25} />
-                <Image preview={false} src={ssaa_50} />
+                <AnnotatedImage preview={false} src={ssaa_0} annotation={"Sharp cube edge rendered with no SSAA."} />
+                <AnnotatedImage preview={false} src={ssaa_5} annotation={"Sharp cube edge rendered with 5x SSAA."}/>
+                <AnnotatedImage preview={false} src={ssaa_10} annotation={"Sharp cube edge rendered with 10x SSAA."}/>
+                <AnnotatedImage preview={false} src={ssaa_25} annotation={"Sharp cube edge rendered with 25x SSAA."}/>
+                <AnnotatedImage preview={false} src={ssaa_50} annotation={"Sharp cube edge rendered with 50x SSAA."} />
             </Carousel>
             <br />
             <Divider style={{borderTopWidth: "1px", borderTopColor: "#000000", opacity: 0.5}}/>

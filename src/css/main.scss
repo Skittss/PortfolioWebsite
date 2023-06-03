@@ -69,6 +69,11 @@ h1, h2, h3, h4, h5, h6 {
     border-inline-start-color: rgba($textcol, 0.25) !important;
 }
 
+.styled-text {
+    color: $textcol;
+    font-family: "Raleway", sans-serif !important;
+}
+
 body {
 
     background-color: $bg;
