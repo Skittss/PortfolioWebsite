@@ -232,7 +232,7 @@ const Home = () => {
                 Quadratic surfaces are characterised by second degree polynomials. They are very similar to ubiquitous second-degree polynomials
                 in <Latex>{`$\\R^2$`}</Latex> which are undoubtedly familiar: <Latex>{`$y=x^2$`}</Latex> (parabola), <Latex>{`$x^2 + y^2 = r$`}</Latex> (circle), etc. 
                 It would be more appropriate to call these unique cases (formally, normal forms) of the general quadratic equation. 
-                Quadric surfaces are the same concept but applied to <Latex>{`$\\R^3$`}</Latex> defined by the following:
+                Quadratic surfaces are the same concept but applied to <Latex>{`$\\R^3$`}</Latex> defined by the following:
                 <br /><br />
                 <div style={{paddingLeft: "3em", paddingRight: "3em", textAlign: "center"}}>
                     <Latex>
