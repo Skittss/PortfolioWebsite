@@ -414,19 +414,19 @@ const Home = () => {
                 the enclosed expressed should be checked for negativity beforehand. Figure 6 shows spheres with varying indices of refraction.
             </p>
             <Carousel autoplay autoplaySpeed={2000} effect="fade" style={{margin: "0 auto", paddingBottom: "20px", width: "100%", maxWidth: "600px"}}>
-                <AnnotatedImage preview={false} src={dielectric_refract_1_0} 
+                <AnnotatedImage src={dielectric_refract_1_0} 
                     annotation={<>Hollow dielectric sphere <Latex>{`$(\\eta_2=1.0)$`}</Latex></>}
                 />
-                <AnnotatedImage preview={false} src={dielectric_refract_2_5} 
+                <AnnotatedImage src={dielectric_refract_2_5} 
                     annotation={<>Refraction only sphere <Latex>{`$(\\eta_2=1.1)$`}</Latex></>}
                 />
-                <AnnotatedImage preview={false} src={dielectric_refract_1_7} 
+                <AnnotatedImage src={dielectric_refract_1_7} 
                     annotation={<>Refraction only sphere <Latex>{`$(\\eta_2=1.3)$`}</Latex></>}
                 />
-                <AnnotatedImage preview={false} src={dielectric_refract_1_5}
+                <AnnotatedImage src={dielectric_refract_1_5}
                     annotation={<>Refraction only sphere <Latex>{`$(\\eta_2=1.5)$`}</Latex></>}
                 />
-                <AnnotatedImage preview={false} src={dielectric_refract_1_3} 
+                <AnnotatedImage src={dielectric_refract_1_3} 
                     annotation={<>Refraction only sphere <Latex>{`$(\\eta_2=1.7)$`}</Latex></>}
                 />
             </Carousel>
@@ -469,13 +469,13 @@ const Home = () => {
                 Required for rendering of soft shadows and proper emissive materials.
             </p>
             <Carousel autoplay autoplaySpeed={2000} effect="fade" style={{margin: "0 auto", paddingBottom: "20px", width: "100%"}}>
-                <AnnotatedImage preview={false} src={shadows_1} annotation={"Shadows rendering with only 1 deterministic ray (no distributed raytracing)."}/>
-                <AnnotatedImage preview={false} src={shadows_5} annotation={"Shadows rendered with 5 sample rays."}/>
-                <AnnotatedImage preview={false} src={shadows_10} annotation={"Shadows rendered with 10 sample rays."}/>
-                <AnnotatedImage preview={false} src={shadows_25} annotation={"Shadows rendered with 25 sample rays."}/>
-                <AnnotatedImage preview={false} src={shadows_50} annotation={"Shadows rendered with 50 sample rays."}/>
-                <AnnotatedImage preview={false} src={shadows_100} annotation={"Shadows rendered with 100 sample rays."}/>
-                <AnnotatedImage preview={false} src={shadows_200} annotation={"Shadows rendered with 200 sample rays."}/>
+                <AnnotatedImage src={shadows_1} annotation={"Shadows rendering with only 1 deterministic ray (no distributed raytracing)."}/>
+                <AnnotatedImage src={shadows_5} annotation={"Shadows rendered with 5 sample rays."}/>
+                <AnnotatedImage src={shadows_10} annotation={"Shadows rendered with 10 sample rays."}/>
+                <AnnotatedImage src={shadows_25} annotation={"Shadows rendered with 25 sample rays."}/>
+                <AnnotatedImage src={shadows_50} annotation={"Shadows rendered with 50 sample rays."}/>
+                <AnnotatedImage src={shadows_100} annotation={"Shadows rendered with 100 sample rays."}/>
+                <AnnotatedImage src={shadows_200} annotation={"Shadows rendered with 200 sample rays."}/>
             </Carousel>
             <h2 id="ssaa" className="raleway-title">
                 Super-Sampling Anti-Aliasing (SSAA)
