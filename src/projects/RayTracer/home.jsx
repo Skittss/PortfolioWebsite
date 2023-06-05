@@ -1,6 +1,8 @@
 import React from 'react';
 import { HashLink } from 'react-router-hash-link';
 import { Row, Col, Divider, Image, Carousel, Grid } from 'antd';
+import SyntaxHighlighter from 'react-syntax-highlighter';
+import { dracula } from 'react-syntax-highlighter/dist/esm/styles/hljs';
 
 import f_img_direct from '../../content/projects/RayTracer/tea_cerem_direct.png'
 import f_img_indirect from '../../content/projects/RayTracer/tea_cerem_indirect.png'
@@ -21,6 +23,9 @@ import quad_hyp_paraboloid from '../../content/projects/RayTracer/quadratics/hyp
 import quad_hyp_one_sheet from '../../content/projects/RayTracer/quadratics/hyperboloid-one-sheet.png'
 import quad_hyp_two_sheet from '../../content/projects/RayTracer/quadratics/hyperboloid-two-sheet.png'
 import quad_paraboloid from '../../content/projects/RayTracer/quadratics/parabolic.png'
+
+import face_normals from '../../content/projects/RayTracer/normals/face_normals.png'
+import vertex_normals from '../../content/projects/RayTracer/normals/vertex_normals.png'
 
 import mirror_bounce_1 from '../../content/projects/RayTracer/mirrors/mirrors-1-bounce.png'
 import mirror_bounce_3 from '../../content/projects/RayTracer/mirrors/mirrors-3-bounces.png'
@@ -59,6 +64,11 @@ import c_img_indirect from '../../content/projects/RayTracer/photonmap/indirect_
 import c_img_specular from '../../content/projects/RayTracer/photonmap/specular_glossy.png'
 import c_img_caustic from '../../content/projects/RayTracer/photonmap/caustics_filter_1024162.png'
 import c_img from '../../content/projects/RayTracer/photonmap/cornell-pm-512.png'
+
+import plane_intersection_code from '../../content/projects/RayTracer/code_snippets/plane_intersection'
+import sphere_intersection_code from '../../content/projects/RayTracer/code_snippets/sphere_intersection'
+import cuboid_intersection_code from '../../content/projects/RayTracer/code_snippets/cuboid_intersection'
+import triangle_intersection_code from '../../content/projects/RayTracer/code_snippets/triangle_intersection'
 
 import 'katex/dist/katex.min.css'
 import Latex from 'react-latex-next';
@@ -103,7 +113,7 @@ const Home = () => {
             <h1 id="overview" className="raleway-title">
                 Overview
             </h1>
-            <Carousel autoplay autoplaySpeed={5000} effect="fade" style={{margin: "0 auto", paddingBottom: "20px", width: "100%", maxWidth: "600px"}}>
+            <Carousel autoplay autoplaySpeed={5000} effect="fade" style={{margin: "0 auto", paddingBottom: "20px", width: "100%", maxWidth: "1000px"}}>
                 <AnnotatedImage preview={false} src={f_img} annotation={"Example render with global illumination"}/>
                 <AnnotatedImage preview={false} src={f_img_direct} annotation={"Stage 1: Direct illumination"}/>
                 <AnnotatedImage preview={false} src={f_img_indirect} annotation={"Stage 2: Indirect illumination (diffuse)"} />
@@ -116,7 +126,10 @@ const Home = () => {
                 an intuitive overview nonetheless.
                 <br/><br/>
                 This post is not entirely designed as a zero-knowledge read, and instead is probably best utilised as supplementary material when   
-                you have the basic concepts of 3D rendering and raytracing pinned down.
+                you have the basic concepts of 3D rendering and raytracing pinned down. I recommend two great reads if you don't feel comfortable jumping in 
+                here: <a target="_blank" href="https://www.scratchapixel.com/index.html">Scratchapixel</a> and <a target="_blank" href="https://raytracing.github.io/books/RayTracingInOneWeekend.html">Ray Tracing in One Weekend</a> which
+                go into more detail than I do, albeit with a slightly different focus (no photon-mapping for example).
+
                 <br /><br />
                 This post is a work-in-progress. For now, enjoy some nice picutres :)
             </p>
@@ -152,6 +165,7 @@ const Home = () => {
                 render. From this brief description, it should be apparent why raytracing on GPUs has been a recent topic of interest - the process is <i>extremely</i> parallelisable,
                 allowing GPU acceleration to push render times into realtime.
             </p>
+            <br />
             <h1 id="core-concept" className="raleway-title">
                 An Overview of Lighting Calculations
             </h1>
@@ -166,6 +180,11 @@ const Home = () => {
                 Typically, <Latex>{`$\\omega_r$`}</Latex> is simply <Latex>{`$-D$`}</Latex>, i.e. the vector from the intersection point towards the camera, and <Latex>{`$\\omega_i$`}</Latex> can 
                 be calculated by assuming light has come from a light in the scene, i.e. <Latex>{`$\\textbf x - O_\\text{light}$`}</Latex>.
             </p>
+            <br />
+            <h2 id="ray-shadow" className="raleway-title">
+                Basic Shadows
+            </h2>
+            <br />
             <h2 id="global-illum" className="raleway-title">
                 Global Illumination
             </h2>
@@ -174,9 +193,11 @@ const Home = () => {
                 These light bounces might not come directly from a light therefore. This is called <b>global illumination</b>. We consider light from all sources, including that which has been indirectly bounced
                 around the scene. We need extra algorithms and data structures to support this kind of bouncing however, so at its simplest we can not allow bouncing, giving only <b>direct illumination</b>.
             </p>
+            <br />
             <h3 id="rendering-eq" className="raleway-title">
                 The Rendering Equation
-            </h3>            <p>
+            </h3>            
+            <p>
                 The rendering equation, introduced by James T. Kajiya, mathematically formalises the calculation of lighting, or 'reflected radiance'. 
                 I find it beneficial to keep this equation in mind, as it exactly defines what calculations we should do at each intersection and can make organising
                 code a lot easier.
@@ -216,15 +237,222 @@ const Home = () => {
             <h1 id="int-test" className="raleway-title">
                 Geometry - Intersection Testing
             </h1>
+            <p>
+                We now know that to render an individual pixel, we cast a ray for it, and determine which object in the scene it has hit. We then
+                calculate lighting at that point, resulting in a colour for the pixel. In order to determine which object has been hit, we can begin by naively
+                checking every object in the scene for intersection, and choose the one which was closest to the camera. It is worth noting that this is a particularly
+                slow approach (especially when scenes have many objects), so we will consider acceleration structures to speed this process up later in this section.
+                <br /><br />
+                The remainder of this section outlines how to calculate intersection points for a number of useful primitives: triangles (used in meshes), flat planes (and curved quadratic variants), spheres, and cuboids.
+                The goal is to find the t-value for a given ray which intersects the primitive. We also need to calculate surface normals at intersection points in order to calculate lighting.
+                Additionally, we will explore constructive solid geometry, which allows us to combine these basic primitives into more complex objects via boolean operations.
+            </p>
+            <br />
+            <h2 id="int-plane" className="raleway-title">
+                Planes
+            </h2>
+            <p>
+                We can determine if a ray intersects a given plane by noting that the vector from the plane center to any point on the plane will be perpendicular to the plane normal. i.e.
+                <br /><br />
+                <div style={{paddingLeft: "3em", paddingRight: "3em", textAlign: "center"}}>
+                    <Latex>
+                        {
+                            `$(p - O_p)\\cdot n = 0$`
+                        }
+                    </Latex>
+                </div>
+                <br />
+                From this, we can determine if a ray intersects the plane by observing that if they indeed intersect, then there will be a common point between them, i.e. substitute <Latex>{`$p$`}</Latex> for the ray equation:
+                <br /><br />
+                <div style={{paddingLeft: "3em", paddingRight: "3em", textAlign: "center"}}>
+                    <Latex>
+                        {
+                            `$((O_r + Dt) - O_p)\\cdot n = 0$`
+                        }
+                    </Latex>
+                </div>
+                <br />
+                <div style={{paddingLeft: "3em", paddingRight: "3em", textAlign: "center"}}>
+                    <Latex>
+                        {
+                            `$\\implies Dt\\cdot n + (O_r - O_p) \\cdot n = 0$`
+                        }
+                    </Latex>
+                </div>
+                <br />
+                <div style={{paddingLeft: "3em", paddingRight: "3em", textAlign: "center"}}>
+                    <Latex>
+                        {
+                            `$\\implies t = \\displaystyle\\frac{(O_p - O_r)\\cdot n}{D \\cdot n} $`
+                        }
+                    </Latex>
+                </div>
+                <br />
+                Thus we have found the point of intersection (if it exists).
+                <br /><br />
+                We are not quite done however. If we were only to calculate this t-value with no other considerations, we would not be able to give the plane specific dimensions (width and height).
+                As it stands, any the plane will have infinite width and height. We can add width and height into the intersection calculation by considering an alternative vector definition of a 3D plane:
+                <br /><br />
+                <div style={{paddingLeft: "3em", paddingRight: "3em", textAlign: "center"}}>
+                    <Latex>
+                        {
+                            `$p=O_p + u\\lambda + v\\mu$`
+                        }
+                    </Latex>
+                </div>
+                <br />
+                By ensuring that <Latex>{`$\\lambda$`}</Latex> and <Latex>{`$\\mu$`}</Latex> are perpendicular along the plane (i.e. they form an orthonormal basis with the plane normal), we can 
+                easily cull intersections which fall outside a certain distance in each direction. This allows us to give the plane a width and height, instead of it being infinite.
+                It is easy to calculate this orthonormal basis: We provide an up vector (normal) and right vector (tangent) and can calculate the bitangent by taking the cross product of them.
+                <br /><br />
+                An implementation of this intersection calculation is shown in the code snippet below.
+            </p>
+            <div className="code-snippet" style={{width: "100%"}}>
+                <SyntaxHighlighter 
+                    language="cpp" 
+                    showLineNumbers={true}
+                    style={dracula}
+                    startingLineNumber={0}
+                >
+                    {plane_intersection_code}
+                </SyntaxHighlighter>
+            </div>
+            <p>
+                Finally, the surface normal at an intersection point is constant, and provided with the definition of the plane.
+            </p>
+            <br />
             <h2 id="int-triangle" className="raleway-title">
                 Triangles
             </h2>
+            <p>
+                Triangles are perhaps the most important primitive to be able to render. By rendering triangles, we can render arbitrary triangle meshes which are ubiquitous in computer graphics.
+                Throughout this post, this can be seen with the Utah Teapot - all renders of it were made using a triangle mesh loaded from a .obj file. 
+                <br /><br />
+                Triangle intersection is well explored and well optimised. In this implementation the standard 'Moller Trumbore' algorithm is used to calculate the intersection.
+                The core idea behind this algorithm is to use Barycentric Coordinates to calculate a potential intersection point. Barycentric coordinates express points as a linear combination of vertex positions.
+                in this case, we define a potential intersection point as a linear combination of the triangles 3 vertices:
+                <br /><br />
+                <div style={{paddingLeft: "3em", paddingRight: "3em", textAlign: "center"}}>
+                    <Latex>
+                        {
+                            `$p=(1-u-v)v_1 + uv_2 + vv_3$`
+                        }
+                    </Latex>
+                </div>
+                <br />
+                A valid intersection point is one with valid with valid coefficients for <Latex>{`$v_1, v_2, v_3$`}</Latex>, i.e. <Latex>{`$u + v = 1$`}</Latex>. 
+                The algorithm calculates these coefficients for the potential intersection point, and rejects any intersections where the above property does not hold.
+                <br /><br />
+                A C++ implementation is shown below.
+            </p>
+            <div className="code-snippet" style={{width: "100%"}}>
+                <SyntaxHighlighter 
+                    language="cpp" 
+                    showLineNumbers={true}
+                    style={dracula}
+                    startingLineNumber={0}
+                >
+                    {triangle_intersection_code}
+                </SyntaxHighlighter>
+            </div>
+            <p>
+                The surface normal for a triangle is a constant, and can be calculated via the cross product like in a plane. However, usually we load these normals from a file
+                when dealing with triangular meshes. This makes our job easier, but we also must consider the implication of using a single normal for an entire triangle.
+                <br /><br />
+                In a large mesh, triangles are usually an approximation of the true geometric form we wish to capture. If we could easily and efficiently render arbitrary continuous surfaces, we would.
+                When using a single surface normal for a whole triangle, this approximation becomes more apparent. For smooth surfaces, it would be beneficial if we could change the surface normal of a triangle
+                depending on where it is hit. Thus we could mimic smoother lighting on a low-poly surface without giving up lots of performance by using many more triangles.
+                <br /><br />
+                Per-vertex normals solve this problem. Using the barycentric coordinates generated from the moller-trumbore algorithm (<Latex>{`$u$`}</Latex> and <Latex>{`$v$`}</Latex>), we can
+                interpolate between vertex normals, giving a smooth looking surface with only a few triangles. Vertex normals may be provided within the mesh file, but they can also be computed manually by averaging the face normals of neighbouring faces otherwise. In a triangle mesh, we consider three adjacent faces for each triangle.
+            </p>
+            <Carousel autoplay autoplaySpeed={3000} effect="fade" style={{margin: "0 auto", paddingBottom: "20px", width: "100%", maxWidth: "512px"}}>
+                <AnnotatedImage preview={false} src={face_normals} annotation={"Triangular mesh rendered with face normals."}/>
+                <AnnotatedImage preview={false} src={vertex_normals} annotation={"Triangular mesh rendered with vertex normals and interpolation."}/>
+            </Carousel>
+            <br />
             <h2 id="int-sphere" className="raleway-title">
                 Spheres
             </h2>
+            <p>
+                Calculating the intersection of a sphere is simple, and is derrived from its cartesian definition:
+                <br /><br />
+                <div style={{paddingLeft: "3em", paddingRight: "3em", textAlign: "center"}}>
+                    <Latex>
+                        {
+                            `$x^2+y^2+z^2=R^2$`
+                        }
+                    </Latex>
+                </div>
+                <br />
+                Thus we can implicitly define a point on the surface of the sphere as
+                <br /><br />
+                <div style={{paddingLeft: "3em", paddingRight: "3em", textAlign: "center"}}>
+                    <Latex>
+                        {
+                            `$p^2-R^2=0$`
+                        }
+                    </Latex>
+                </div>
+                <br />
+                Similarly to the intersection for a plane; if there is an intersection, there will be a common point between the sphere and the ray equation.
+                Therefore substituting <Latex>{`$p=O + Dt$`}</Latex>:
+                <br /><br />
+                <div style={{paddingLeft: "3em", paddingRight: "3em", textAlign: "center"}}>
+                    <Latex>
+                        {
+                            `$(O + Dt)^2-R^2=0$`
+                        }
+                    </Latex>
+                </div>
+                <br />
+                <div style={{paddingLeft: "3em", paddingRight: "3em", textAlign: "center"}}>
+                    <Latex>
+                        {
+                            `$\\implies D^2t^2 + 2ODt + O^2 - R^2=0$`
+                        }
+                    </Latex>
+                </div>
+                <br />
+                gives a quadratic equation for <Latex>{`$t$`}</Latex> which can be solved via the general quadratic formula where <Latex>{`$a=D^2,\\ b=2OD,\\ c=O^2-R^2$`}</Latex>.
+                <br /><br />
+                This intersection calculation, with variable center point for the sphere <Latex>{`$O_s$`}</Latex> is implemented as below.
+            </p>
+            <div className="code-snippet" style={{width: "100%"}}>
+                <SyntaxHighlighter 
+                    language="cpp" 
+                    showLineNumbers={true}
+                    style={dracula}
+                    startingLineNumber={0}
+                >
+                    {sphere_intersection_code}
+                </SyntaxHighlighter>
+            </div>
+            <p>
+                Additionally, we need the surface normal on the sphere at the point of intersection. This is simply the vector from the sphere center to the intersection point, normalised:
+            </p>
+            <div style={{paddingLeft: "3em", paddingRight: "3em", textAlign: "center"}}>
+                <Latex>
+                    {
+                        `$\\textbf n = (p - O_s) / R$`
+                    }
+                </Latex>
+            </div>
+            <br />
             <h2 id="int-cuboid" className="raleway-title">
                 Cuboids
             </h2>
+            <div className="code-snippet" style={{width: "100%"}}>
+                <SyntaxHighlighter 
+                    language="cpp" 
+                    showLineNumbers={true}
+                    style={dracula}
+                    startingLineNumber={0}
+                >
+                    {cuboid_intersection_code}
+                </SyntaxHighlighter>
+            </div>
+            <br />
             <h2 id="int-quadratic" className="raleway-title">
                 Quadratic Surfaces
             </h2>
@@ -242,7 +470,9 @@ const Home = () => {
                 <br />
                 The ray-intersection calculation is handled no differently than for any other implicit surface, and the specific t-values can be
                 calculated using the quadratic equation after performing the substitution <Latex>{`$\\begin{pmatrix} x & y & z\\end{pmatrix} = O + Dt$`}</Latex>  on
-                the above equation where <Latex>{`$O$`}</Latex> and <Latex>{`$D$`}</Latex> are the ray origin and direction respectively.
+                the above equation where <Latex>{`$O$`}</Latex> and <Latex>{`$D$`}</Latex> are the ray origin and direction respectively. This results in a system of equations for t which can
+                be solved via matrix calculations.
+                <br/><br/>
                 The only remaining task is calculating the surface normals, which is again no different than
                 for any other continuous implicit surface; the partial derivative of the quadratic surface equation in <Latex>{`$x$`}</Latex>, <Latex>{`$y$`}</Latex> and <Latex>{`$z$`}</Latex>. 
                 Below are the different normal form quadratic surfaces capable of being created via the above equation.
@@ -261,6 +491,7 @@ const Home = () => {
                 In order to visualise these quadratic surfaces properly, an axis-aligned bounding box (AABB) is used to bound any
                 intersection points (i.e. they must be inside the AABB to be valid hits) so that they do not display indefinitely into the distance.
             </p>
+            <br />
             <h2 id="csg" className="raleway-title">
                 Constructive Solid Geometry
             </h2>
@@ -327,15 +558,50 @@ const Home = () => {
                 The only real technical consideration remaining is that the normals of any hits selected from object <Latex>{`$R$`}</Latex> during a difference
                 operation must be negated as they create a negative surface imprint.
             </p>
+            <br />
             <h2 id="acceleration" className="raleway-title">
                 Acceleration Structures
             </h2>
+            <p>
+                Rendering certain objects can become very costly when done naively. The main perpetrators in this implementation are mesh objects
+                (i.e. the teapot) and CSG trees. The high cost can be attributed to their expensive intersection calculation. Without any acceleration
+                structure, this intersection must be fully checked for every pixel in the rendered image. For a mesh, this may be thousands to
+                hundreds of thousands of triangle intersections, per pixel in the image. This is extremely wasteful - for example if a mesh is visible for
+                only a few pixels in the image, an overwhelming majority of intersections will be false yet we do full work for every pixel in the image
+                <br /><br />
+                Bounding objects are acceleration structures which cut the number of intersection calculations we have to do considerably. This
+                is achieved by first coarsely defining the bounds of an object via a cheaper intersection algorithm, and only then doing an expensive
+                intersection calculation when the coarse intersection evaluates to true.
+            </p>
+            <br />
             <h3 id="aabb" className="raleway-title">
                 Axis-aligned Bounding Box (AABB)
             </h3>
+            <p>
+                A simple acceleration structure is the axis-aligned bounding box (AABB). This is simply a cube aligned with the 3 primary
+                axes with centre at the origin, which then has an affine transform applied to position it anywhere in 3D space. This provides a
+                good baseline and is good enough for more simple objects such as CSG trees which are combinations of fairly primitive objects.
+                A quick explanation of this intersection algorithm is that the minimum and maximum corners of the cube define the maximum
+                and minimum bounds of the box in each dimension. A ray is cast, and six potential intersection points are compared for the six
+                faces of the cube. These intersection points are calculated in the same manner as a regular plane. Intersection points which
+                have <Latex>{`$x,y,z$`}</Latex> values that fall outside the extents of the cube are classed as invalid hits, and a valid AABB intersection occurs when a valid
+                in<Latex>{`$\\to$`}</Latex>out hit pair can be found.
+            </p>
+            <br />
             <h3 id="bv" className="raleway-title">
                 14-Plane Bounding Volumes
             </h3>
+            <p>
+                Performance is still left on the table with AABB, particularly for more complex objects like meshes. Kay and Kajiya introduced
+                a method for bounding volume calculations defined by 14 planes which closer approximates more complex geometry while still
+                being cheap. This closer approximation allows for an even larger number of costly
+                intersection calls to be culled. The planes defined for the volume are in pairs, similar in essence to opposite faces of an AABB,
+                and in fact the first 6 planes are exactly that. The remaining 8 planes are pairs along each diagonal of the 3 primary axes. The
+                intersection calculation is relatively simple. Intersection points for each plane-pair are calculated. If the closest intersection has
+                a larger t-value than the furthest intersection (i.e. the ray is facing away from the pair of planes), then there must be no intersection.
+                If this is not the case for all plane-pairs, there is a valid intersection.
+            </p>
+            <br />
             <h3 id="bvh" className="raleway-title">
                 Bounding Volume Heirarchies (BVH)
             </h3>
@@ -347,11 +613,11 @@ const Home = () => {
             <h2 id="diffuse" className="raleway-title">
                 Lambertian Diffuse
             </h2>
-            <h2 id="textures" className="raleway-title">
-                Basic Textures
-            </h2>
             <h2 id="phong" className="raleway-title">
                 Phong Lighting Model
+            </h2>
+            <h2 id="textures" className="raleway-title">
+                Basic Textures
             </h2>
             <h2 id="mirrors" className="raleway-title">
                 Mirrors

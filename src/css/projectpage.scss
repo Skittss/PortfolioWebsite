@@ -34,6 +34,10 @@ $textcol: whitesmoke;
     color: rgba($textcol, 0.5);
 }
 
+.code-snippet {
+    font-family:  'Roboto Mono', monospace !important;
+}
+
 .project-content-wrapper {
     font-family: "Raleway";
     font-size: 16.5px;
