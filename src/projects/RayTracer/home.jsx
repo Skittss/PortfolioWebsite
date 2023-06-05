@@ -27,6 +27,8 @@ import quad_paraboloid from '../../content/projects/RayTracer/quadratics/parabol
 import face_normals from '../../content/projects/RayTracer/normals/face_normals.png'
 import vertex_normals from '../../content/projects/RayTracer/normals/vertex_normals.png'
 
+import bounding_overlay from '../../content/projects/RayTracer/bounding/bv_overlay.png'
+
 import mirror_bounce_1 from '../../content/projects/RayTracer/mirrors/mirrors-1-bounce.png'
 import mirror_bounce_3 from '../../content/projects/RayTracer/mirrors/mirrors-3-bounces.png'
 import mirror_bounce_5 from '../../content/projects/RayTracer/mirrors/mirrors-5-bounces.png'
@@ -442,6 +444,36 @@ const Home = () => {
             <h2 id="int-cuboid" className="raleway-title">
                 Cuboids
             </h2>
+            <p>
+                To implement cuboid intersection, the <i>Axis-aligned bounding box</i> (AABB) algorithm can be used. By default, the algorithm works on a box centered at the origin
+                and aligned with the 3 primary axes, but we are able to position it anywhere in 3D space by defining a local coordinate system. We define a local position a local orthonormal basis (set of axes) aligned with the edges of the cuboid. We then  
+                convert the ray position and direction into this local coordinate space before doing the AABB calculation. In this local coordinate space, the cuboid is centered at the origin and aligned with the primary axes,
+                so AABB can now be used.
+                <br /><br />
+                The idea behind the AABB intersection algorithm is that we can easily define 6 straight lines with the minimum and maximum extents of each primary axis, which in turn correspond with each edge of the cuboid.
+                E.g. <Latex>{`$x=\\min_x, y=\\min_y, z=\\min_z$`}</Latex> and similarly for the maximum bounds. We can perform a simple substitution with the ray equation in the targetted axis to calculate the t-value for each one, for example in <Latex>{`$x$`}</Latex>:
+                <br /><br />
+                <div style={{paddingLeft: "3em", paddingRight: "3em", textAlign: "center"}}>
+                    <Latex>
+                        {
+                            `$O_x+D_xt=\\min_x$`
+                        }
+                    </Latex>
+                </div>
+                <br />
+                <div style={{paddingLeft: "3em", paddingRight: "3em", textAlign: "center"}}>
+                    <Latex>
+                        {
+                            `$\\implies O_x+D_xt=\\displaystyle\\frac{\\min_x - O_x}{D_x}$`
+                        }
+                    </Latex>
+                </div>
+                <br />
+                Finally, we check if the t-value of each intersection falls within the bounds of the cuboid (as the lines extend in each axis indefinitely), and note that in order to have a valid 
+                box intersection, we need valid intersection pair from different primary axes. In other words, we have an intersection only when the ray enters the cuboid from one face, and exits through another.
+                <br /><br />
+                An optimised implementation of the above is shown below.
+            </p>
             <div className="code-snippet" style={{width: "100%"}}>
                 <SyntaxHighlighter 
                     language="cpp" 
@@ -452,6 +484,26 @@ const Home = () => {
                     {cuboid_intersection_code}
                 </SyntaxHighlighter>
             </div>
+            <p>
+                To get the surface normal of an intersection in AABB, we can simply index from a predefined table depending on the position of the intersection point (i.e. which minimum bound it lays on).
+                In local coordinate space, there are 6 fixed surface normals:
+                <br /><br />
+                <div style={{paddingLeft: "3em", paddingRight: "3em", textAlign: "center"}}>
+                    <Latex>
+                        {
+                            `$\\begin{pmatrix}1\\\\ 0 \\\\ 0\\end{pmatrix}, 
+                            \\begin{pmatrix}-1\\\\ 0 \\\\ 0\\end{pmatrix},
+                            \\begin{pmatrix}0\\\\ 1 \\\\ 0\\end{pmatrix},
+                            \\begin{pmatrix}0\\\\ -1 \\\\ 0\\end{pmatrix},
+                            \\begin{pmatrix}0\\\\ 0 \\\\ 1\\end{pmatrix},
+                            \\begin{pmatrix}0\\\\ 0 \\\\ -1\\end{pmatrix}
+                            $`
+                        }
+                    </Latex>
+                </div>
+                <br />
+                which are then transformed into global coordinate space by performing the inverse of the global to local coordinate calculation performed earlier.
+            </p>
             <br />
             <h2 id="int-quadratic" className="raleway-title">
                 Quadratic Surfaces
@@ -575,24 +627,24 @@ const Home = () => {
             </p>
             <br />
             <h3 id="aabb" className="raleway-title">
-                Axis-aligned Bounding Box (AABB)
+                Bounding Primitives
             </h3>
             <p>
-                A simple acceleration structure is the axis-aligned bounding box (AABB). This is simply a cube aligned with the 3 primary
-                axes with centre at the origin, which then has an affine transform applied to position it anywhere in 3D space. This provides a
-                good baseline and is good enough for more simple objects such as CSG trees which are combinations of fairly primitive objects.
-                A quick explanation of this intersection algorithm is that the minimum and maximum corners of the cube define the maximum
-                and minimum bounds of the box in each dimension. A ray is cast, and six potential intersection points are compared for the six
-                faces of the cube. These intersection points are calculated in the same manner as a regular plane. Intersection points which
-                have <Latex>{`$x,y,z$`}</Latex> values that fall outside the extents of the cube are classed as invalid hits, and a valid AABB intersection occurs when a valid
-                in<Latex>{`$\\to$`}</Latex>out hit pair can be found.
+                A simple approach is to simply bound complex objects by a primitive volume, reusing the intersection code for that specific primitive.
+                A common approach is to use a AABB (cuboid) as the calculation to fit
+                the box to another object is simple - we simply make an AABB at the same position as the complex object, and with its width and height to the maximum and minimum object bounds.
+                
+                This will speed up intersection calculations considerably. We begin by doing a check against the primitive bounding volume, allowing us to cull
+                any intersection calculations where it is obvious that there will never be an intersection. This notably increases performance when rendering triangular meshes, as the number of
+                triangle intersection checks can be extremely large for each raycast.
             </p>
             <br />
             <h3 id="bv" className="raleway-title">
                 14-Plane Bounding Volumes
             </h3>
             <p>
-                Performance is still left on the table with AABB, particularly for more complex objects like meshes. Kay and Kajiya introduced
+                Performance is still left on the table with AABB and primitives however. Bounding primitives usually only loosely fit to the underlying object, meaning there are still many cases
+                where we will end up doing a full intersection check when there should clearly be no intersections. Kay and Kajiya introduced
                 a method for bounding volume calculations defined by 14 planes which closer approximates more complex geometry while still
                 being cheap. This closer approximation allows for an even larger number of costly
                 intersection calls to be culled. The planes defined for the volume are in pairs, similar in essence to opposite faces of an AABB,
@@ -601,6 +653,9 @@ const Home = () => {
                 a larger t-value than the furthest intersection (i.e. the ray is facing away from the pair of planes), then there must be no intersection.
                 If this is not the case for all plane-pairs, there is a valid intersection.
             </p>
+            <div style={{margin: "0 auto", paddingBottom: "20px", width: "100%", maxWidth: "1500px"}}>
+                <AnnotatedImage src={bounding_overlay} annotation="14-plane bounding volume applied to a mesh of the Utah Teapot, visualised "/>
+            </div>
             <br />
             <h3 id="bvh" className="raleway-title">
                 Bounding Volume Heirarchies (BVH)
