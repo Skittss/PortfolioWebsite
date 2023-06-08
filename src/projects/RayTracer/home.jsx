@@ -75,6 +75,8 @@ import sphere_intersection_code from '../../content/projects/RayTracer/code_snip
 import cuboid_intersection_code from '../../content/projects/RayTracer/code_snippets/cuboid_intersection'
 import triangle_intersection_code from '../../content/projects/RayTracer/code_snippets/triangle_intersection'
 
+import hemisphere_scatter_code from '../../content/projects/RayTracer/code_snippets/hemisphere_scatter'
+
 import 'katex/dist/katex.min.css'
 import Latex from 'react-latex-next';
 
@@ -126,9 +128,9 @@ const Home = () => {
                 <AnnotatedImage preview={false} src={f_img_caustic} annotation={"Stage 4: Indirect illumination (caustics)"} />
             </Carousel>
             <p>
-                In this project, I will be doing a whistlestop tour of the basics of raytracing - as well as a select few more advanced features.
-                There are many resources out there explaining raytracing better than I can here (See Ray tracing in one weekend for example) but I hope to give
-                an intuitive overview nonetheless.
+                In this project, I delve into the powerful realm of ray tracing — a groundbreaking light transport technique 
+                that has reshaped the landscape of computer graphics. As technology advances, so does the demand for more realistic and immersive visual experiences in various applications such as gaming and animation. 
+                Ray tracing has emerged as a game-changer, enabling us to simulate the intricate behavior of light, resulting in visually stunning and physically accurate renders.
                 <br/><br/>
                 This post is not entirely designed as a zero-knowledge read, and instead is probably best utilised as supplementary material when   
                 you have the basic concepts of 3D rendering and raytracing pinned down. I recommend two great reads if you don't feel comfortable jumping in 
@@ -136,7 +138,7 @@ const Home = () => {
                 go into more detail than I do, albeit with a slightly different focus (no photon-mapping for example).
 
                 <br /><br />
-                This post is a work-in-progress. For now, enjoy some nice picutres :)
+                The source code for this renderer will be made open-source at a later date.
             </p>
             <br />
             <Divider style={{borderTopWidth: "1px", borderTopColor: "#000000", opacity: 0.5}}/>
@@ -500,17 +502,12 @@ const Home = () => {
                 In local coordinate space, there are 6 fixed surface normals:
                 <br /><br />
                 <div style={{paddingLeft: "3em", paddingRight: "3em", textAlign: "center"}}>
-                    <Latex>
-                        {
-                            `$\\begin{pmatrix}1\\\\ 0 \\\\ 0\\end{pmatrix}, 
-                            \\begin{pmatrix}-1\\\\ 0 \\\\ 0\\end{pmatrix},
-                            \\begin{pmatrix}0\\\\ 1 \\\\ 0\\end{pmatrix},
-                            \\begin{pmatrix}0\\\\ -1 \\\\ 0\\end{pmatrix},
-                            \\begin{pmatrix}0\\\\ 0 \\\\ 1\\end{pmatrix},
-                            \\begin{pmatrix}0\\\\ 0 \\\\ -1\\end{pmatrix}
-                            $`
-                        }
-                    </Latex>
+                    <Latex>{`$\\begin{pmatrix}1\\\\ 0 \\\\ 0\\end{pmatrix},$`}</Latex>
+                    <Latex>{`$\\begin{pmatrix}-1\\\\ 0 \\\\ 0\\end{pmatrix},$`}</Latex>
+                    <Latex>{`$\\begin{pmatrix}0\\\\ 1 \\\\ 0\\end{pmatrix},$`}</Latex>
+                    <Latex>{`$\\begin{pmatrix}0\\\\ -1 \\\\ 0\\end{pmatrix},$`}</Latex>
+                    <Latex>{`$\\begin{pmatrix}0\\\\ 0 \\\\ 1\\end{pmatrix},$`}</Latex>
+                    <Latex>{`$\\begin{pmatrix}0\\\\ 0 \\\\ -1\\end{pmatrix}$`}</Latex>
                 </div>
                 <br />
                 which are then transformed into global coordinate space by performing the inverse of the global to local coordinate calculation performed earlier.
@@ -906,6 +903,7 @@ const Home = () => {
                 <AnnotatedImage src={shadows_200} annotation={"Shadows rendered with 200 sample rays."}/>
             </Carousel>
             <br/>
+            <Divider style={{borderTopWidth: "1px", borderTopColor: "#000000", opacity: 0.5}}/>
             <h1 id="ssaa" className="raleway-title">
                 Super-Sampling Anti-Aliasing (SSAA)
             </h1>
@@ -934,16 +932,93 @@ const Home = () => {
                 <AnnotatedImage preview={false} src={photon_map_direct} annotation={"Cornell box rendered with direct illumination only."} />
                 <AnnotatedImage preview={false} src={photon_map_global} annotation={"Cornell box rendered with global illumination."}/>
             </Carousel>
+            <p>
+                Photon mapping is a two pass algorithm which allows <Latex>{`$L_i$`}</Latex> to be approximated by first bouncing photons around a scene to closer
+                mimic how light is actually transported. This closer-to-reality representation allows photon mapping to include global illumination
+                in its calculations - more specifically indirect illumination (colour bleeding) and caustics (focussed light). It boasts better time
+                complexity and lower-frequency noise in renders than global illumination algorithms of similar age. This comes at the cost of higher
+                memory use, as photons need to be stored when bouncing them around the scene. For the first pass, we bounce photons about our scene and store them when they hit certain surfaces.
+                For the second pass, during the ray-gathering step, we approximate <Latex>{`L_i`}</Latex> at <Latex>{`$\\textbf x$`}</Latex> from nearby stored photons.
+            </p>
+            <br />
             <h2 id="photon-trace" className="raleway-title">
                 Photon Tracing and Storage
             </h2>
+            <p>
+                Photons are bounced around the scene to emulate real light transport - the process is named photon tracing. Photon tracing starts
+                at light sources in the scene and ends when photons bounce off into the void, or are absorbed by a material, just like how light
+                can be absorbed in reality. Tracing starts at the light and thus photons propagate flux as they are traced, as opposed to backwards
+                ray tracing where radiance is gathered from ray casts.
+                <br /><br />
+                Photons are stored when they hit certain surfaces. The specific surfaces we target depends on the type of illumination being simulated; we distinguish between specular and diffuse surfaces for example. 
+                Caustic photons (specular reflections) are stored separately in a 'Caustic Photon Map' from the rest of the illumination - in a 'Global
+                Photon Map' - as they require more precision. In both cases photons are stored in a KD-tree, an appropriate acceleration structure for computing
+                k-nearest-neighbour (knn) searches which are required for the radiance estimate we will see later.
+            </p>
             <Carousel autoplay autoplaySpeed={3000} effect="fade" style={{margin: "0 auto", paddingBottom: "20px", width: "100%", maxWidth: "600px"}}>
                 <AnnotatedImage preview={false} src={photon_map_global_vis} annotation={"Visualisation of global photon map (~1M Photons)."} />
                 <AnnotatedImage preview={false} src={photon_map_caustic_vis} annotation={"Visualisation of caustic photon map (~1M Photons)."}/>
             </Carousel>
+            <br />
             <h3 id="photon-scatter" className="raleway-title">
-                Scattering and Russian Roulette
+                Photon Scattering
             </h3>
+            <p>
+                Diffuse reflection is re-emittance of light randomly in a hemisphere above <Latex>{`$\\textbf x$`}</Latex> - we saw this with lambertian diffuse materials. We need to be able to compute this in order to 
+                properly simulate the bouncing of photons around a scene. A method for getting a random direction in this hemisphere in
+                world space is therefore required for photon tracing with diffuse surfaces. A random direction in the hemisphere in tangent space (local
+                about <Latex>{`$\\textbf x$`}</Latex> with the <Latex>{`$y$`}</Latex> basis vector being <Latex>{`$\\textbf n$`}</Latex>) can be calculated by generating a random spherical coordinate 
+                with <Latex>{`$\\displaystyle\\phi\\in\\bigg[-\\frac{\\pi}{2}, \\frac{\\pi}{2}\\bigg],$`}</Latex> <Latex>{`$\\theta\\in[0,2\\pi]$`}</Latex>.
+                The spherical coordinate is then transformed into a Cartesian coordinate (still in tangent space), then transformed into world space
+                via an affine transformation.
+            </p>
+            <div className="code-snippet" style={{width: "100%"}}>
+                <SyntaxHighlighter 
+                    language="cpp" 
+                    showLineNumbers={true}
+                    style={dracula}
+                    startingLineNumber={0}
+                >
+                    {hemisphere_scatter_code}
+                </SyntaxHighlighter>
+            </div>
+            <br />
+            <h3 id="photon-roulette" className="raleway-title">
+                Russian Roulette
+            </h3>
+            <p>
+                Russian roulette is a optimisation technique that can be applied to photon tracing to reduce the computational effort expended on
+                unuseful photons. When we refer to 'unuseful photons', we mean photons that carry very little contributing colour - in physics, this is the energy they carry or 'flux'. 
+                Without Russian roulette, it is likely that photons which have been diffusely reflected a few times would have very
+                low flux (as they propagate flux with each bounce). Thus, a lot of effort is wasted in simulating further bounces of these photons
+                which negligibly contribute to the overall lighting. Russian roulette takes a different approach in an attempt to make all photons
+                have similar magnitudes of flux, thus minimising 'wasted' computation time.
+                <br /><br />
+                The way Russian roulette works here is through the observation that reflecting <Latex>{`$n$`}</Latex> photons at say, 50% power, is equivalent to
+                reflecting <Latex>{`$\\displaystyle\\frac{n}{2}$`}</Latex> photons at 100% power. This can be achieved stochastically; A random 
+                variable <Latex>{`$\\epsilon\\in[0, 1]$`}</Latex> is taken, and compared to
+                the average reflection coefficients of the material <Latex>{`$\\bar\\rho_d, \\bar\\rho_s$`}</Latex>, taken from the material's diffuse and specular albedo by averaging their 3 colour channels. 
+                The type of reflection is then determined as follows:
+                <br/><br/>
+                <div style={{paddingLeft: "3em", paddingRight: "3em", textAlign: "center"}}>
+                    <Latex>
+                        {`$\\begin{aligned}
+                            \\epsilon\\in[0,\\bar\\rho_d]&\\to\\text{diffuse reflection}\\\\
+                            \\epsilon\\in[0, \\bar\\rho_d+\\bar\\rho_s]&\\to\\text{specular reflection}\\\\
+                            \\epsilon\\in[\\bar\\rho_d+\\bar\\rho_s, 1]&\\to\\text{absorption}
+                        \\end{aligned}$`}
+                    </Latex>
+                </div>
+            </p>
+            <p>
+                Note a full BRDF calculation is not used at bounces using this method, instead the flux of reflected photons must be adjusted by 
+                multiplying by <Latex>{`$\\rho_d/\\bar\\rho_d$`}</Latex> or <Latex>{`$\\rho_s/\\bar\\rho_s$`}</Latex> depending on the type of reflection. 
+                (i.e. we scale by the colours which would be sampled from the BRDF).
+                <br /><br />
+                Overall, we can simulate the effect of more photons with a smaller selection by using russian roulette, so it is a worthwhile optimisation considering we may want to fire millions of photons into our
+                scene.
+            </p>
+            <br />
             <h2 id="photon-gather" className="raleway-title">
                 Radiance Gathering
             </h2>
@@ -954,21 +1029,157 @@ const Home = () => {
                 <AnnotatedImage preview={false} src={c_img_specular} annotation={"Specular and Glossy"} />
                 <AnnotatedImage preview={false} src={c_img_caustic} annotation={"Indirect illumination (caustics)"} />
             </Carousel>
+            <p>
+                Once we have our photon maps, we can begin rendering our final image. This involves calculating the <Latex>{`$L_i(\\textbf x, \\omega_i)$`}</Latex> component of the rendering equation.
+                The original implementation of photon mapping proposes splitting the different types of illumination in the scene into separate calculations. The main benefit of this is that we
+                get to use different techniques for each lighting calculation as we see fit, and makes it easier to not double up on simulated light paths.
+                <br /><br />
+                <div style={{paddingLeft: "3em", paddingRight: "3em", textAlign: "center"}}>
+                    <Latex>
+                        {`$L_i(\\textbf x, \\omega_i)=L_{i,l}(\\textbf x, \\omega_i)+(L_{i,c}(\\textbf x, \\omega_i)+L_{i,d}(\\textbf x, \\omega_i))+L_{i,c}(\\textbf x, \\omega_i)+L_{i,d}(\\textbf x, \\omega_i)$`}
+                    </Latex>
+                </div>
+                <br />
+                where
+            </p>
+            <div style={{paddingLeft: "2vw", paddingRight: "2vw"}}>
+                <Row className="project-style-cont" style={{display: "flex"}}>
+                    <Col className="project-style-cont"><b>1. </b> &nbsp;&nbsp;&nbsp;</Col>
+                    <Col className="project-style-cont" flex="1vw">
+                        <Latex>{`$L_{i,l}$`}</Latex> - <b>Direct Illumination</b> given by <Latex>{`$LDE$`}</Latex> in path notation and is directly gathered using standard gathering rays.
+                    </Col>
+                </Row>
+                <br/>
+                <Row className="project-style-cont" style={{display: "flex"}}>
+                    <Col className="project-style-cont"><b>2. </b> &nbsp;&nbsp;&nbsp;</Col>
+                    <Col className="project-style-cont" flex="1vw">
+                        <Latex>{`$L_{i,d}$`}</Latex> - <b>Indirect Illumination</b> given by <Latex>{`$LD(S|D)+DE$`}</Latex> in path notation and is approximated using the global photon map.
+                    </Col>
+                </Row>
+                <br/>
+                <Row className="project-style-cont" style={{display: "flex"}}>
+                    <Col className="project-style-cont"><b>3. </b> &nbsp;&nbsp;&nbsp;</Col>
+                    <Col className="project-style-cont" flex="1vw">
+                        <Latex>{`$L_{i,c}+L_{i,d}$`}</Latex> - <b>Specular and Glossy </b> given by <Latex>{`$L(S|D)^*SE$`}</Latex> in path notation and is again directly gathered using standard gathering rays.
+                    </Col>
+                </Row>
+                <br/>
+                <Row className="project-style-cont" style={{display: "flex"}}>
+                    <Col className="project-style-cont"><b>4. </b> &nbsp;&nbsp;&nbsp;</Col>
+                    <Col className="project-style-cont" flex="1vw">
+                        <Latex>{`$L_{i,c}$`}</Latex> - <b>Caustics </b> given by <Latex>{`$LS+DE$`}</Latex> in path notation and is approximated using the caustic photon map.
+                    </Col>
+                </Row>
+            </div>
+            <br/><br />
             <h3 id="li-approx" className="raleway-title">
                 Incident Radiance Approximation
             </h3>
+            <p>
+                <Latex>{`$L_i$`}</Latex> can be approximated from a photon map by calculating the flux density of photons in a sphere <Latex>{`$r$`}</Latex> about <Latex>{`$\\textbf x$`}</Latex>. The
+                radius of the sphere can be a pre-defined constant, leading to a smoother radiance estimate over larger distances, or dynamically
+                calculated by expanding the sphere until a set number of photons are found. The former approach has the effect of smoothing the
+                radiance estimate over larger distances which is useful for indirect illumination (global photon map); the latter approach preserves
+                all the detail in the photon map leading to higher-frequency detail, useful for rendering caustics (caustic photon map). This is why photons are stored in a KD-tree, 
+                as it makes it very easy to get all photons in a shere about a point - a simple k-nearest-neighbours query. I won't go
+                over the derivation here, but formally, this estimate transforms the rendering equation into the following:
+                <br/><br/>
+                <div style={{paddingLeft: "3em", paddingRight: "3em", textAlign: "center"}}>
+                    <Latex>
+                    {
+                        `$\\displaystyle L_r(\\textbf{x}, \\omega_i, \\omega_r) =
+                        \\frac{1}{\\pi r^2}\\sum_{p=1}^n f_r(\\textbf{x}, \\omega_i, \\omega_r)\\Delta\\Phi_p(\\textbf x, \\omega_i)$`
+                    }                   
+                    </Latex>
+                </div>
+                <br/>
+                where <Latex>{`$\\Phi_p$`}</Latex> are photons from the knn query of the photon map. The main thing of note here is that we calculate the density by
+                assuming the surface around <Latex>{`$\\textbf x$`}</Latex> is a flat surface - i.e. a circle not a sphere. This gives rise to the divisor of <Latex>{`$\\pi r^2$`}</Latex>.
+                It is also worth noting that a sphere is not the most accurate approximation under this assumption - an ellipsoid squished in the direction of <Latex>{`$\\textbf x$`}</Latex>'s normal
+                would be more accurate, but using a sphere has the benefit of being quickly queried from the photon maps.
+            </p>
             <br />
             <Divider style={{borderTopWidth: "1px", borderTopColor: "#000000", opacity: 0.5}}/>
             <h1 id="post-process" className="raleway-title">
                 Post Processing
             </h1>
+            <p>
+                Now that we have rendered out our 3D scene, what's left is to post-process the image to get a final render.
+                At this stage, it is useful to be able to mess with some properties of our image to make it more appealing.
+            </p>
             <h2 id="post-filters" className="raleway-title">
-                Useful Filters and Attributes
+                Basic Image Filters
             </h2>
-            Gamma spaces, Contrast, Saturation, etc.
+            <p>
+                We can build a simple but useful selection of image filters:
+            </p>
+            <div style={{paddingLeft: "2vw", paddingRight: "2vw"}}>
+                <Row className="project-style-cont" style={{display: "flex"}}>
+                    <Col className="project-style-cont"><b>1. </b> &nbsp;&nbsp;&nbsp;</Col>
+                    <Col className="project-style-cont" flex="1vw">
+                        <Latex>{`$\\text{exposure}(\\textbf v,\\ e)=\\textbf v\\cdot e$`}</Latex>
+                    </Col>
+                </Row>
+                <br/>
+                <Row className="project-style-cont" style={{display: "flex"}}>
+                    <Col className="project-style-cont"><b>2. </b> &nbsp;&nbsp;&nbsp;</Col>
+                    <Col className="project-style-cont" flex="1vw">
+                        <Latex>{`$\\text{contrast}(\\textbf v,\\ c)=c(\\textbf v - 0.5) + 0.5$`}</Latex>
+                    </Col>
+                </Row>
+                <br/>
+                <Row className="project-style-cont" style={{display: "flex"}}>
+                    <Col className="project-style-cont"><b>3. </b> &nbsp;&nbsp;&nbsp;</Col>
+                    <Col className="project-style-cont" flex="1vw">
+                        <Latex>{`$\\text{brightness}(\\textbf v,\\ b)=\\textbf v + b$`}</Latex>
+                    </Col>
+                </Row>
+                <br/>
+                <Row className="project-style-cont" style={{display: "flex"}}>
+                    <Col className="project-style-cont"><b>4. </b> &nbsp;&nbsp;&nbsp;</Col>
+                    <Col className="project-style-cont" flex="1vw">
+                        <Latex>{`$\\text{saturation}(\\textbf v,\\ s)=\\text{lerp}(\\textbf v,\\ \\text{gray}(\\textbf v),\\ s)$`}</Latex>
+                    </Col>
+                </Row>
+                <br/>
+                <Row className="project-style-cont" style={{display: "flex"}}>
+                    <Col className="project-style-cont"><b>5. </b> &nbsp;&nbsp;&nbsp;</Col>
+                    <Col className="project-style-cont" flex="1vw">
+                        <Latex>{`$\\text{colour overlay}(\\textbf v,\\ \\textbf c)=\\textbf v \\cdot \\textbf c$`}</Latex>
+                    </Col>
+                </Row>
+                <br/>
+                <Row className="project-style-cont" style={{display: "flex"}}>
+                    <Col className="project-style-cont"><b>6. </b> &nbsp;&nbsp;&nbsp;</Col>
+                    <Col className="project-style-cont" flex="1vw">
+                        <Latex>{`$\\text{gamma}(\\textbf v, \\gamma)=\\textbf v ^ \\gamma$`}</Latex>
+                    </Col>
+                </Row>
+                <br/>
+            </div>
+            <p>
+                It is important to clamp the results of these calculations to be greater than zero - we can't have a negative amount of light! These filters can be applied in any order, 
+                except for the gamma space calculation, which <i>must</i> be the final post processing step, even after tone mapping which we will visit next.
+                Many more filters exist that we could apply here as well, but this selection is analogous to the kinds of settings you might find on a digital camera. 
+            </p>
             <h2 id="tone-map" className="raleway-title">
-                Tone Mapping and HDR
+                HDR and Tone Mapping 
             </h2>
+            <p>
+                Dynamic Range refers to the range of colours we can represent within our image. Up until this point, renders from a raytracer will be unbounded in terms of colour.
+                We simply add up all of the reflected radiance and store it in our image buffer. Our image therefore is one of <i>High Dynamic Range</i> (HDR) - we have values outside of 
+                standard RGB representation. We still wish to display our image in RGB though, so we must do a conversion from HDR to RGB space.
+                <br /><br />
+                There are various ways of doing this conversion. The most simple method would be to define an exposure cap, like in a digital camera. Any values above our exposure cap are clamped to the cap value <Latex>{`$\\in[0, 255]$`}</Latex> in RGB images.
+                We could extend this exposure cap to be automatic by stretching or compressing our range of values to <Latex>{`$[0, 255]$`}</Latex> in a similar fashion to a contrast filter. These filters would work fine for a realistic conversion, but we aren't making use of the 
+                HDR information we have. 
+                <br /><br />
+                Tonemapping makes use of HDR information by mapping HDR colour values to a curve, properly balancing the light levels and also letting us apply a certain level of artistic effect.
+                It is basically a variable colour filter, allowing our images to have a certain 'feel' under the curve. For example, we could
+                make images have a yellowish tint in their mid-tones for a more cosy feel.
+                <br /><br />
+                There are many tonemapping curves, a popular choice in video games is the ACES curve. In this implementation, I use a curve made by Hajime Uchimura, the details of which can be found <a target='_blank' href="https://www.polyphony.co.jp/publications/sa2018/">here</a>.
+            </p>
         </ProjectPage>
     );
 }
