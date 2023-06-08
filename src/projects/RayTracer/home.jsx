@@ -1000,7 +1000,7 @@ const Home = () => {
                 the average reflection coefficients of the material <Latex>{`$\\bar\\rho_d, \\bar\\rho_s$`}</Latex>, taken from the material's diffuse and specular albedo by averaging their 3 colour channels. 
                 The type of reflection is then determined as follows:
                 <br/><br/>
-                <div style={{paddingLeft: "3em", paddingRight: "3em", textAlign: "center"}}>
+                <div style={{textAlign: "center"}}>
                     <Latex>
                         {`$\\begin{aligned}
                             \\epsilon\\in[0,\\bar\\rho_d]&\\to\\text{diffuse reflection}\\\\
