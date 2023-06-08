@@ -53,7 +53,6 @@ const Home = () => {
                 Note that this model encapsulates not only vertical movement of the surface, but also horizontal movement as well. This is a key observation that lets us build more
                 complex models.
             </p>
-
             <br />
             <Divider style={{borderTopWidth: "1px", borderTopColor: "#000000", opacity: 0.5}}/>
             <h1 id="displacement" className="raleway-title">

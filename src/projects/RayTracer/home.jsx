@@ -29,6 +29,9 @@ import vertex_normals from '../../content/projects/RayTracer/normals/vertex_norm
 
 import bounding_overlay from '../../content/projects/RayTracer/bounding/bv_overlay.png'
 
+import lambertian from '../../content/projects/RayTracer/materials/lambertian_diffuse.png'
+import phong from '../../content/projects/RayTracer/materials/phong.png'
+
 import mirror_bounce_1 from '../../content/projects/RayTracer/mirrors/mirrors-1-bounce.png'
 import mirror_bounce_3 from '../../content/projects/RayTracer/mirrors/mirrors-3-bounces.png'
 import mirror_bounce_5 from '../../content/projects/RayTracer/mirrors/mirrors-5-bounces.png'
@@ -153,6 +156,7 @@ const Home = () => {
                 Light travels in straight lines. This makes rays an appropriate data structure to keep track of how light travels throughout a scene.
                 Rays are vectors in 3D space, defined by an origin point <Latex>{`$O$`}</Latex> and direction <Latex>{`$D$`}</Latex>. From this, we can identify every point that falls upon
                 the ray with a line defined by a 'distance' parameter <Latex>{`$t$`}</Latex>:
+                <br /><br />
                 <div style={{paddingLeft: "3em", paddingRight: "3em", textAlign: "center"}}>
                     <Latex>
                         {`$R=O+Dt$`}
@@ -186,6 +190,13 @@ const Home = () => {
             <h2 id="ray-shadow" className="raleway-title">
                 Basic Shadows
             </h2>
+            <p>
+                The BRDF alone does not paint the full picture of rendering as we still need a way of incorporating shadows. The simplest way of computing hard regions of shadow is to cast a secondary ray at the intersection 
+                point <Latex>{`$\\textbf x$`}</Latex> towards lights, and only calculate the BRDF if the light is not occluded (i.e. there is no intersection between the ray and an object).
+                <br /><br />
+                This simple approach works well for direct illumination (where we do not simulate light bouncing), but is not applicable to other parts of global illumination, which we will visit next.
+                Further down the line we will additionally look at a method to render soft shadows, as this simple approach can only render strict shadow boundaries.
+            </p>
             <br />
             <h2 id="global-illum" className="raleway-title">
                 Global Illumination
@@ -223,7 +234,7 @@ const Home = () => {
                 and other visible light sources (e.g. an area light).
                 <br /><br />
                 The integral component states that at point <Latex>{`$\\textbf x$`}</Latex>, we gather all the incident radiance from all possible incident directions (<Latex>{`$\\omega_i$`}</Latex>) in a
-                hemisphere above <Latex>{`$\\textbf x$`}</Latex> (<Latex>{`$\\Omega$`}</Latex>). We multiply each incident ray by the BDRF <Latex>{`$f_r$`}</Latex> for its given direction to determine how much of the incident
+                hemisphere above <Latex>{`$\\textbf x$`}</Latex> (<Latex>{`$\\Omega$`}</Latex>). We multiply each incident ray by the BRDF <Latex>{`$f_r$`}</Latex> for its given direction to determine how much of the incident
                 light is reflected along <Latex>{`$\\omega_r$`}</Latex> - thus giving reflected radiance. 
                 We also apply Lambert's cosine law via <Latex>{`$(\\omega_i \\cdot x)$`}</Latex>.
                 <br /><br />
@@ -658,22 +669,115 @@ const Home = () => {
             </div>
             <br />
             <h3 id="bvh" className="raleway-title">
-                Bounding Volume Heirarchies (BVH)
+                Bounding Volume Hierarchies (BVH)
             </h3>
+            <p>
+                Bounding Volume Hierarchies allow us to further cull intersection calculations by arranging objects in our scene in a hierarchy. This is typically done using a tree data structure;
+                we can use a binary tree, or a wider tree (i.e. variable number of nodes) to group similar objects better. 
+                We create new bounding volumes (nodes) for groups of objects in our scene, allowing us to first quickly check this parent node for intersection
+                and cull depending on the result. We know if a ray does not intersect a parent volume, it can't intersect any children.
+                <br /><br />
+                Though not implemented in this raytracer (as we work with typically a small number of objects), it is fairly easy to implement a simple BVH.
+                Even a simple scene will be useful when dealing with scenes that are composed of many triangle-dense meshes for example. 
+            </p>
             <br />
             <Divider style={{borderTopWidth: "1px", borderTopColor: "#000000", opacity: 0.5}}/>
             <h1 id="materials" className="raleway-title">
                 Materials
             </h1>
+            <p>
+                Materials determine what colour an object is rendered with, using the lighting they are under. Materials are simply implementations of a BRDF calculation to calculate reflected radiance (loosely speaking, the colour we see).
+                At a technical level, we need one procedure for doing the BRDF calculation, and another for sampling the incident radiance which is used in the calculation. This is because different
+                different materials interact with light in different ways, and is a particular concern with <i>global materials</i>, ones which sample radiance from 
+                from different locations than just the intersection point (think reflection and refraction). We will encounter examples of these materials later.
+                <br /><br />
+                Before we begin, some terminology. Albedo <Latex>{`$(\\rho)$`}</Latex> refers to the intrinsic colour of an object. It specifically defines 
+                the distribution of reflected light from an object (i.e. what proportion of RGB bands are reflected), but can be thought of simply as 'base colour'.
+                We may choose to define more than one albedo for an object which describes the colour of reflected light under different circumstances. A good example of this is the Phong lighting model,
+                in which we define 3 separate albedos for ambient, diffuse, and specular lighting.
+            </p>
+            <br />
             <h2 id="diffuse" className="raleway-title">
                 Lambertian Diffuse
             </h2>
+            <p>
+                Lambertian Diffuse is a simple material that only incorporates diffuse lighting onto the target object.
+                Diffuse lighting refers to soft and gradual shadows which arise on matte materials from the random scattering of light at an object's
+                surface. When light hits the surface, it can be thought of being randomly scattered in a hemisphere above the intersection location (this is a simplification -
+                in reality there is some level of <i>subsurface scattering</i>). The intensity of reflected light obeys Lambert's cosine law, in other words, it is less intense at oblique viewing angles.
+                This can be characterised by the following BRDF:
+                <br /><br />
+                <div style={{paddingLeft: "3em", paddingRight: "3em", textAlign: "center"}}>
+                    <Latex>
+                        {`$f_r(\\textbf x. \\omega_i, \\omega_r)=\\displaystyle\\frac{\\rho_d}{\\pi}$`}
+                    </Latex>
+                </div>
+                <br />
+                noting that lambert's cosine term <Latex>{`$(\\omega_i\\cdot \\textbf n)$`}</Latex> is included in the full rendering equation.
+            </p>
+            <div style={{margin: "0 auto", paddingBottom: "20px", width: "100%", maxWidth: "600px"}}>
+                <AnnotatedImage src={lambertian} annotation="Cube rendered with a lambertian diffuse material."/>
+            </div>
+            <br />
             <h2 id="phong" className="raleway-title">
                 Phong Lighting Model
             </h2>
+            <p>
+                The Phong lighting model incorporates ambient, diffuse, and specular approximations into the lighting calclation. Diffuse lighting we have seen already with
+                Lambertian Diffuse, but what are ambient and specular lighting? Ambient lighting refers to the <i>ambient light</i> in a scene, under which all objects are influenced
+                even without making specific lights objects to emit the light. This is simply a constant light colour which all objects should be affected by. Specular lighting are intense
+                reflections of light caused by light directly reflecting into the camera. We see this is glossy objects, mirrors, and alike. Some proper specular materials are introduced later (Mirrors, dielectrics),
+                but we can make some simple approximations of specular lighting and incorporate them into the BRDF calculation.
+                <br /><br />
+                <div style={{paddingLeft: "3em", paddingRight: "3em", textAlign: "center"}}>
+                    <Latex>
+                        {`$f_r(\\textbf x. \\omega_i, \\omega_r)=L_\\text{ambient} + L_\\text{diffuse} + L_\\text{specular}$`}
+                    </Latex>
+                </div>
+                <br />
+                <div style={{paddingLeft: "3em", paddingRight: "3em", textAlign: "center"}}>
+                    <Latex>
+                        {`$L_\\text{ambient} = \\rho_a$`}
+                    </Latex>
+                </div>
+                <br />
+                <div style={{paddingLeft: "3em", paddingRight: "3em", textAlign: "center"}}>
+                    <Latex>
+                        {`$L_\\text{diffuse} = \\displaystyle\\frac{\\rho_d}{\\pi}$`}
+                    </Latex>
+                </div>
+                <br />
+                <div style={{paddingLeft: "3em", paddingRight: "3em", textAlign: "center"}}>
+                    <Latex>
+                        {`$L_\\text{specular} = \\rho_s\\cdot(\\omega_r\\cdot\\text{reflect}(\\omega_i, \\textbf n))^\\alpha$`}
+                    </Latex>
+                </div>
+                <br />
+                Ambient lighting is a constant <Latex>{`$\\rho_a$`}</Latex>, and we reuse diffuse lighting calculations from lambertian diffuse, so the
+                main addition here is the specular term. We incorporate a specular albedo for colour control, and calculate a similarity measure via cross product between the reflected radiance direction (usually the camera ray direction, inverted), and the perfect
+                mirror-like reflection of light from the direction of incident radiance. What we are doing here is adding specular colour proportionally to how much light perfectly reflects into the camera, thus giving us specular highlights. <Latex>{`$\\alpha$`}</Latex> is
+                included for highlight attenuation. Since <Latex>{`$\\omega_r\\cdot\\text{reflect}(\\omega_i, \\textbf n)\\in[0, 1]$`}</Latex>, exponentinentiation to <Latex>{`$\\alpha$`}</Latex> means values further from 1 will contribute less; exponential light falloff for the highlights. Thus, a higher
+                value for <Latex>{`$\\alpha$`}</Latex> leads to sharper specular highlights. A typical value is <Latex>{`$\\alpha\\approx 20$`}</Latex>.
+            </p>
+            <div style={{margin: "0 auto", paddingBottom: "20px", width: "100%", maxWidth: "512px"}}>
+                <AnnotatedImage src={phong} annotation="Utah Teapot and a sphere rendered with a Phong material."/>
+            </div>
+            <br />
             <h2 id="textures" className="raleway-title">
                 Basic Textures
             </h2>
+            <p>
+                So far, the albedos of our materials have been constant. This limits us only to block colours for our objects. Textures are images which we can map colour from onto objects, and are a big factor in making realistic, or artistically styled renders.
+                The way colour information is mapped from texture to object is a <i>UV map</i>. We define UV coordinates for all of our geometry, which specifies what pixel we should look at in a texture image for the object's colour. 
+                <br /><br />
+                We have already implicitly seen a few ways of generating UV coordinates:
+                In planes they were simply direction coefficients from the cartesian definition of plane-points, and for triangles they were given by the barycentric coordinates. In a triangular mesh, they are given per-vertex, and we interpolate texture colour across triangular faces.
+                <br /><br />
+                There are different ways to generate UV coordinates for a number of objects (e.g. spheres), but I will not delve into them all here.
+                The rest of the implementation is easy once we generate UV coordinates, we simply replace <Latex>{`$\\rho$`}</Latex> in calculations 
+                with a uv-read from a texture. This can be an image file, or even procedurally generated, such as the checkerboard pattern seen throughout this post.
+            </p>
+            <br />
             <h2 id="mirrors" className="raleway-title">
                 Mirrors
             </h2>
@@ -712,6 +816,7 @@ const Home = () => {
                 surface. A simple way of implementing this is to choose a random position on a sphere centered about
                 a point on the true reflected ray. A higher radius sphere means more fuzz.
             </p>
+            <br />
             <h2 id="dielectrics" className="raleway-title">
                 Dielectrics
             </h2>
@@ -721,7 +826,7 @@ const Home = () => {
                 calculated according the below equation, derived from Snell's law.
             </p>
             <div style={{paddingLeft: "3em", paddingRight: "3em", textAlign: "center"}}>
-                <Latex>{`$\\omega_r = r\\omega_i + \\textbf n \\bigg(rc- \\sqrt{1 - r^2(1 - c^2)}\\bigg) \\ \\ \\ \\text{where } c=-\\textbf n \\cdot \\omega_i, \\ \\text{and } {r=\\frac{\\eta_1}{\\eta_2}}$`}</Latex>
+                <Latex>{`$\\omega_r = r\\omega_i + \\textbf n \\bigg(rc- \\sqrt{1 - r^2(1 - c^2)}\\bigg) \\ \\ \\ \\text{where } c=-\\textbf n \\cdot \\omega_i, \\ \\text{and } {r=\\displaystyle\\frac{\\eta_1}{\\eta_2}}$`}</Latex>
             </div>
             <br />
             <p>
@@ -761,7 +866,7 @@ const Home = () => {
                 a cheap yet relatively accurate approximation, can be used:
             </p>
             <div style={{paddingLeft: "3em", paddingRight: "3em", textAlign: "center"}}>
-                <Latex>{`$R=R_0+(1 - R_0)(1-\\textbf n \\cdot \\omega_i)^5 \\ \\ \\ \\text{where } R_0=\\big(\\frac{\\eta_1-\\eta_2}{\\eta_1 + \\eta_2}\\big)^2$`}</Latex>
+                <Latex>{`$R=R_0+(1 - R_0)(1-\\textbf n \\cdot \\omega_i)^5 \\ \\ \\ \\text{where } R_0=\\bigg(\\displaystyle\\frac{\\eta_1-\\eta_2}{\\eta_1 + \\eta_2}\\bigg)^2$`}</Latex>
             </div>
             <br />
             <p>
@@ -780,14 +885,16 @@ const Home = () => {
             </Carousel>
             <br />
             <Divider style={{borderTopWidth: "1px", borderTopColor: "#000000", opacity: 0.5}}/>
-            <h1 id="rendering-tech" className="raleway-title">
-                Useful Rendering Techniques
+            <h1 id="distributed-raytracing" className="raleway-title">
+                Distributed Raytracing and Emissive Materials
             </h1>
-            <h2 id="distributed-raytracing" className="raleway-title">
-                Distributed Raytracing
-            </h2>
             <p>
-                Required for rendering of soft shadows and proper emissive materials.
+                Up until this point, we have only been able to render hard-shadows. This is a consequence of using only point lights and a single
+                occlusion raycast. We had previously seen the term <Latex>{`$L_e$`}</Latex> in the rendering equation which implies that instead of using just point lights, we can make objects themselves into light sources.
+                To support emissive materials, we need to change the occlusion calculation to consider percentage occlusion instead of being a boolean calculation. Emissive materials mean our lights have <b>area</b>, and this is where soft shadows come from, i.e. these regions soft shadow regions are regions of <i>partial</i> light occlusion.
+                <br /><br />
+                To calculate partial occlusion, we can use random sampling. When testing for occlusion, we sample <Latex>{`$n$`}</Latex> random points on an emissive material's surface, and perform a boolean occlusion test on each one.
+                The arithmetic mean of these tests then gives the proportion of occlusion. We therefore need a method for generating random points on an object's surface, which is usually similar to the uv-mapping calculating, but in reverse.  The use of random sampling also introduces noise, so we should be sure to use as high <Latex>{`$n$`}</Latex>  as possible.
             </p>
             <Carousel autoplay autoplaySpeed={2000} effect="fade" style={{margin: "0 auto", paddingBottom: "20px", width: "100%", maxWidth: "1370px"}}>
                 <AnnotatedImage src={shadows_1} annotation={"Shadows rendering with only 1 deterministic ray (no distributed raytracing)."}/>
@@ -798,9 +905,19 @@ const Home = () => {
                 <AnnotatedImage src={shadows_100} annotation={"Shadows rendered with 100 sample rays."}/>
                 <AnnotatedImage src={shadows_200} annotation={"Shadows rendered with 200 sample rays."}/>
             </Carousel>
-            <h2 id="ssaa" className="raleway-title">
+            <br/>
+            <h1 id="ssaa" className="raleway-title">
                 Super-Sampling Anti-Aliasing (SSAA)
-            </h2>
+            </h1>
+            <p>
+                Aliasing arises from rendering our continuous 3D scene in a limited number of discrete pixels. This is particularly noticeable at object boundaries and where we have diagonal lines.
+                <br /><br />
+                There are a number of anti-aliasing techniques that we can employ, but the simplest by far is Super-Sampling Anti-Aliasing (SSAA), and works well for reasonably high resolution images. We
+                generate <Latex>{`$n$`}</Latex> rays for each pixel and take the mean colour. Random rays can be generated by taking the principal camera ray and applying a random offset <Latex>{`$\\in[-0.5, 0.5]$`}</Latex> in both dimensions of the camera plane.
+                Again, the use of random sampling can introduce noise for low <Latex>{`$n$`}</Latex>, so it is best to use as high <Latex>{`$n$`}</Latex> as possible.
+                <br /><br />
+                SSAA is quite expensive. With each new sample ray we effectively render the whole image once again. If a faster technique is desired, I would suggest having a look at FXAA.
+            </p>
             <Carousel autoplay autoplaySpeed={2000} effect="fade" style={{margin: "0 auto", paddingBottom: "20px", width: "100%", maxWidth: "600px"}}>
                 <AnnotatedImage preview={false} src={ssaa_0} annotation={"Sharp cube edge rendered with no SSAA."} />
                 <AnnotatedImage preview={false} src={ssaa_5} annotation={"Sharp cube edge rendered with 5x SSAA."}/>
