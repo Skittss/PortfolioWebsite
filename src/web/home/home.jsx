@@ -29,9 +29,9 @@ const HomePage = () => {
 					</Col>
 					<Col xs={24} md={12} style={{textAlign: screens.md ? "left" : "center", verticalAlign: screens.md? "middle" : "top"}}>
 						<div style={{height: "100%", display: "flex", alignItems: "center", justifyContent: screens.md ? "left" : "center"}}>
-							<div>
+							<div className="styled-text">
 								<p style={{fontSize: 30, marginBottom: "5px", fontFamily: "'Raleway-Bold', sans-serif"}}>Hey there! 👋</p>
-								<p style={{marginBottom: "15px"}}>I'm Henry <span style={{color: 'gray'}}>(Github - Skittss)</span></p>
+								<p style={{marginBottom: "15px"}}>I'm <Link to="/about">Henry</Link> <span style={{color: 'gray'}}>(Github - Skittss)</span></p>
 								<p style={{marginBottom: "5px"}}>I'm into Machine Learning, Computer Vision, and Graphics.</p>
 								<p style={{marginBottom: "15px"}}>I also like a little bit of WebDev!</p>
 								<p style={{marginBottom: "5px"}}>Check out my projects <Link to="/projects"> here. </Link></p>

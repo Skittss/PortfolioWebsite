@@ -86,7 +86,7 @@ const Navbar = () => {
                     PROJECTS
                     <Link to="/projects"/>
                 </Menu.Item>
-                <Menu.Item>
+                <Menu.Item key="/about">
                     ABOUT
                     <Link to="/about"/>
                 </Menu.Item>

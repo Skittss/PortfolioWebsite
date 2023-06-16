@@ -351,7 +351,7 @@ const Home = () => {
                 Graphs and Discussion
             </h2>
             <p>
-                Overall, through use of DDQN, we can saw promising and performative results. All agents exhibited
+                Overall, through use of DDQN, we can see promising and performative results. All agents exhibited
                 clear attempts to stay on track and drive at high speeds when possible. On the best trained model
                 (STACK_DDQN_3), the agent is close to full episode solves approximately 50% of the time. Additionally, 
                 the agent consistently beat both baseline measures, even in episodes with relatively poor performance compared 
@@ -383,7 +383,7 @@ const Home = () => {
                 mean score is relatively high for all agents. This is partly due to the fact that the agents are punished
                 harshly for mistakes (via early episode termination) but also due to the fact that sometimes an agent
                 isn't able to perform a simple action which it is able to perform in a seemingly similar scenario. This
-                is most often a failed early turn. We surmise this is due to three reasons: 1) some level of forgetting - an
+                is most often a failed early turn. This could be due to three reasons: 1) some level of forgetting - an
                 agent dropping an older learned policy in favour of a new one based on new experience. 2) somewhat
                 incoherent models of the track in agents' convolutional layer feature maps. 3) agents sometimes being
                 forced to make suboptimal moves due to turning being somewhat heavy-handed in the discrete action
@@ -420,7 +420,7 @@ const Home = () => {
                 shallow upwards trends when training was halted (especially STACK_DDQN_P_1), so it is possible
                 they would be able to solve the environment fully given enough iterations.
                 <br /><br />
-                We would also like to experiment further with different training approaches such as Dueling DQN.
+                It would be ideal to experiment further with different training approaches such as Dueling DQN.
                 Dueling DQN could alleviate some of the performance inconsistency
                 observed in late-stage training by assisting the agent in having a more coherent model of its environment
                 due to both training and target networks sharing the same convolutional layers.
