@@ -84,7 +84,7 @@ const AboutPage = () => {
                 <LegacyContainer 
                     img={uob_logo} 
                     title="The University of Bath"
-                    timestring="September 2019 to July 2023"
+                    timestring="September 2020 to July 2023"
                     location="Bath, United Kingdom"
                     description={
                         <>
