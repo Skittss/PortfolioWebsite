@@ -20,7 +20,7 @@ const LegacyContainer = ({img, title, timestring, location, description}) => {
     const screens = useBreakpoint();
 
     return (
-        <Row gutter={[20, 20]} style={{padding: "20px"}}>
+        <Row wrap={false} gutter={[20, 20]} style={{padding: "20px"}}>
             {screens.md ? (
                 <Col flex="150px">
                     <img src={img} width="100%" stlye={{color: "whitesmoke"}}/>
