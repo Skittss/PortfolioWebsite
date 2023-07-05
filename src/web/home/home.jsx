@@ -17,8 +17,8 @@ const HomePage = () => {
 				<Seigaiha />
 
 				<div className='padded-main'>
-				<Row gutter={[20, 16]}>
-					<Col xs={24} md={12} style={{textAlign: screens.md ? "right" : "center"}}>
+				<Row gutter={[20, 16]} wrap={!screens.md} justify="center">
+					<Col style={{textAlign: screens.md ? "right" : "center"}}>
 						<Image
 							preview={false} 
 							fallback="Github profile picture" 
@@ -27,7 +27,7 @@ const HomePage = () => {
 							style={{borderRadius: "50%", border: "solid 2px", borderColor: "whitesmoke"}}
 						/>
 					</Col>
-					<Col xs={24} md={12} style={{textAlign: screens.md ? "left" : "center", verticalAlign: screens.md? "middle" : "top"}}>
+					<Col style={{textAlign: screens.md ? "left" : "center", verticalAlign: screens.md? "middle" : "top"}}>
 						<div style={{height: "100%", display: "flex", alignItems: "center", justifyContent: screens.md ? "left" : "center"}}>
 							<div className="styled-text">
 								<p style={{fontSize: 30, marginBottom: "5px", fontFamily: "'Raleway-Bold', sans-serif"}}>Hey there! 👋</p>

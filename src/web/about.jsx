@@ -50,8 +50,8 @@ const AboutPage = () => {
             <Seigaiha />
 
             <div className='padded-main'>
-            <Row gutter={[20, 16]}>
-                <Col xs={24} md={12} style={{textAlign: screens.md ? "right" : "center"}}>
+            <Row gutter={[20, 16]} wrap={!screens.md} style={{width: screens.xl ? "65%" : "100%", margin: "0 auto"}}>
+                <Col flex="none" style={{textAlign: screens.md ? "right" : "center", margin: screens.xl ? '0 0 0 Max(0px, calc((50vw - 17.5vw - 320px) / 2))' : "0 auto"}}>
                     <Image
                         preview={false} 
                         fallback="Github profile picture" 
@@ -60,7 +60,7 @@ const AboutPage = () => {
                         style={{borderRadius: "50%", border: "solid 2px", borderColor: "whitesmoke"}}
                     />
                 </Col>
-                <Col xs={24} md={12} style={{textAlign: screens.md ? "left" : "center", verticalAlign: screens.md? "middle" : "top"}}>
+                <Col flex="auto" style={{textAlign: screens.md ? "left" : "center", verticalAlign: screens.md? "middle" : "top"}}>
                     <div style={{height: "100%", display: "flex", alignItems: "center", justifyContent: screens.md ? "left" : "center", width: screens.xl ? 'calc(50vw - 17.5vw - 20px)' : "100%"}}>
                         <div className="styled-text">
                             <p style={{fontSize: 30, marginBottom: "5px", fontFamily: "'Raleway-Bold', sans-serif"}}>Hey there! 👋</p>
