@@ -50,7 +50,7 @@ const HomePage = () => {
 														The University of Bath
 													</Row>
 													<Row align="middle">
-														<span style={{fontSize: 10, color: 'gray'}}>BSc Computer Science (Year 3)</span>
+														<span style={{fontSize: 10, color: 'gray'}}>BSc (Hons) Computer Science (Year 3)</span>
 													</Row>
 												</Col>
 											</Row>
