@@ -61,7 +61,7 @@ const HomePage = () => {
 										<Col flex={1}>
 										<Row style={{height: "100%", display: "flex", alignItems: "center", justifyContent: screens.md ? "left" : "center"}}>
 											<Col style={{color: 'orange'}}>Status: &nbsp;</Col>
-											<Col style={{background: "rgba(0,0,0,0.5)", borderRadius: "0.4em", padding: "2px 5px 2px 5px", fontFamily: "'Roboto Mono', monospace"}}>&gt; Graduating 😎<span className="animated-cursor" /></Col>
+											<Col style={{background: "rgba(0,0,0,0.5)", borderRadius: "0.4em", padding: "2px 5px 2px 5px", fontFamily: "'Roboto Mono', monospace"}}>&gt; Graduated 😎<span className="animated-cursor" /></Col>
 										</Row>
 										</Col>
 									</Row>

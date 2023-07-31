@@ -88,7 +88,7 @@ const AboutPage = () => {
                     location="Bath, United Kingdom"
                     description={
                         <>
-                        <b>BSc (Hons) Computer Science.</b> Graduating with <u>first class honours</u>.
+                        <b>BSc (Hons) Computer Science.</b> Grade: <u>first class honours</u>.
                         </>
                     }
                 />
