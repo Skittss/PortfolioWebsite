@@ -91,7 +91,7 @@ const Home = () => {
 
     return (
     
-        <ProjectPage title={Meta.title} thumb={Meta.thumb} >
+        <ProjectPage title={Meta.title} thumb={Meta.thumb} githubURL="https://github.com/Skittss/RayTracer">
             <h1 id="overview" className="raleway-title">
                 Overview
             </h1>
@@ -113,7 +113,7 @@ const Home = () => {
                 go into more detail than I do, albeit with a slightly different focus (no photon-mapping for example).
 
                 <br /><br />
-                The source code for this renderer will be made open-source at a later date.
+                Code snippets in this post are abbreviated for brevity. The full source code for this renderer is available on <a target="_blank" href="https://github.com/Skittss/RayTracer">GitHub</a>.
             </p>
             <br />
             <Divider style={{borderTopWidth: "1px", borderTopColor: "#000000", opacity: 0.5}}/>
@@ -681,7 +681,7 @@ const Home = () => {
                 <br /><br />
                 <div style={{paddingLeft: "3em", paddingRight: "3em", textAlign: "center"}}>
                     <Latex>
-                        {`$f_r(\\textbf x. \\omega_i, \\omega_r)=\\displaystyle\\frac{\\rho_d}{\\pi}$`}
+                        {`$f_r(\\textbf x, \\omega_i, \\omega_r)=\\displaystyle\\frac{\\rho_d}{\\pi}$`}
                     </Latex>
                 </div>
                 <br />
@@ -703,7 +703,7 @@ const Home = () => {
                 <br /><br />
                 <div style={{paddingLeft: "3em", paddingRight: "3em", textAlign: "center"}}>
                     <Latex>
-                        {`$f_r(\\textbf x. \\omega_i, \\omega_r)=L_\\text{ambient} + L_\\text{diffuse} + L_\\text{specular}$`}
+                        {`$f_r(\\textbf x, \\omega_i, \\omega_r)=L_\\text{ambient} + L_\\text{diffuse} + L_\\text{specular}$`}
                     </Latex>
                 </div>
                 <br />
