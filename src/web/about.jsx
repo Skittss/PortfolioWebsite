@@ -13,6 +13,7 @@ import uob_logo from "../content/uob-logo.svg";
 import piano_svg from "../content/piano.svg";
 import pencil_svg from "../content/pencil.svg";
 import flag_svg from "../content/flag.svg";
+import camera_svg from "../content/camera.svg";
 
 const { useBreakpoint } = Grid
 
@@ -116,7 +117,7 @@ const AboutPage = () => {
                     description={
                         <>
                         Casual pianist of over 10 years.<br /><br />
-                        I like sound engineering and composition, and enjoy making arrangements of music from film and games. 
+                        I enjoy sound engineering and composition, and enjoy making arrangements of music from film and games. 
                         </>
                     }
                 />
@@ -129,6 +130,18 @@ const AboutPage = () => {
                         <>
                         I like learning to draw human anatomy! I particularly enjoy drawing characters in manga/comic-like styles. 😊<br /><br />
                         Familiar with a wide range of programs in creative suites.
+                        </>
+                    }
+                />
+                <LegacyContainer 
+                    img={camera_svg} 
+                    title="Photography"
+                    timestring=""
+                    location=""
+                    description={
+                        <>
+                        Hobbyist photographer. I shoot a mix of street photography, landscapes, nature, and architecture.<br /><br />
+                        Currently using a Fujifilm X-T20 & FX 18-55mm f2.8-4 lens.
                         </>
                     }
                 />
