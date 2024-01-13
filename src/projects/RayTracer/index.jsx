@@ -4,7 +4,7 @@ import router from "./router";
 const Meta = {
     title: "C++ RayTracer",
     thumb: img,
-    tags: ["C++"],
+    tags: ["C++", "~~ray-tracing~~"],
     date: "2022-12-08",
     abstract: "A photon-mapping based raytracer written in C++ from first principles.",
     legacy: false,

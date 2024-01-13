@@ -1,6 +1,7 @@
 import React from 'react';
 import SubRouter from "../web/routers/subrouter";
 
+const Shimenawa = React.lazy(() => import("./Shimenawa/router"));
 const ODST = React.lazy(() => import("./ODST/router"));
 const RayTracer = React.lazy(() => import("./RayTracer/router"));
 const CarRacing = React.lazy(() => import("./CarRacing/router"));
@@ -17,6 +18,7 @@ const routes = [
     {path: "/CarRacing", component: CarRacing, exact: false},
     {path: "/RayTracer", component: RayTracer, exact: false},
     {path: "/ODST", component: ODST, exact: false},
+    {path: "/Shimenawa", component: Shimenawa, exact: false},
 ];
 
 const ProjectsRouter = ({routerDepth}) => {
