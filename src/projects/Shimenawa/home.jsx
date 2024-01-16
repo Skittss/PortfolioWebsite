@@ -81,7 +81,7 @@ const Home = () => {
             To see the full shader in action, visit it on shadertoy <a href={"https://www.shadertoy.com/view/clVyzW"} target='_blank'>here</a>, or through this embed (if your browser can load it, compile time is quite long):
             <br/><br/>
             <div style={{width: "100%", maxWidth: "540px", margin: "0 auto", aspectRatio: "3/2"}}>
-                <iframe width="640" height="360" frameborder="0" src="https://www.shadertoy.com/embed/clVyzW?gui=true&t=10&paused=true&muted=false" allowfullscreen></iframe>
+                <iframe width="100%" height="100%" frameborder="0" src="https://www.shadertoy.com/embed/clVyzW?gui=true&t=10&paused=true&muted=false" allowfullscreen></iframe>
             </div>
             <br />
             <Divider style={{borderTopWidth: "1px", borderTopColor: "#000000", opacity: 0.5}}/>
