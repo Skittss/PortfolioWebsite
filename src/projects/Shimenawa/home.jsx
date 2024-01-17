@@ -271,7 +271,8 @@ float map(in vec3 p) {
             <br/>
             <p>
                 Animation is fairly straight forward; we can create simple procedural animations by perturbing based on a time factor. Even better - slap the perturbation
-                into a periodic function like sin or cosine, and you have a perfect loop with little effort!
+                into a periodic function like sin or cosine, and you have a perfect loop with little effort! The animation below is a simple time-based and periodic 
+                radial peturbation of the y coordinate space.
             </p>
             <AnnotatedVideo 
                 annotation={"Exaggerated domain warping applied for animation of the rope (注連縄) and wind on the paper (紙垂)"}
@@ -281,7 +282,7 @@ float map(in vec3 p) {
             />
             <br/><br/>
             <p>
-                Now let's look at the rope SDF.
+                Next let's look at the rope SDF itself.
             </p>
             <AnnotatedImage src={ropeSdfWarp} annotation={"Shimenawa SDF (with materials & lighting applied)"}/>
             <br/>
@@ -341,7 +342,7 @@ float sdCapsule(vec3 p, float r, float h) {
                 >
                     {
                     `
-float sdRope(vec3 p, in float braid_r, in float l, in float rot_freq, in float rot_offset)
+float sdRopeCoil(vec3 p, in float braid_r, in float l, in float rot_freq, in float rot_offset)
 {
     // Rotate and twist a capsule to make the rope along the x axis
     p.yz *= rot(p.x * PI * rot_freq); // twisting; 45-deg per x
@@ -372,11 +373,11 @@ float sdRope(vec3 p, in float braid_r, in float l, in float rot_freq, in float r
                 >
                     {
                     `
-float sdShimenawa(vec3 p, in float braid_r, in float l, in float rot_freq, in float rot_offset)
+float sdRope(vec3 p, in float braid_r, in float l, in float rot_freq, in float rot_offset)
 {
     float d = 1e10; // initialise distance;
-    d = min(d, sdRope(braid_r, l, rot_freq,  rot_offset)); // Top coil
-    d = min(d, sdRope(braid_r, l, rot_freq, -rot_offset)); // Bot coil
+    d = min(d, sdRopeCoil(braid_r, l, rot_freq,  rot_offset)); // Top coil
+    d = min(d, sdRopeCoil(braid_r, l, rot_freq, -rot_offset)); // Bot coil
 
     return d;
 }`
@@ -391,10 +392,110 @@ float sdShimenawa(vec3 p, in float braid_r, in float l, in float rot_freq, in fl
                 <b><u>3. Looping into a torus</u></b>
                 <br/><br/>
                 Looping the straight coil into a torus shape can be done in a few ways, but my approach was to use a special kind of domain transformation involving conversion 
-                between two local uv spaces.
+                between two local coordinate spaces.
             </p>
             <h3 id="local-uvs" className="raleway-title">
                 Imposing SDFs with local UVs
+            </h3>
+            <p>
+                By converting between coordinate spaces, we can impose one shape onto another. The following demo shows this technique in 2D with an arrow SDF imposed
+                onto that of a circle. This is the same effect that we want to create for the rope, but in 2d.
+            </p>
+            <div style={{width: "100%", maxWidth: "540px", margin: "0 auto", aspectRatio: "3/2"}}>
+                <iframe width="100%" height="100%" frameborder="0" src="https://www.shadertoy.com/embed/mtGcDz?gui=true&t=10&paused=true&muted=false" allowfullscreen></iframe>
+            </div>
+            <br/>
+            <p>
+                For our purposes, transforming the SDF around one base axis is sufficient. This same technique is extensible to any transformation, but let's keep it simple for now.
+            </p>
+            <p>
+                For the rope coils (or in the above demo, the arrow), the base axis is simply
+                the axis which the SDF lies along, in this case x. For the circle, we can view the base axis as lying along the circumference of the circle. 
+                Keeping track of the distance along the circumference will thus give us this axis coordinate (t), so let's make that SDF quickly:
+            </p>
+            <div className="code-snippet" style={{width: "100%"}}>
+                <SyntaxHighlighter 
+                    language="cpp" 
+                    showLineNumbers={true}
+                    style={dracula}
+                    startingLineNumber={0}
+                >
+                    {
+`
+float sdCircle(in vec2 p, in float r, out float t) 
+{
+    // angle to closest pt in range [-PI, PI]
+    float closest_p_theta = atan(p.y, p.x) + PI;
+    t = closest_p_theta / (2.0 * PI); // convert to range [0, 1]
+    
+    return length(p) - r;
+}`
+                    }
+                </SyntaxHighlighter>
+            </div>
+            <p>
+                Now that we have a mapping between the coordinates of the base axis, let's think about how we convert between the other (orthogonal) axis.
+            </p>
+            <p>
+                For the SDF we are imposing onto the circle, this axis is unchanged. In our 2D example it is simply the y axis. For the circle itself, this axis changes 
+                radially, and is in fact given by the distance to the circle, which is the result of the SDF! This property also generalises to the local coordinate space of any SDF if you think
+                about it.
+            </p>
+            <p>
+                Now we have a basic example for imposing SDFs onto one another:
+            </p>
+            <div className="code-snippet" style={{width: "100%"}}>
+                <SyntaxHighlighter 
+                    language="cpp" 
+                    showLineNumbers={true}
+                    style={dracula}
+                    startingLineNumber={0}
+                >
+                    {
+`
+float sdImpose(in vec2 p, in float r)
+{
+    float rt = 0.0f;
+	float d = sdCircle(p, r, rt);
+
+    // adjust 0 -> 1 t-value to actual circumference of the circle
+    vec2 segUV = vec2(rt * 2.0*PI*r, d); // calculate local uv
+    d = sdArrow(segUV, ...arrow params); // Arrow lying on x-axis
+
+    return d;
+}`
+                    }
+                </SyntaxHighlighter>
+            </div>
+            <br/>
+            <p>
+                Next is applying this to our 3D example. The problem actually remains unchanged as the circle we want to impose the rope onto still lies on a 2D plane. 
+                Our third axis (y) remains constant between our coordinate spaces, so we only have to make slight modifications for it to work in 3D:
+            </p>
+            <div className="code-snippet" style={{width: "100%"}}>
+                <SyntaxHighlighter 
+                    language="cpp" 
+                    showLineNumbers={true}
+                    style={dracula}
+                    startingLineNumber={0}
+                >
+                    {
+`
+float sdRope(vec3 p, in float braid_r, in float l) {
+    float rt = 0.0;
+    float d = sdCircle(p.xz, r, rt);
+    float circum = 2.0*PI*r;
+    
+    vec3 ring_uvw = vec3(rt * circum, p.y, d);
+    d = sdRope(ring_uvw, r, circum, 10.0, 0.02);
+
+    return d;
+}`
+                    }
+                </SyntaxHighlighter>
+            </div>
+            <h3 id="overshooting" className="raleway-title">
+                Overshooting in Warping
             </h3>
             <h3 id="repetition" className="raleway-title">
                 Domain Repetition
