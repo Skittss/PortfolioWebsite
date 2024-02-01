@@ -20,6 +20,8 @@ import ropeSdf0Coil from '../../content/projects/Shimenawa/rope_sdf_no_coil.png'
 import ropeSdf1Coil from '../../content/projects/Shimenawa/rope_sdf_one_coil.png'
 import ropeSdf2Coil from '../../content/projects/Shimenawa/rope_sdf_two_coil.png'
 import ropeSdfComplete from '../../content/projects/Shimenawa/rope_sdf_complete.png'
+import ropeOvershoot from '../../content/projects/Shimenawa/overshooting.png'
+import ropeNormals from '../../content/projects/Shimenawa/normals.png'
 
 import 'katex/dist/katex.min.css'
 import Latex from 'react-latex-next';
@@ -74,9 +76,9 @@ const Home = () => {
                 Renders
             </h1>
             <Carousel autoplay autoplaySpeed={5000} effect="fade" style={{margin: "0 auto", paddingBottom: "20px", width: "100%"}}>
-                <AnnotatedImage preview={false} src={day} annotation={"Day"}/>
-                <AnnotatedImage preview={false} src={sunset} annotation={"Sunset"}/>
-                <AnnotatedImage preview={false} src={night} annotation={"Night"} />
+                <AnnotatedImage src={day} annotation={"Day"}/>
+                <AnnotatedImage src={sunset} annotation={"Sunset"}/>
+                <AnnotatedImage src={night} annotation={"Night"} />
             </Carousel>
             To see the full shader in action, visit it on shadertoy <a href={"https://www.shadertoy.com/view/clVyzW"} target='_blank'>here</a>, or through this embed (if your browser can load it, compile time is quite long):
             <br/><br/>
@@ -389,7 +391,7 @@ float sdRope(vec3 p, in float braid_r, in float l, in float rot_freq, in float r
             </p>
             <br/>
             <p>
-                <b><u>3. Looping into a torus</u></b>
+                <b><u>4. Looping into a torus</u></b>
                 <br/><br/>
                 Looping the straight coil into a torus shape can be done in a few ways, but my approach was to use a special kind of domain transformation involving conversion 
                 between two local coordinate spaces.
@@ -494,15 +496,182 @@ float sdRope(vec3 p, in float braid_r, in float l) {
                     }
                 </SyntaxHighlighter>
             </div>
+            <br/>
             <h3 id="overshooting" className="raleway-title">
                 Overshooting in Warping
             </h3>
+            <p>
+                If you implement the code above, you might notice that it doesn't quite look right. Certain parts of the object may appear to clip into nothingness - what's happening here?
+            </p>
+            <AnnotatedImage src={ropeOvershoot} annotation={"What's happening to my SDF?!"}/>
+            <br/>
+            <p>
+                Let's look at what happens to our SDF when we warp the domain to see what's going on:
+            </p>
+            <div style={{width: "100%", maxWidth: "540px", margin: "0 auto", aspectRatio: "3/2"}}>
+                <iframe width="100%" height="100%" frameborder="0" src="https://www.shadertoy.com/embed/4fSXDV?gui=true&t=10&paused=true&muted=false" allowfullscreen></iframe>
+            </div>
+            <br/>
+            <p>
+                We can see that in some cases (the peaks of the sin wave) the warped SDF ends up closer to the sample point than our distance describes. The result 
+                when we apply this to ray-marching is <i>overshooting</i> - we end up missing the surface entirely because we have <b>overestimated the distance</b> to it.
+            </p>
+            <p>
+                The simplest solution to overshooting is to simply multiply the SDF distance by a constant factor:
+            </p>
+            <div className="code-snippet" style={{width: "100%"}}>
+                <SyntaxHighlighter 
+                    language="cpp" 
+                    showLineNumbers={true}
+                    style={dracula}
+                    startingLineNumber={0}
+                >
+                    {
+`
+float sdRope(vec3 p, in float braid_r, in float l) {
+    ...
+
+    d *= 0.8; // const for fixing overshooting
+    return d;
+}`
+                    }
+                </SyntaxHighlighter>
+            </div>
+            <p>
+                This ensures our distance is conservative so no overshooting can occur. The exact factor you need to use depends on how extreme the warp is.
+            </p>
+            <p>
+                We must be mindful of the effect this has on performance, however. Underestimating the distance to an object will make us perform more raymarching steps
+                than normal when we render it. For example, if we approximate the distance as half of what it should be, we will end up reaching the surface in twice the amount of raymarching steps.
+                This solves the overshooting problem, but this 2x operation multiplier can slow the program down and be the difference between a useable one, and an unusable one in the context of real-time rendering.
+            </p>
+            <p>
+                Therefore, we should keep this constant <b>as large as possible</b> and <b>apply it on an individual basis to only warped objects which have overshooting problems</b>, not the entire raymarching loop.
+            </p>
+            <p>
+                Additionally, a lot of the time overshooting problems will be unnoticeable or nonexistant if the warp is small, so we should use this fix with prudence.
+            </p>
+            <br/>
             <h3 id="repetition" className="raleway-title">
                 Domain Repetition
             </h3>
+            <p>
+                TODO. For now, check out <a href="https://iquilezles.org/articles/sdfrepetition/" target='_blank'>this article</a>. :)
+            </p>
+            <br/>
             <h3 id="normals" className="raleway-title">
                 Calculating Normals of Implicit Geometry
             </h3>
+            <p>
+                There are a couple different ways to approach calculating normals for implicit geometry. The one that I (and many others on shadertoy) use is a variant of central differences which samples from a tetrahedron.
+            </p>
+            <p>
+                The basic idea of central differences is analogous to how we calculate a vertex normal - we look at the surfaces adjacent to the sample point to determine the derrivative (which is the normal). 
+            </p>
+            <br/>
+            <p>
+                Mathematically, we calculate the partial derivatives in each primary axis to get the derivative of the surface:
+            </p>
+            <div style={{paddingLeft: "3em", paddingRight: "3em", textAlign: "center"}}>
+                <Latex>{`$\\displaystyle \\nabla f(p) = \\bigg\\lbrace{\\partial f(p)\\over \\partial x}, {\\partial f(p)\\over \\partial y}, {\\partial f(p)\\over \\partial z}\\bigg\\rbrace$`}</Latex>
+            </div>
+            <br />
+            <p>
+                Each partial derivative is then approximated via central difference, where <Latex>{`$h$`}</Latex> defines our interval size (smaller is more accurate):
+            </p>
+            <div style={{paddingLeft: "3em", paddingRight: "3em", textAlign: "center"}}>
+                <Latex>{`$\\displaystyle {\\partial f(p)\\over \\partial x} \\approx \\frac{f(p + \\lbrace h, 0, 0\\rbrace) - f(p - \\lbrace h, 0, 0\\rbrace)}{2h}$`}</Latex>
+            </div>
+            <br/>
+            <div style={{paddingLeft: "3em", paddingRight: "3em", textAlign: "center"}}>
+                <Latex>{`$\\displaystyle {\\partial f(p)\\over \\partial y} \\approx \\frac{f(p + \\lbrace 0, h, 0\\rbrace) - f(p - \\lbrace 0, h, 0\\rbrace)}{2h}$`}</Latex>
+            </div>
+            <br/>
+            <div style={{paddingLeft: "3em", paddingRight: "3em", textAlign: "center"}}>
+                <Latex>{`$\\displaystyle {\\partial f(p)\\over \\partial z} \\approx \\frac{f(p + \\lbrace 0, 0, h\\rbrace) - f(p - \\lbrace 0, 0, h\\rbrace)}{2h}$`}</Latex>
+            </div>
+            <br />
+            <p>
+                Central difference is generally preferred for accuracy over the forward difference which you were probably taught in calculus class <Latex>{`$\\big(f(p + \\lbrace h, 0, 0\\rbrace) - f(p) / h\\big)$`}</Latex> as 
+                it is not directionally biased.
+            </p>
+            <p>
+                It is worth noting though that we end up doing 6 evaluations of <Latex>{`$f(p)$`}</Latex> for central differences, whereas the forward difference needs only 4. This is undesirable when <Latex>{`$f$`}</Latex> is our expensive SDF.
+            </p>
+            <br/>
+            <p>
+                By sampling points on a tetrahedron, we can get the best of both worlds: central difference accuracy with only 4 <Latex>{`$f$`}</Latex> evaluations.
+            </p>
+            <p>
+                The vertices of the tetrahedron are given by: 
+            </p>
+            <div style={{paddingLeft: "3em", paddingRight: "3em", textAlign: "center"}}>
+                <Latex>{`$k_0=\\begin{Bmatrix}\\phantom{-}1 & -1 & -1\\end{Bmatrix}\\\\ k_1=\\begin{Bmatrix}-1 & -1 & \\phantom{-}1\\end{Bmatrix} \\\\ k_2=\\begin{Bmatrix}\\phantom{-}1 & -1 & -1\\end{Bmatrix} \\\\ k_3=\\begin{Bmatrix}\\phantom{-}1 & \\phantom{-}1 & \\phantom{-}1\\end{Bmatrix}$`}</Latex>
+            </div>
+            <br/>
+            <p>
+                The property that none of these vertices lie directly on a primary axis allows us to sum the function at each vertex to give the derivative via the following derivation:
+            </p>
+            <div style={{margin: "0 auto", width: "fit-content", paddingLeft: "3em", paddingRight: "3em", textAlign: "left"}}>
+                <Latex>{`$
+                    \\displaystyle \\phantom{\\iff}m=\\sum_ik_if(p+hk_i)\\\\
+                    \\iff m=\\sum_ik_i(f(p+hk_i) - f(p))\\\\
+                    \\iff m=\\sum_ik_i\\nabla_{k_i}f(p)\\\\
+                    \\iff m=\\sum_ik_i(k_i\\cdot\\nabla f(p))\\\\
+                    \\iff m=\\nabla f(p)\\cdot\\bigg\\lbrace\\sum_i k_{i_x}k_i,\\ \\sum_i k_{i_y}k_i,\\ \\sum_i k_{i_z}k_i\\bigg\\rbrace\\\\
+                    \\iff m= 4\\ \\nabla f(p)\\\\~\\\\
+                    \\ \\implies \\bar n = {m\\over |m|}
+                $`}</Latex>
+            </div>
+            <br/>
+            <p>
+                I highly suggest reading <a href="http://iquilezles.org/articles/normalsSDF/" target="_blank">this article from Inigo Quilez</a> for a more thorough explanation of this derivation.
+            </p>
+            <br/>
+            <p>
+                We don't have to understand this whole derivation to put the resulting observation into code:
+            </p>
+            <div className="code-snippet" style={{width: "100%"}}>
+                <SyntaxHighlighter 
+                    language="cpp" 
+                    showLineNumbers={true}
+                    style={dracula}
+                    startingLineNumber={0}
+                >
+                    {
+`
+vec3 calcNormal(vec3 p) {
+    const float h = 1e-5;
+    const vec2 k = vec2(1, -1);
+    return normalize( k.xyy * map(p + k.xyy) + 
+                      k.yyx * map(p + k.yyx) +
+                      k.yxy * map(p + k.yxy) +
+                      k.xxx * map(p + k.xxx) );
+}`
+                    }
+                </SyntaxHighlighter>
+            </div>
+            <p>
+                And just like that, we have normals!
+            </p>
+            <AnnotatedImage src={ropeNormals} annotation={"Visualisation of normals generated for an SDF using tetrahedron sampling."}/>
+            <br/>
+            <p>
+                Though the above code works perfectly fine mathematically, you may encounter examples which look different yet identical at runtime. 
+            </p>
+            <p>
+                The reason for this is due to how certain compilers deal with the above code. Particularly for WebGL, the compiler may decide to inline the map function four times 
+                to boost runtime performance, but in doing so, may dramatically increase the compile time, or may run over the allowed instruction size on the platform itself.
+            </p>
+            <p>
+                Some solutions (particularly on shadertoy) trick the compiler into leaving the function be by changing the normal calculation into a loop. The loop must depend on a value which is unknown at runtime to prevent the loop from
+                being unwound and causing a similar problem to before.
+            </p>
+            <br/>
+            <p>
+                Now with normals calculated, we have all the geometric information we need to move on to lighting! :)
+            </p>
+            <br/>
             <h3 id="shadows" className="raleway-title">
                 Fast Soft Shadows
             </h3>
