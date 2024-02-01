@@ -1,6 +1,6 @@
 import React from 'react';
 import { HashLink } from 'react-router-hash-link';
-import { Row, Col, Divider, Image, Carousel } from 'antd';
+import { Row, Col, Divider, Image, Carousel, Grid } from 'antd';
 
 import shimenawa from '../../content/projects/Shimenawa/Shimenawa_Night_1080p.mp4'
 import day from '../../content/projects/Shimenawa/day_thumb.png'
@@ -34,7 +34,11 @@ import ProjectPage from '../projectPage';
 import AnnotatedImage from '../annotatedImage';
 import AnnotatedVideo from '../annotatedVideo';
 
+const { useBreakpoint } = Grid;
+
 const Home = () => {
+    const screens = useBreakpoint();
+
     return (
     
         <ProjectPage title={Meta.title} thumb={Meta.teaser} githubURL={"https://github.com/Skittss/Shimenawa"} projectLink={"https://www.shadertoy.com/view/clVyzW"}>
@@ -572,13 +576,14 @@ float sdRope(vec3 p, in float braid_r, in float l) {
             <p>
                 Mathematically, we calculate the partial derivatives in each primary axis to get the derivative of the surface:
             </p>
-            <div style={{paddingLeft: "3em", paddingRight: "3em", textAlign: "center"}}>
+            <div style={{fontSize: screens.sm ? "inherit" : 12, paddingLeft: "3em", paddingRight: "3em", textAlign: "center"}}>
                 <Latex>{`$\\displaystyle \\nabla f(p) = \\bigg\\lbrace{\\partial f(p)\\over \\partial x}, {\\partial f(p)\\over \\partial y}, {\\partial f(p)\\over \\partial z}\\bigg\\rbrace$`}</Latex>
             </div>
             <br />
             <p>
                 Each partial derivative is then approximated via central difference, where <Latex>{`$h$`}</Latex> defines our interval size (smaller is more accurate):
             </p>
+            <div style={{fontSize: screens.sm ? "inherit" : 12 }}>
             <div style={{paddingLeft: "3em", paddingRight: "3em", textAlign: "center"}}>
                 <Latex>{`$\\displaystyle {\\partial f(p)\\over \\partial x} \\approx \\frac{f(p + \\lbrace h, 0, 0\\rbrace) - f(p - \\lbrace h, 0, 0\\rbrace)}{2h}$`}</Latex>
             </div>
@@ -589,6 +594,7 @@ float sdRope(vec3 p, in float braid_r, in float l) {
             <br/>
             <div style={{paddingLeft: "3em", paddingRight: "3em", textAlign: "center"}}>
                 <Latex>{`$\\displaystyle {\\partial f(p)\\over \\partial z} \\approx \\frac{f(p + \\lbrace 0, 0, h\\rbrace) - f(p - \\lbrace 0, 0, h\\rbrace)}{2h}$`}</Latex>
+            </div>
             </div>
             <br />
             <p>
@@ -612,7 +618,7 @@ float sdRope(vec3 p, in float braid_r, in float l) {
             <p>
                 The property that none of these vertices lie directly on a primary axis allows us to sum the function at each vertex to give the derivative via the following derivation:
             </p>
-            <div style={{margin: "0 auto", width: "fit-content", paddingLeft: "3em", paddingRight: "3em", textAlign: "left"}}>
+            <div style={{fontSize: screens.sm ? "inherit" : 10, margin: "0 auto", width: "fit-content", paddingLeft: "3em", paddingRight: "3em", textAlign: "left"}}>
                 <Latex>{`$
                     \\displaystyle \\phantom{\\iff}m=\\sum_ik_if(p+hk_i)\\\\
                     \\iff m=\\sum_ik_i(f(p+hk_i) - f(p))\\\\
