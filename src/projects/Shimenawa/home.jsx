@@ -23,6 +23,12 @@ import ropeSdfComplete from '../../content/projects/Shimenawa/rope_sdf_complete.
 import ropeOvershoot from '../../content/projects/Shimenawa/overshooting.png'
 import ropeNormals from '../../content/projects/Shimenawa/normals.png'
 
+import sphereDomainRep from '../../content/projects/Shimenawa/sphere_domain_rep.png'
+import sphereDomainRepRad from '../../content/projects/Shimenawa/sphere_domain_rep_rad.png'
+import domainRepShimenawa from '../../content/projects/Shimenawa/domain_rep_shimenawa.png'
+import domainRepBridges from '../../content/projects/Shimenawa/domain_rep_bridges.png'
+import domainRepPillars from '../../content/projects/Shimenawa/domain_rep_pillars.png'
+
 import 'katex/dist/katex.min.css'
 import Latex from 'react-latex-next';
 
@@ -382,8 +388,8 @@ float sdRopeCoil(vec3 p, in float braid_r, in float l, in float rot_freq, in flo
 float sdRope(vec3 p, in float braid_r, in float l, in float rot_freq, in float rot_offset)
 {
     float d = 1e10; // initialise distance;
-    d = min(d, sdRopeCoil(braid_r, l, rot_freq,  rot_offset)); // Top coil
-    d = min(d, sdRopeCoil(braid_r, l, rot_freq, -rot_offset)); // Bot coil
+    d = min(d, sdRopeCoil(p, braid_r, l, rot_freq,  rot_offset)); // Top coil
+    d = min(d, sdRopeCoil(p, braid_r, l, rot_freq, -rot_offset)); // Bot coil
 
     return d;
 }`
@@ -557,10 +563,211 @@ float sdRope(vec3 p, in float braid_r, in float l) {
             </p>
             <br/>
             <h3 id="repetition" className="raleway-title">
-                Domain Repetition
+                Domain Repetition and Scaling Scenes
             </h3>
             <p>
-                TODO. For now, check out <a href="https://iquilezles.org/articles/sdfrepetition/" target='_blank'>this article</a>. :)
+                We now have a way to modify basic primitives with transformations and warping, and are able to fix them when they break.
+            </p>
+            <p>
+                This is great - we can start to make some more complex scenes with lots of geometry by re-calling our SDF functions at different points in space and performing a union with <Latex>{`$\\min()$`}</Latex>. However, when we do this, we will quickly notice that it runs quite poorly.
+                The reasons for this are at least twofold:
+            </p>
+            <div style={{paddingLeft: "2vw", paddingRight: "2vw"}}>
+                <Row className="project-style-cont" style={{display: "flex"}}>
+                    <Col className="project-style-cont"><b>1. </b> &nbsp;&nbsp;&nbsp;</Col>
+                    <Col className="project-style-cont" flex="1vw">
+                        Our scene <Latex>{`$\\text{map}()$`}</Latex> function becomes overly coupled between lots of unrelated geometry.
+                    </Col>
+                </Row>
+                <br/>
+                <Row className="project-style-cont" style={{display: "flex"}}>
+                    <Col className="project-style-cont"><b>2. </b> &nbsp;&nbsp;&nbsp;</Col>
+                    <Col className="project-style-cont" flex="1vw">
+                        Lots of repeated calls to the same expensive SDF function.
+                    </Col>
+                </Row>
+                <br/>
+            </div>
+            <br/>
+            <p>
+                First, let's address 1. What do I mean by this?
+            </p>
+            <p>
+                When we lump all of our scene geometry into one big SDF - <Latex>{`$\\text{map}()$`}</Latex>, we are forced into evaluating the SDF for our entire scene even when we are only considering
+                calculations for a single object. This is especially notable when we add expensive lighting calculations into the mix (as we will encounter in the next couple of sections). 
+            </p>
+            <p>
+                Think about casting shadows on objects for example; we currently would be forced to evaluate the effect of <i>all</i> objects casting a shadow on the object we're actually
+                considering at a point <Latex>{`$p$`}</Latex>. While this is an accurate calculation, it is undoubtedly slow - the complexity of lighting our scene will scale polynomially with
+                respect to the number of objects in it. 
+            </p>
+            <p>       
+                Instead, if we know that certain objects can <i>never interact</i>, or the effect of this being the case is unnoticeable, we should separate them
+                into different functions so we have more control over what SDFs we evaluate for certain calculations. This in turn allows us to scale up our scene without hemorrhaging performance.
+            </p>
+            <p>
+                A simple separation we can make is between <b>background and foreground</b>. We can get away with having less detail in a background, so it makes sense to not couple it with calculations for the 
+                foreground, which tend to be much more expensive. 
+            </p>
+            <p>
+                If you look at the code for Shimenawa, I split the SDFs, normal and lighting calculations, and even the raymarching itself into
+                separate <Latex>{`$\\text{...Foreground}()$`}</Latex> and <Latex>{`$\\text{...Background}()$`}</Latex> functions to save on performance.
+            </p>
+            <br/>
+            <p>
+                We've now found a better way of dealing with point no. 1, so now on to 2. 
+            </p>
+            <p>
+                Currently (as we've seen with our rope example) if we want to duplicate an object, we simply make another call to the SDF:
+            </p>
+            <p>
+            <div className="code-snippet" style={{width: "100%"}}>
+                <SyntaxHighlighter 
+                    language="cpp" 
+                    showLineNumbers={true}
+                    style={dracula}
+                    startingLineNumber={0}
+                >
+                    {
+                    `
+float sdRope(vec3 p, in float braid_r, in float l, in float rot_freq, in float rot_offset)
+{
+    float d = 1e10; // initialise distance;
+    d = min(d, sdRopeCoil(p, braid_r, l, rot_freq,  rot_offset)); // Top coil
+    d = min(d, sdRopeCoil(p, braid_r, l, rot_freq, -rot_offset)); // Bot coil
+
+    return d;
+}`
+                    }
+                </SyntaxHighlighter>
+            </div>
+            </p>
+            <p>
+                But isn't this sort of wasteful? The calls to the SDF are <i>exactly the same</i>, so wouldn't it be great if there were some way of condensing this into a single call to increase performance?
+            </p>
+            <p>
+                Enter domain repetition! Domain repetition refers to dividing our infinite spatial domain into repetitions of finite space. We first map a point in infinite space into a finite local space, then evaluate the
+                SDF. So long as our SDFs lie within the bounds of the finite spaces, we have gotten away with rendering as many duplications of an object as we want with zero additional SDF overhead.
+            </p>
+            <p>
+                It is worth noting that although we eliminate SDF overhead, we still make the render more expensive, but in an efficient way. We still have to do more material / lighting calculations as we render objects for more pixels than before. No free lunch, eh?
+            </p>
+            <br/>
+            <p>
+                This may seem a little hand-wavey at first, so let's first apply this to our example with the rope, noting that our duplicated object is simply a reflection in the xz plane:
+            </p>
+            <div className="code-snippet" style={{width: "100%"}}>
+                <SyntaxHighlighter 
+                    language="cpp" 
+                    showLineNumbers={true}
+                    style={dracula}
+                    startingLineNumber={0}
+                >
+                    {
+                    `
+float sdRope(vec3 p, in float braid_r, in float l, in float rot_freq, in float rot_offset)
+{
+    float d = 1e10; // initialise distance;
+    p.y = abs(p.y) - 0.02; // domain repetition: reflection in xz
+    d = min(d, sdRopeCoil(p, braid_r, l, rot_freq,  rot_offset));
+
+    return d;
+}`
+                    }
+                </SyntaxHighlighter>
+            </div>
+            <p>
+                Note that we have to offset the SDF in y in order for it to be duplicated in entirety. We have effectively partitioned our input space into two (reflected) partitions along the XZ plane.
+            </p>
+            <br/>
+            <p>
+                We can partition our space for repetition in any arbitrary way we like. For example, by partitioning space with a 2D grid:
+            </p>
+            <div className="code-snippet" style={{width: "100%"}}>
+                <SyntaxHighlighter 
+                    language="cpp" 
+                    showLineNumbers={true}
+                    style={dracula}
+                    startingLineNumber={0}
+                >
+                    {
+                    `
+float sdDomainRepGrid(vec3 p)
+{
+    float d = 1e10; // initialise distance;
+
+    const vec2 spacing = vec2(145.0); // grid spacing
+    vec2 id = round(p.xz / spacing); // index of the current tile p is in
+
+    vec2 q = p; // local grid space coord
+
+    // Have a quick think about why the following transform works
+    //    (Hint: SDFs are evaluated at the world-space origin)
+    q.xz = p.xz - spacing * id; // transform to local grid space
+
+    d = sdSphere(q, 2.5); // render spheres - only one SDF call!
+
+    return d;
+}`
+                    }
+                </SyntaxHighlighter>
+            </div>
+            <AnnotatedImage src={sphereDomainRep} annotation={"Infinite domain repetition of spheres via a grid"}/>
+            <br/><br/>
+            <p>
+                Another useful example is a radial repetition:
+            </p>
+            <div className="code-snippet" style={{width: "100%"}}>
+                <SyntaxHighlighter 
+                    language="cpp" 
+                    showLineNumbers={true}
+                    style={dracula}
+                    startingLineNumber={0}
+                >
+                    {
+                    `
+#define TAU 6.28318533
+float sdDomainRepRad(vec3 p)
+{
+    float d = 1e10; // initialise distance;
+
+    vec3 q = p;
+    const float rep_angle = TAU / 7.0; // angle of repetition sector (7 sectors)
+    float sector round(atan(p.z, p.x) / rep_angle);
+    float rot_angle = sector * rep_angle;
+    q.xz *= rot(angrot);
+
+    // Have a quick think about why this offset is necessary
+    q.x -= 1.0; // offset the SDF from the origin
+
+    d = sdSphere(q, 0.05);
+
+    return d;
+}`
+                    }
+                </SyntaxHighlighter>
+            </div>
+            <AnnotatedImage src={sphereDomainRepRad} annotation={"Radial domain repetition of spheres"}/>
+            <br/><br/>
+            <p>
+                We've really only scratched the surface of what domain repetition is able to do with these two examples, but rest assured it is a powerful tool for making the illusion that a scene is
+                complex when it is in fact rather simple and inexpensive.
+            </p>
+            <p>
+                Let's look at a few examples of how I applied domain repetition in Shimenawa:
+            </p>
+            <Carousel autoplay autoplaySpeed={5000} effect="fade" style={{margin: "0 auto", paddingBottom: "20px", width: "100%"}}>
+                <AnnotatedImage src={domainRepShimenawa} annotation={"Rotational repetition used to duplicate the hanging ropes and paper."}/>
+                <AnnotatedImage src={domainRepBridges} annotation={"1D grid repetition used to duplicate bridge segments into a single continuous bridge."}/>
+                <AnnotatedImage src={domainRepPillars} annotation={"2D grid repetition and warping used to arrange duplicated pillar segments in a pseudo-random fashion."} />
+            </Carousel>
+            <p>
+                As well as these examples, I used domain repetition extensively in modelling to make complex yet inexpensive implicit geometry.
+            </p>
+            <p>
+                I highly recommend <a href="https://iquilezles.org/articles/sdfrepetition/" target="_blank">Inigo Quilez' resources on domain repetition</a> if you are interested in using domain repetition for yourself.
+                There are lots of different ways to apply it - for example, think about how you may limit our infinite grid example to a <i>finite</i> grid. All manner of these examples are explained thoroughly in
+                the aforementioned article.
             </p>
             <br/>
             <h3 id="normals" className="raleway-title">
@@ -667,7 +874,7 @@ vec3 calcNormal(vec3 p) {
             </p>
             <p>
                 The reason for this is due to how certain compilers deal with the above code. Particularly for WebGL, the compiler may decide to inline the map function four times 
-                to boost runtime performance, but in doing so, may dramatically increase the compile time, or may run over the allowed instruction size on the platform itself.
+                in an attempt to boost runtime performance, but in doing so, may dramatically increase the compile time, or may run over the allowed instruction size on the platform itself.
             </p>
             <p>
                 Some solutions (particularly on shadertoy) trick the compiler into leaving the function be by changing the normal calculation into a loop. The loop must depend on a value which is unknown at runtime to prevent the loop from
@@ -684,9 +891,6 @@ vec3 calcNormal(vec3 p) {
             <h3 id="ao" className="raleway-title">
                 Ambient Occlusion
             </h3>
-            <h3 id="sss" className="raleway-title">
-                Quick and Easy Sub-surface Scattering
-            </h3>
             <h3 id="accel" className="raleway-title">
                 Acceleration Structures (Bounding Volumes, LOD, and Culling)
             </h3>
@@ -695,7 +899,9 @@ vec3 calcNormal(vec3 p) {
             <h2 id="materials" className="raleway-title">
                 Basic Materials and Lighting
             </h2>
-
+            <h3 id="sss" className="raleway-title">
+                Quick and Easy Sub-surface Scattering
+            </h3>
             <br/>
             <h2 id="volumetrics" className="raleway-title">
                 Volumetric Cloud Rendering
