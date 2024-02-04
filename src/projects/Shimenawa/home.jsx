@@ -29,6 +29,9 @@ import domainRepShimenawa from '../../content/projects/Shimenawa/domain_rep_shim
 import domainRepBridges from '../../content/projects/Shimenawa/domain_rep_bridges.png'
 import domainRepPillars from '../../content/projects/Shimenawa/domain_rep_pillars.png'
 
+import hardShadows from '../../content/projects/Shimenawa/hard_shadows.png'
+import softShadows from '../../content/projects/Shimenawa/soft_shadows.png'
+
 import 'katex/dist/katex.min.css'
 import Latex from 'react-latex-next';
 
@@ -135,7 +138,7 @@ void mainImage(out vec4 fragColror, in vec2 fragCoord) {
     vec2 rd = getCameraRay(fragCoord);
     
     float t = 0.0;
-    for (int i=0; i<MAX_STEPS ) {
+    for (int i=0; i<MAX_STEPS; i++) {
         float p = ro + t * rd; // a point along the ray
         float d = map(p); // dist to surface
         if (d < EPSILON) break;
@@ -888,6 +891,138 @@ vec3 calcNormal(vec3 p) {
             <h3 id="shadows" className="raleway-title">
                 Fast Soft Shadows
             </h3>
+            <p>
+                The calculations most integral to grounding our scene revolve around the transportation of light. Though our use of light
+                does not have to be physically correct, it is usually a important to <i>base our lighting from physical principles</i>. This makes our calculations more well defined and, importantly, lets us 
+                avoid the "uncanny valley" where things 'just don't look quite right'.
+            </p>
+            <p>
+                In this section and the next we will look at methods to build up a simple lightscape. We will focus at this stage on splitting our image into occluded / non-occluded parts through use of shadow.
+            </p>
+            <p>
+                To preface, light transportation is more complicated than a simple occlusion pass, and we will deliberately be leaving out specific light phenomena like bounce lighting (indirect illumination), 
+                and subsurface scattering here to revisit later mostly in the interest of performance.
+            </p>
+            <br/><br/>
+            <p>
+                The most basic approach we will begin with is by casting a shadow similar to how it is done in ray tracing. That is, we cast a ray from an objects surface in the direction of light, evaluating the colour as 
+                shadow if we intersect any objects on the way. 
+            </p>
+            <p>
+                The obvious way to implement this is with a secondary ray-marching loop:
+            </p>
+            <div className="code-snippet" style={{width: "100%"}}>
+                <SyntaxHighlighter 
+                    language="cpp" 
+                    showLineNumbers={true}
+                    style={dracula}
+                    startingLineNumber={0}
+                >
+                    {
+`
+#define MAX_SHADOW_STEPS 256
+void calcShadow(in vec3 ro, in vec3 rd) {
+
+    // Start with a small t offset to avoid reintersecting the current surface
+    float t = 0.01;
+
+    // No shadow unless an intersection happens during the raymarch
+    //   Note: Shadow is a multiplier on colour, so 1.0 = no shadow, 0.0 = full shadow.
+    float shadow = 1.0;
+
+    for (int i=0; i<MAX_SHADOW_STEPS; i++) {
+        float p = ro + t * rd;
+        float d = map(p);
+
+        if (d < EPSILON) { shadow = 0.0; break; };
+
+        t += d;
+    }
+
+    return shadow;
+}`
+                    }
+                </SyntaxHighlighter>
+            </div>
+            <AnnotatedImage src={hardShadows} annotation={"Hard shadows via a secondary ray-march"}/>
+            <br/>
+            <p>
+                This is a good starting point, but is not the look that we're going for. We have reduced shadowing to a binary case, when real shadows almost never look this sharp unless we are
+                in very strong (almost always unnatural) lighting conditions. Not to say that this way of shadowing is 'incorrect' - we could definitely use it for a comic style 
+                or in <a href="https://en.wikipedia.org/wiki/Cel_shading" target="_blank">cel shading</a>.
+            </p>
+            <br/>
+            <p>
+                For more realistic shadows, we must observe that shadows have regions of partial occlusion - penumbra - where our shadow multiplier will be somewhere between zero and one.
+                This is due to light sources having a physical size, not just being some abstract and infintessimally small point. From a given perspective, a proportion of the light source may
+                be occluded, so we should model this also.
+            </p>
+            <p>
+                SDFs become very beneficial in doing so. What would normally take ray-tracing many individual samples to compute, we can approximate by observing that at any point along our light ray if we are close to hitting an object,
+                then we are likely in the penumbra. We can also surmise that the amount of occlusion is inversely proportional to the distance to the nearest intersection, which is exactly what the SDF describes. 
+                Lastly we can assume that the distance along the light ray is proportional to the occlusion due to the effects of parallax.
+            </p>
+            <p>
+                From this, we can come up with the following equation:
+            </p>
+            <div style={{margin: "0 auto", width: "fit-content", paddingLeft: "3em", paddingRight: "3em", textAlign: "left"}}>
+                <Latex>{`$\\displaystyle \\phantom{\\iff} \\text{occ}\\propto {t \\over d}\\\\~\\\\ \\iff\\text{occ}= k \\cdot {t \\over d}$`}</Latex>
+            </div>
+            <br/>
+            <p>
+                Then modify our existing shadow calculation to use it:
+            </p>
+            <div className="code-snippet" style={{width: "100%"}}>
+                <SyntaxHighlighter 
+                    language="cpp" 
+                    showLineNumbers={true}
+                    style={dracula}
+                    startingLineNumber={0}
+                >
+                    {
+`
+#define MAX_SHADOW_STEPS 256
+void calcShadow(in vec3 ro, in vec3 rd, float k) {
+
+    float t = 0.01;
+
+    // Again, default case is no shadow
+    //  Note: shadow = 1 - occ so it can be used as a multiplier
+    float shadow = 1.0;
+
+    for (int i=0; i<MAX_SHADOW_STEPS; i++) {
+        float p = ro + t * rd;
+        float d = map(p);
+        
+        // early exit for full shadow
+        if (d < EPSILON) return 0.0;
+
+        // Note: flip occ calculation as shadow is inv. proportional to occ.
+        shadow = min(shadow, k * d / t)
+
+        t += d;
+    }
+
+    return shadow;
+}`
+                    }
+                </SyntaxHighlighter>
+            </div>
+            <AnnotatedImage src={softShadows} annotation={"Soft shadows, k = 2.0"}/>
+            <br/>
+            <p>
+                For Shimenawa, I chose to make the foreground shadows softer than those in the background to mimic the light scattering properties you may see from a rope material. While the sunlight remains the same for the entire 
+                scene, a rope would internally scatter the light somewhat due to gaps and subsurface scattering, leading to an overall more diffuse look. Instead of modelling this complex scattering, just increasing the shadow softness is enough to
+                get the point across.
+            </p>
+            <br/>
+            <p>
+                In cases, there is minor artifacting with the approach above. If this becomes an issue, I would recommend looking at the following fix (it is worth noting that this fix is more expensive though).
+            </p>
+            <div style={{width: "100%", maxWidth: "540px", margin: "0 auto", aspectRatio: "3/2"}}>
+                <iframe width="100%" height="100%" frameborder="0" src="https://www.shadertoy.com/embed/lsKcDD?gui=true&t=10&paused=true&muted=false" allowfullscreen></iframe>
+            </div>
+            <br/>
             <h3 id="ao" className="raleway-title">
                 Ambient Occlusion
             </h3>
