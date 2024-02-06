@@ -31,6 +31,9 @@ import domainRepPillars from '../../content/projects/Shimenawa/domain_rep_pillar
 
 import hardShadows from '../../content/projects/Shimenawa/hard_shadows.png'
 import softShadows from '../../content/projects/Shimenawa/soft_shadows.png'
+import noAO from '../../content/projects/Shimenawa/no-ao.png'
+import noAOlambertian from '../../content/projects/Shimenawa/no-ao-lambertian.png'
+import aoLambertian from '../../content/projects/Shimenawa/ao-lambertian.png'
 
 import 'katex/dist/katex.min.css'
 import Latex from 'react-latex-next';
@@ -60,7 +63,7 @@ const Home = () => {
                 </video>
             </div>
             <p>
-            'Shimenawa' is a non-photorealistically-rendered scene utilising ray-marching to render complex implicit geometry and volumetrics.
+            'Shimenawa' is a non-photorealistically-rendered scene utilising ray marching to render complex implicit geometry and volumetrics.
             This means that everything you are looking at above is defined mathematically, and completely procedural!
             </p>
             <p>
@@ -103,15 +106,9 @@ const Home = () => {
             <h1 id="techniques" className="raleway-title">
                 Techniques
             </h1>
-            <p>
-                The algorithm at the core of this shader is ray marching, more specifically, sphere tracing.
-            </p>
-            <p>
-                This section is currently being written. Please come back later!
-            </p>
             <br/>
             <h2 id="ray-marching" className="raleway-title">
-                Ray-marching
+                Ray Marching
             </h2>
             <p>
                 The algorithm at the core of this shader is sphere tracing, a simple yet versatile method when combined with Signed Distance Functions (SDFs). SDFs will be touched
@@ -139,7 +136,7 @@ void mainImage(out vec4 fragColror, in vec2 fragCoord) {
     
     float t = 0.0;
     for (int i=0; i<MAX_STEPS; i++) {
-        float p = ro + t * rd; // a point along the ray
+        vec3 p = ro + t * rd; // a point along the ray
         float d = map(p); // dist to surface
         if (d < EPSILON) break;
         t += d;
@@ -527,7 +524,7 @@ float sdRope(vec3 p, in float braid_r, in float l) {
             <br/>
             <p>
                 We can see that in some cases (the peaks of the sin wave) the warped SDF ends up closer to the sample point than our distance describes. The result 
-                when we apply this to ray-marching is <i>overshooting</i> - we end up missing the surface entirely because we have <b>overestimated the distance</b> to it.
+                when we apply this to ray marching is <i>overshooting</i> - we end up missing the surface entirely because we have <b>overestimated the distance</b> to it.
             </p>
             <p>
                 The simplest solution to overshooting is to simply multiply the SDF distance by a constant factor:
@@ -773,6 +770,178 @@ float sdDomainRepRad(vec3 p)
                 the aforementioned article.
             </p>
             <br/>
+            <h3 id="accel" className="raleway-title">
+                Acceleration Structures
+            </h3>
+            <p>
+                As our scene becomes very complex, it becomes increasingly beneficial to cut down on the work we do in rendering SDFs in certain cases.
+            </p>
+            <p>
+                For particularly expensive SDFs that take up a large proportion of our scene, we can gain a good amount of performance back by employing acceleration techniques.
+            </p>
+            <p>
+                For Shimenawa, I used three such techniques: <b>Bounding Volumes</b>, <b>Level of Detail (LOD)</b>, and <b>Culling</b>.
+            </p>
+            <br/>
+            <p>
+                <b><u>1. Bounding Volumes</u></b>
+                <br/><br/>
+                This reduces the work done to render a complex SDF by only evaluating the whole (expensive) SDF when we are marching close to it. At larger distances, we evaulate a single inexpensive SDF 
+                for a volume that bounds it. For example:
+            </p>
+            <div className="code-snippet" style={{width: "100%"}}>
+                <SyntaxHighlighter 
+                    language="cpp" 
+                    showLineNumbers={true}
+                    style={dracula}
+                    startingLineNumber={0}
+                >
+                    {
+                    `
+float sdExample(vec3 p)
+{
+    float d = 1e10;
+
+    // Evaluate bbox if > 1.0 away
+    const float bbox_eval_dist = 1.0;
+
+    // Bounding box
+    d = sdBox(p, ...); // params defined per-object to fit
+    if (d > bbox_eval_dist) return 1e10;
+
+    // Only evaluate the expensive SDF if we are close
+    return sdExampleExpensive(p);
+}`
+                    }
+                </SyntaxHighlighter>
+            </div>
+            <p>
+                It is worth noting that with ray marching, we end up doing more marching steps as we are close to objects to converge on the final distance value for a pixel. This means that 
+                we usually do a fairly high number of evaulations of the expensive SDF anyway as we march close, somewhat negating the improvements from the bounding box. Nevertheless, this is still 
+                a good improvement for very expensive geometry.
+            </p>
+            <p>
+                It is preferable to use a scaled primitive from an expensive SDF as the bounding box instead of an additional, unrelated SDF. This removes the bounding box overhead entirely, making this optimisiation 
+                a no-brainer to implement.
+            </p>
+            <br/>
+            <p>
+                Importantly, we can also apply a bounding volume to the ray marching loop itself. This is extremely effective at increasing performance as we effectively reduce the resolution of our 
+                scene into only the areas that have objects, instead of wasting work evaluating SDFs for pixels we know will have no geometry.
+            </p>
+            <p>
+                This is a very simple addition to our main ray marching loop, provided we can analytically intersect the bounding volume (in the following case, a sphere):
+            </p>
+            <div className="code-snippet" style={{width: "100%"}}>
+                <SyntaxHighlighter 
+                    language="cpp" 
+                    showLineNumbers={true}
+                    style={dracula}
+                    startingLineNumber={0}
+                >
+                    {
+                    `
+#define MAX_STEPS 128
+#define EPSILON 0.001
+#deinfe BOUNDING_SPHERE_SIZE = 10.0
+void mainImage(out vec4 fragColror, in vec2 fragCoord) {
+    vec3 ro = vec3(0.0); // camera origin
+    vec2 rd = getCameraRay(fragCoord);
+    
+    // In (x), out (y) intersection points of the bounding volume
+    vec2 bounding_isect = iSphere(ro, rd, BOUNDING_SPHERE_SIZE);
+
+    // If there is an intersection, and the volume currently visible
+    if (bounding_isect.y > 0.0) {
+        // We can even start the ray march at the edge of the bounding volume
+        float t = max(bounding_isect.x, EPSILON);
+
+        for (int i=0; i<MAX_STEPS; i++) {
+            vec3 p = ro + t * rd; // a point along the ray
+            float d = map(p); // dist to surface
+            if (d < EPSILON) break;
+            t += d;
+        }
+    }
+}`
+                    }
+                </SyntaxHighlighter>
+            </div>
+            <br/>
+            <p>
+                <b><u>2. Level of Detail (LOD)</u></b>
+                <br/><br/>
+                For extremely expensive SDFs, we may have a lot of fine detail which becomes almost impossible to discern at far distances. It therefore doesn't make sense for us to be doing
+                a lot of work for something that ultimately goes unseen. LOD refers to creating a less-expensive version of the thing we want to render, and rendering it in place of the expensive version
+                when it is sufficiently far away from the camera. In the case of SDFs, we can just remove the primitives used for fine detail and redefine it as a separate function.
+            </p>
+            <p>
+                In Shimenawa, I implemented this for the infinite bridges, as the fine details will always become aliased and unnoticeable as the bridge stretches to infinity.
+            </p>
+            <p>
+                In code, it may look something like this:
+            </p>
+            <div className="code-snippet" style={{width: "100%"}}>
+                <SyntaxHighlighter 
+                    language="cpp" 
+                    showLineNumbers={true}
+                    style={dracula}
+                    startingLineNumber={0}
+                >
+                    {
+                    `
+#define LOD_DIST 100.0
+float sdExample(vec3 p)
+{
+    // Note this assumes the camera is at the world origin.
+    bool use_lod = length(p) > LOD_DIST;
+
+    float d = use_lod ? sdExampleLOD(p): sdExampleExpensive(p);
+
+    return d;
+}`
+                    }
+                </SyntaxHighlighter>
+            </div>
+            <br/>
+            <p>
+                <b><u>3. Culling</u></b>
+                <br/><br/>
+                We can reduce work in the ray march itself by terminating it early when we know that we are never going to intersect a certain object. This can either be because we have defined it in a certain way 
+                or that we simply do not care that certain portions are not rendered. This is usually because a) we have defined our SDFs in such a way that we know the cannot exist in certain portions of space. Or b) 
+                the parts of the object which are culled are not visible anyway. 
+            </p>
+            <p>
+                We must be aware that if we forcibly terminate the raymarch, nothing will be rendered behind the object we culled, including objects from different SDFs which may exist somewhere along the ray.
+            </p>
+            <p>
+                In Shimenawa, I used culling mostly for the field of pillars, as it was extremely costly to render. The pillars are culled in the y axis below a certain height they are enveloped in clouds.
+                Additionally, the pillars are culled after a certain distance from the origin to make the scene less cluttered and less expensive.
+            </p>
+            <p>
+                Implementing culling is as simple as early-exiting your SDF before it is evaluated depending on a certain factor, for example vertical height:
+            </p>
+            <div className="code-snippet" style={{width: "100%"}}>
+                <SyntaxHighlighter 
+                    language="cpp" 
+                    showLineNumbers={true}
+                    style={dracula}
+                    startingLineNumber={0}
+                >
+                    {
+                    `
+#define Y_CULL 10.0
+float sdCullExample(vec3 p)
+{
+    // Cull based on y
+    if (p.y > Y_CULL) return 1e10;
+
+    return expensiveSDF(p);
+}`
+                    }
+                </SyntaxHighlighter>
+            </div>
+            <br/>
             <h3 id="normals" className="raleway-title">
                 Calculating Normals of Implicit Geometry
             </h3>
@@ -909,7 +1078,7 @@ vec3 calcNormal(vec3 p) {
                 shadow if we intersect any objects on the way. 
             </p>
             <p>
-                The obvious way to implement this is with a secondary ray-marching loop:
+                The obvious way to implement this is with a secondary ray marching loop:
             </p>
             <div className="code-snippet" style={{width: "100%"}}>
                 <SyntaxHighlighter 
@@ -931,7 +1100,7 @@ void calcShadow(in vec3 ro, in vec3 rd) {
     float shadow = 1.0;
 
     for (int i=0; i<MAX_SHADOW_STEPS; i++) {
-        float p = ro + t * rd;
+        vec3 p = ro + t * rd;
         float d = map(p);
 
         if (d < EPSILON) { shadow = 0.0; break; };
@@ -991,7 +1160,7 @@ void calcShadow(in vec3 ro, in vec3 rd, float k) {
     float shadow = 1.0;
 
     for (int i=0; i<MAX_SHADOW_STEPS; i++) {
-        float p = ro + t * rd;
+        vec3 p = ro + t * rd;
         float d = map(p);
         
         // early exit for full shadow
@@ -1022,18 +1191,111 @@ void calcShadow(in vec3 ro, in vec3 rd, float k) {
             <div style={{width: "100%", maxWidth: "540px", margin: "0 auto", aspectRatio: "3/2"}}>
                 <iframe width="100%" height="100%" frameborder="0" src="https://www.shadertoy.com/embed/lsKcDD?gui=true&t=10&paused=true&muted=false" allowfullscreen></iframe>
             </div>
-            <br/>
+            <br/><br/>
             <h3 id="ao" className="raleway-title">
                 Ambient Occlusion
             </h3>
-            <h3 id="accel" className="raleway-title">
-                Acceleration Structures (Bounding Volumes, LOD, and Culling)
-            </h3>
+            <p>
+                We've generated a simple lightscape with shadow casting, but you may have noticed that our result still looks a bit flat. For example with the rope, wouldn't we expect 
+                the crevices between the two braids to be dark? As it stands, these areas are fully illuminated. 
+            </p>
+            <p>
+                The first reason for this is our very basic use of materials. Currently, our material is a single colour, or "albedo", for all parts not in shadow. Typically, we will model the amount of light 
+                which would reach a surface at a certain point within the material itself. This is called <b>diffuse lighting</b>, and we typically implement it as <i>lambertian diffuse</i>, the details of which will follow in the next section. 
+            </p>
+            <p>
+                We should also note that diffuse lighting is <b>not the same as the shadow casting we did in the previous step</b>. We do not model inter-object lighting, only intra-object lighting (i.e. self-shadowing).
+                However, implementing this will lead to some visual improvement:
+            </p>
+            <Carousel autoplay autoplaySpeed={5000} effect="fade" style={{margin: "0 auto", paddingBottom: "20px", width: "100%"}}>
+                <AnnotatedImage src={noAO} annotation={"Without lambertian diffuse (for comparison)"}/>
+                <AnnotatedImage src={noAOlambertian} annotation={"With lambertian diffuse"}/>
+            </Carousel>
+            <p>
+                Lambertian diffuse is one part of the equation for getting more accurate lighting, but the aforementioned problem with crevices being fully illuminated is still unsolved.
+            </p>
+            <p>
+                This is because the rest of the problem is actually a <i>global illumination</i> issue. We should think about <i>why</i> a crevice would be less illuminated - because ambient light is less likely 
+                to bounce into the crevice then back into our camera. Importantly, this is not necessarily direct light from our light source, so we must find another way to model <i>indirect</i> lighting outside of our shadow pass.
+            </p>
+            <p>
+                This is the role of ambient occlusion (AO). We model how likely it is that light would arrive at a point on the model's surface, and use that to determine our final colour alongside our shadow multiplier.
+                It follows that if light is less likely to arrive at a point, the final colour should be darker.
+            </p>
+            <p>
+                AO approximates the probability of light reaching a point by sampling for nearby geometry that may occlude the point. With this description, it should be more obvious why the technique is called "ambient occlusion" 
+                in the first place.
+            </p>
+            <p>
+                More specifically, we uniformly sample points in a hemisphere about the surface normal. This is an approach you will be familiar with if you've done ray tracing before. Let's have a look at it in code:
+            </p>
+            <div className="code-snippet" style={{width: "100%"}}>
+                <SyntaxHighlighter 
+                    language="cpp" 
+                    showLineNumbers={true}
+                    style={dracula}
+                    startingLineNumber={0}
+                >
+                    {
+`
+#define AO_SAMPLES 64.0
+#define AO_MAX_SAMPLE_DIST 0.01
+#define AO_DISTANCE_FALLOFF 6.0
+void calcAO(in vec3 p, in vec3 normal) {
 
+    float ao = 0.0;
+
+    for (int i=0; i<int(AO_SAMPLES); i++) {
+        
+        vec3 sample_vector = sampleHemisphere(float(i), AO_SAMPLES);
+
+        // Sample at random distances as we are really sampling a volume of space
+        float h = hash(float(i));
+        sample_vector *= AO_MAX_SAMPLE_DIST * h;
+        
+        vec3 q = p + 0.01 * normal; // Point just above the surface to avoid self-sampling.
+        
+        // Any points at a distance > 1.0 are not close enough to contribute to the occlusion
+        ao += clamp(map(q + sample_vector), 0.0, 1.0);
+    }
+    ao /= AO_SAMPLES;
+
+    // Control the linear falloff of the AO
+    return clamp(ao * AO_DISTANCE_FALLOFF, 0.0, 1.0);
+}`
+                    }
+                </SyntaxHighlighter>
+            </div>
+            <p>
+                The basic loop is very simple; we sample from the hemisphere, and accumulate the distance to the closest object, taking the average at the end. Our AO
+                is a multiplier like with our shadow calculation, so full occlusion and no occlusion are 0.0 and 1.0 respectively.
+            </p>
+            <p>
+                I haven't included the sampleHemisphere() function here - see if you can work through it yourself. It involves some reasonably simple maths with spherical coordinates.
+            </p>
+            <p>
+                Finally, note the inclusion of a hashing function at line 13. With AO, we are really sampling the entire volume of space about our point for occlusion, not just a 
+                shell. This is important as we are using SDFs, which only give the distance from a given point, not along a ray like we may have in ray tracing. 
+                Thus, we include a hashing function (<HashLink smooth to="#hash">details here</HashLink>) to generate a [0, 1] value for each sample which we can use to ensure we sample at varying distances.
+            </p>
+            <p>
+                With AO included, we get a much better lighting approximation:
+            </p>
+            <Carousel autoplay autoplaySpeed={5000} effect="fade" style={{margin: "0 auto", paddingBottom: "20px", width: "100%"}}>
+                <AnnotatedImage src={noAOlambertian} annotation={"Lambertian diffuse only (for comparison)"}/>
+                <AnnotatedImage src={aoLambertian} annotation={"Ambient Occlusion and lambertian diffuse"}/>
+            </Carousel>
+            <p>
+                With just shadow casting and AO, we have a relatively simple yet already powerful lighting system. This suffices most of our lighting needs, the rest of which we can tackle individually for each material as we see fit,
+                like with our lambertian diffuse example above.
+            </p>
             <br/>
             <h2 id="materials" className="raleway-title">
-                Basic Materials and Lighting
+                Basic Materials
             </h2>
+            <p>
+                The following sections are in progress, please come back later!
+            </p>
             <h3 id="sss" className="raleway-title">
                 Quick and Easy Sub-surface Scattering
             </h3>
