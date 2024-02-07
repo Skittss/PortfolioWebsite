@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Image, Row, Col, Grid, Divider, Spin } from 'antd'
 import { Link } from 'react-router-dom'
 
@@ -11,6 +11,8 @@ const { useBreakpoint } = Grid
 
 const HomePage = () => {
 		const screens = useBreakpoint();
+
+		const [imgLoaded, setImgLoaded] = useState(false);
 
 		return (
 			<FadeIn>
@@ -27,9 +29,10 @@ const HomePage = () => {
 									<Spin style={{margin: "auto"}} size="large"/>
 								</div>
 							}
+							onLoad={() => setImgLoaded(true)}
 							src="https://github.com/Skittss.png" 
 							width="300px"
-							style={{borderRadius: "50%", border: "solid 2px", borderColor: "whitesmoke"}}
+							style={{borderRadius: "50%", border: imgLoaded ? "solid 2px" : "none", borderColor: "whitesmoke"}}
 						/>
 					</Col>
 					<Col style={{textAlign: screens.md ? "left" : "center", verticalAlign: screens.md? "middle" : "top"}}>
