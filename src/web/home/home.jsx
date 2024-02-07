@@ -1,5 +1,5 @@
 import React from 'react';
-import { Image, Row, Col, Grid, Divider } from 'antd'
+import { Image, Row, Col, Grid, Divider, Spin } from 'antd'
 import { Link } from 'react-router-dom'
 
 import FadeIn from 'react-fade-in';
@@ -22,6 +22,11 @@ const HomePage = () => {
 						<Image
 							preview={false} 
 							fallback="Github profile picture" 
+							placeholder={
+								<div style={{width: "300px", height: "300px", display: "flex", alignItems: "center", justifyContent: "center"}}>
+									<Spin style={{margin: "auto"}} size="large"/>
+								</div>
+							}
 							src="https://github.com/Skittss.png" 
 							width="300px"
 							style={{borderRadius: "50%", border: "solid 2px", borderColor: "whitesmoke"}}

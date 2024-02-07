@@ -1,5 +1,5 @@
 import React, { Suspense, useEffect, useState, useRef, useCallback , useMemo} from 'react';
-import { Button, Image, Row, Col, Grid, Divider } from 'antd'
+import { Button, Image, Row, Col, Grid, Divider, Spin } from 'antd'
 import { Canvas, useFrame, useThree, extend } from 'react-three-fiber';
 import { DoubleSide, Clock, DepthTexture, LinearFilter, RGBFormat, WebGLRenderTarget, NearestFilter, UnsignedShortType } from 'three';
 import { OrbitControls, PerspectiveCamera } from '@react-three/drei'
@@ -55,7 +55,12 @@ const AboutPage = () => {
                 <Col flex="none" style={{textAlign: screens.md ? "right" : "center", margin: screens.xl ? '0 0 0 Max(0px, calc((50vw - 17.5vw - 320px) / 2))' : "0 auto"}}>
                     <Image
                         preview={false} 
-                        fallback="Github profile picture" 
+                        fallback="Github profile picture"
+                        placeholder={
+                            <div style={{width: "300px", height: "300px", display: "flex", alignItems: "center", justifyContent: "center"}}>
+                                <Spin style={{margin: "auto"}} size="large"/>
+                            </div>
+                        }
                         src="https://github.com/Skittss.png" 
                         width="300px"
                         style={{borderRadius: "50%", border: "solid 2px", borderColor: "whitesmoke"}}

@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import FadeIn from 'react-fade-in';
 import { Link, useLocation } from 'react-router-dom';
-import { Card, Tooltip, Grid, Row, Col, Image, Divider } from 'antd';
+import { Card, Tooltip, Grid, Row, Col, Divider } from 'antd';
 import ProjectMetas from "../projects";
 
 import "../css/projectpage.scss";
@@ -9,15 +9,6 @@ import "../css/projectpage.scss";
 const { useBreakpoint } = Grid
 
 const { Meta } = Card;
-
-const CoverImage = props => {
-    return (
-        <div className="cover-image-container">
-            <Image preview={false} className="cover-image" alt={props.alt} src={props.src}/>
-            <div className="fade-out"/>
-        </div>
-    );
-}
 
 const _langTagColours = {
     "JavaScript": "#43FF97",
@@ -68,12 +59,12 @@ const LangTag = props => {
     );
 }
 
-const _getCard = (pMeta, large, screens) => {
-    if (screens.sm) return _getProjectCard(pMeta, large);
-    return _getProjectCardVertical(pMeta, large)
+const _getCard = (pMeta, thumb, large, screens) => {
+    if (screens.sm) return _getProjectCard(pMeta, thumb, large);
+    return _getProjectCardVertical(pMeta, thumb, large)
 }
 
-const _getProjectCardVertical = (pMeta, large) => {
+const _getProjectCardVertical = (pMeta, thumb, large) => {
 
     return (
         <Col span={24} style={{
@@ -83,7 +74,7 @@ const _getProjectCardVertical = (pMeta, large) => {
             <Row>
                 <div style={{
                     aspectRatio: "1 / 1",
-                    backgroundImage: `url(${pMeta.thumb})`,
+                    backgroundImage: `url(${thumb || pMeta.placeholder})`,
                     backgroundPosition: 'center',
                     backgroundSize: 'cover',
                     backgroundRepeat: 'no-repeat',
@@ -119,8 +110,7 @@ const _getProjectCardVertical = (pMeta, large) => {
 
 }
 
-
-const _getProjectCard = (pMeta, large, screens) => {
+const _getProjectCard = (pMeta, thumb, large, screens) => {
 
     return (
         <Row style={{
@@ -129,7 +119,7 @@ const _getProjectCard = (pMeta, large, screens) => {
         <Col span={8} style={{position: "relative"}}>
             <div style={{
                 aspectRatio: "1 / 1",
-                backgroundImage: `url(${pMeta.thumb})`,
+                backgroundImage: `url(${thumb || pMeta.placeholder})`,
                 backgroundPosition: 'center',
                 backgroundSize: 'cover',
                 backgroundRepeat: 'no-repeat',
@@ -172,6 +162,26 @@ const Projects = () => {
     const primaryColSpan = screens.xl ? 12 : 24;
     const primaryColProjIdxStart = screens.xl ? 1 : 0;
     const primaryColGutter = screens.sm ? [16, 16] : [0, 16];
+    
+    const [sources, setSource] = useState(ProjectMetas.map(meta => null));
+
+    useEffect(() => {
+        ProjectMetas.map((meta, idx) => {
+            const src_img = new Image();
+            src_img.src = meta.thumb;
+            src_img.onload = () => {
+                setSource(sources => {
+                    console.log(sources);
+                    let newSources = sources.map((src, src_idx) => {
+                        if (src_idx == idx) return meta.thumb;
+                        return src;
+                    })
+                    return newSources;
+                })
+                console.log(idx);
+            }
+        })
+    }, [])
 
     return (
         <div className={screens.xl ? 'padded-main' : 'unpadded-main'}>
@@ -182,7 +192,7 @@ const Projects = () => {
                     <Row style={{paddingBottom: 16}} justify="center">
                         <Col span={16}>
                             <Link to={loc.pathname + ProjectMetas[0].route}>
-                                {_getCard(ProjectMetas[0], true, screens)}                                
+                                {_getCard(ProjectMetas[0], sources[0], true, screens)}                                
                             </Link>
                         </Col>
                     </Row>
@@ -190,7 +200,7 @@ const Projects = () => {
 
                 <Row gutter={primaryColGutter} justify="center" align="middle">
                     {
-                        ProjectMetas.slice(primaryColProjIdxStart).map(pMeta => {
+                        ProjectMetas.slice(primaryColProjIdxStart).map((pMeta, idx) => {
                             if (pMeta.legacy) {
                                 return null
                             }
@@ -198,7 +208,7 @@ const Projects = () => {
                                 return (
                                     <Col span={primaryColSpan}>
                                         <Tooltip title={pMeta.tooltip ? pMeta.tooltip : "This project has no page yet."} placement="bottom">
-                                            {_getCard(pMeta, false, screens)}
+                                            {_getCard(pMeta, sources[primaryColProjIdxStart + idx], false, screens)}
                                         </Tooltip>
                                     </Col>
                                 );
@@ -206,7 +216,7 @@ const Projects = () => {
                                 return (
                                     <Col span={primaryColSpan}>   
                                         <Link to={loc.pathname + pMeta.route}>
-                                            {_getCard(pMeta, false, screens)}                                
+                                            {_getCard(pMeta, sources[primaryColProjIdxStart + idx], false, screens)}                                
                                         </Link>
                                     </Col>
                                 );
@@ -222,7 +232,7 @@ const Projects = () => {
                 </div>
                 <Row gutter={primaryColGutter} justify="center" align="middle">
                     {
-                        ProjectMetas.map(pMeta => {
+                        ProjectMetas.map((pMeta, idx) => {
                             if (!pMeta.legacy) {
                                 return null
                             }
@@ -230,7 +240,7 @@ const Projects = () => {
                                 return (
                                     <Col span={primaryColSpan}>
                                         <Tooltip title={pMeta.tooltip ? pMeta.tooltip : "This project has no link yet."} placement="bottom">
-                                            {_getCard(pMeta, false, screens)}
+                                            {_getCard(pMeta, sources[idx], false, screens)}
                                         </Tooltip>
                                     </Col>
                                 );
@@ -240,12 +250,12 @@ const Projects = () => {
                                         {pMeta.tooltip ? (
                                             <Tooltip title={pMeta.tooltip} placement="bottom">
                                                 <a href={pMeta.route}>
-                                                    {_getCard(pMeta, false, screens)}                                
+                                                    {_getCard(pMeta, sources[idx], false, screens)}                                
                                                 </a>
                                             </Tooltip>
                                         ) : (
                                             <a href={pMeta.route}>
-                                                {_getCard(pMeta, false, screens)}                                
+                                                {_getCard(pMeta, sources[idx], false, screens)}                                
                                             </a>
                                         )}
                                     </Col>
