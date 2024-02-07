@@ -73,11 +73,11 @@ const Home = () => {
             </p>
             <br/>
             <Carousel autoplay autoplaySpeed={5000} effect="fade" style={{margin: "0 auto", paddingBottom: "20px", width: "100%", maxWidth: "500px"}}>
-                <AnnotatedImage src={meiji} annotation={"Shimenawa at Meiji Shrine, Tokyo ( 明治神宫、東京 )"}/>
-                <AnnotatedImage src={sakurayama} annotation={"Shimenawa at Sakurayama Hachimingu Shrine, Takayama ( 櫻`山八幡宮、高山 )"}/>
-                <AnnotatedImage src={unknownTakayama} annotation={"Shimenawa and Colourful braided rope at an unknown shrine in Takayama ( 不明の神社、高山 )"} />
-                <AnnotatedImage src={fushimiInari1} annotation={"Shimenawa at Fushimi Inari, Kyoto ( 伏見稲荷大社、京都 )"} />
-                <AnnotatedImage src={fushimiInari2} annotation={"More shimenawa at Fushimi Inari, Kyoto ( 伏見稲荷大社、京都 )"} />
+                <AnnotatedImage src={meiji} annotation={"Shimenawa at Meiji Shrine, Tokyo (\u00a0明\u2060治\u2060神\u2060宫、東\u2060京\u00a0)"}/>
+                <AnnotatedImage src={sakurayama} annotation={"Shimenawa at Sakurayama Hachimingu Shrine, Takayama (\u00a0櫻\u2060山八\u2060幡\u2060宮、高\u2060山\u00a0)"}/>
+                <AnnotatedImage src={unknownTakayama} annotation={"Shimenawa and Colourful braided rope at an unknown shrine in Takayama (\u00a0不明の神社、高\u2060山\u00a0)"} />
+                <AnnotatedImage src={fushimiInari1} annotation={"Shimenawa at Fushimi Inari, Kyoto (\u00a0伏\u2060見\u2060稲\u2060荷大\u2060社、京\u2060都\u00a0)"} />
+                <AnnotatedImage src={fushimiInari2} annotation={"More shimenawa at Fushimi Inari, Kyoto (\u00a0伏\u2060見\u2060稲\u2060荷大\u2060社、京\u2060都\u00a0)"} />
             </Carousel>
             <br/>
             <p>
