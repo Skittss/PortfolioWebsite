@@ -1,6 +1,6 @@
 import React from 'react';
 import { TextureLoader, LinearFilter } from 'three';
-import { useLoader, useThree } from 'react-three-fiber';
+import { useLoader, useThree } from '@react-three/fiber';
 
 // Custom Three.js component - Image projected onto plane which fills the entirety of the viewport.
 
@@ -23,7 +23,7 @@ const ThreeImagePlane = ({img, dim}) => {
 
     return (
         <mesh scale={[width, height, 1]}>
-            <planeBufferGeometry attach="geometry"/>
+            <planeGeometry attach="geometry"/>
             <meshBasicMaterial attach="material" map={image} depthTest={false} toneMapped={false}/>
         </mesh>
     )

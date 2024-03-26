@@ -13,7 +13,7 @@ import results_extension_1 from '../../content/projects/ODST/extension_results.p
 import 'katex/dist/katex.min.css'
 import Latex from 'react-latex-next';
 
-import Meta from '.';
+import {Meta} from '.';
 import ProjectPage from '../projectPage';
 import AnnotatedImage from '../annotatedImage';
 

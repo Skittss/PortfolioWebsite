@@ -1,4 +1,4 @@
-import { Canvas, extend, useFrame, useThree } from 'react-three-fiber';
+import { Canvas, extend, useFrame, useThree } from '@react-three/fiber';
 import React, { useState, useRef, Suspense, useEffect } from 'react';
 import FadeIn from 'react-fade-in';
 import { Image, Slider, InputNumber, Button, Row, Col, Select, Spin } from 'antd';

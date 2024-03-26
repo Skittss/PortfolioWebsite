@@ -13,4 +13,4 @@ const Meta = {
     tooltip: "Take a look around!"
 }
 
-export default Meta;
+export {Meta};

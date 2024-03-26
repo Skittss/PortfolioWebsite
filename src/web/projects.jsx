@@ -171,14 +171,12 @@ const Projects = () => {
             src_img.src = meta.thumb;
             src_img.onload = () => {
                 setSource(sources => {
-                    console.log(sources);
                     let newSources = sources.map((src, src_idx) => {
                         if (src_idx == idx) return meta.thumb;
                         return src;
                     })
                     return newSources;
                 })
-                console.log(idx);
             }
         })
     }, [])

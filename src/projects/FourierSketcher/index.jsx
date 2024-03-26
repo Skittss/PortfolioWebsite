@@ -1,9 +1,31 @@
+import React from 'react';
+import { Helmet } from 'react-helmet';
+import SubRouter from "../../web/routers/subrouter";
+
 import img from "../../content/projects/FourierSketcher/thumb.png";
 import img_placeholder from "../../content/projects/FourierSketcher/thumb_placeholder.png";
-import router from "./router";
+
+const projTitle = "Fourier Sketcher (Prototype)";
+
+const Home = React.lazy(() => import("./home"));
+// const Main = React.lazy(() => import("./src/main"));
+
+const routes = [
+    {path: "/", component: Home, exact: true},
+    // {path: "/main", component: Main, exact: true},
+];
+
+const Router = ({routerDepth}) => {
+    return (
+        <>
+        <Helmet><title>{projTitle}</title></Helmet>
+        <SubRouter routes={routes} routerDepth={routerDepth} />
+        </>
+    );
+}
 
 const Meta = {
-    title: "Fourier Sketcher (Prototype)",
+    title: projTitle,
     thumb: img,
     placeholder: img_placeholder,
     date: "2021-01-11",
@@ -11,7 +33,7 @@ const Meta = {
     tags: ["JavaScript", "~~p5js~~"],
     legacy: false,
     route: "/FourierSketcher",
-    router: router
+    router: Router
 }
 
-export default Meta;
+export {Router, Meta};

@@ -20,7 +20,7 @@ import training_montage from '../../content/projects/CarRacing/training_montage.
 import 'katex/dist/katex.min.css'
 import Latex from 'react-latex-next';
 
-import Meta from '.';
+import {Meta} from '.';
 import ProjectPage from '../projectPage';
 import AnnotatedImage from '../annotatedImage';
 

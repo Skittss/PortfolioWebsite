@@ -1,5 +1,5 @@
 import React, { Suspense } from 'react'
-import { Route, Switch, useLocation } from "react-router-dom";
+import { Outlet, Route, Routes, useLocation } from "react-router-dom";
 import { load } from "../../App";
 
 const _getBaseLocation = depth => {
@@ -18,23 +18,25 @@ const _getBaseLocation = depth => {
 const SubRouter = ({routes, routerDepth}) => {
     const baseLocation = _getBaseLocation(routerDepth);
     return (
+        <>
+        <Outlet/>
         <Suspense fallback={load()}>
-            <Switch>
+            <Routes>
                 {routes.map(route => {
                     console.log("generated route: ", baseLocation + route.path)
                     return route.component ? (
-                        <Route 
-                            path={baseLocation + route.path}
+                        <Route
+                            key={baseLocation + route.path}
+                            path={route.path}
                             exact={route.exact}
                             name={route.name}
-                            render={props => (
-                                <route.component {...props} routerDepth={routerDepth+1}/>
-                            )}
+                            element={<route.component  routerDepth={routerDepth+1}/>}
                         />
                     ) : null;
                 })}
-            </Switch>
+            </Routes>
         </Suspense>
+        </>
     )
 }
 

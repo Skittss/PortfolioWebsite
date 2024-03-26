@@ -32,7 +32,7 @@ const HomePage = () => {
 							onLoad={() => setImgLoaded(true)}
 							src="https://github.com/Skittss.png" 
 							width="300px"
-							style={{borderRadius: "50%", border: imgLoaded ? "solid 2px" : "none", borderColor: "whitesmoke"}}
+							style={{borderRadius: "50%", border: imgLoaded ? "solid 2px whitesmoke" : "none"}}
 						/>
 					</Col>
 					<Col style={{textAlign: screens.md ? "left" : "center", verticalAlign: screens.md? "middle" : "top"}}>

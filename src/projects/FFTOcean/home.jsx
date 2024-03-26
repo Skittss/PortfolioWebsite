@@ -11,7 +11,7 @@ import normals from '../../content/projects/FFTOcean/normals.png'
 import 'katex/dist/katex.min.css'
 import Latex from 'react-latex-next';
 
-import Meta from '.';
+import {Meta} from '.';
 import ProjectPage from '../projectPage';
 
 const Home = () => {

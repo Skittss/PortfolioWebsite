@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Canvas, useFrame } from 'react-three-fiber';
+import { Canvas, useFrame } from '@react-three/fiber';
 import { Clock } from 'three';
 
 import { SeigaihaFragment, SeigaihaVertex } from './seigaihaShader';
@@ -29,7 +29,7 @@ const FragShaderPlane = ({time, clock, time_callback, scale_callback}) => {
 
 	return (
 	<mesh scale={[...dim, 1]}>
-		<planeBufferGeometry attach="geometry" />
+		<planeGeometry attach="geometry" />
 		<shaderMaterial 
 		attach="material" 
 		uniforms={uniforms}

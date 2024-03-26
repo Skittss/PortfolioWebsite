@@ -25,8 +25,13 @@ $grad: #15191f;
 }
 
 .ant-menu-horizontal {
-    .ant-menu-item a {
+
+    .ant-menu-overflow-item {
         color: $col
+    }
+
+    .ant-menu-item a {
+        color: $col !important
     }
 
     .ant-menu-title-content:hover {

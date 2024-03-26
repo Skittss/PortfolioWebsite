@@ -12,4 +12,4 @@ const Meta = {
     route: "https://github.com/Skittss/Hex",
 }
 
-export default Meta;
+export {Meta};

@@ -8,7 +8,7 @@ import lerpImg from '../../content/projects/Webgl-Canny/Canny-lerp.png';
 import 'katex/dist/katex.min.css'
 import Latex from 'react-latex-next';
 
-import Meta from '.';
+import {Meta} from '.';
 import ProjectPage from '../projectPage';
 
 const Home = () => {

@@ -2,11 +2,19 @@ import "../css/navbar.scss";
 
 import React, { useState, useEffect } from 'react';
 import { Layout, Menu } from 'antd';
-import { Link, useLocation, useHistory } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { GithubOutlined } from '@ant-design/icons';
 const { Header } = Layout;
 
 const Navbar = () => {
+
+    function useLocationEffect(callback) {
+        const location = useLocation();
+
+        useEffect(() => {
+            callback(location);
+        }, [location, callback])
+    }
 
     function getMenuKeyFromPath(pth) {
         const pathname = pth;
@@ -16,13 +24,15 @@ const Navbar = () => {
     }
     const [menuKey, setMenuKey] = useState(getMenuKeyFromPath(useLocation().pathname))
 
-    const history = useHistory()
+    useLocationEffect((loc) => {setMenuKey(getMenuKeyFromPath(loc.pathname));})
 
-    useEffect(() => {
-        return history.listen((loc) => {
-            setMenuKey(getMenuKeyFromPath(loc.pathname))
-        })
-    }, [history])
+    // const history = useNavigate()
+
+    // useEffect(() => {
+    //     return history.listen((loc) => {
+    //         setMenuKey(getMenuKeyFromPath(loc.pathname))
+    //     })
+    // }, [history])
     const [screenSize, setScreenSize] = useState(getCurrentDimension());
 
     function getCurrentDimension() {

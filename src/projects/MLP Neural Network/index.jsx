@@ -12,4 +12,4 @@ const Meta = {
     route: "https://github.com/Skittss/MLPNeuralNet",
 }
 
-export default Meta;
+export {Meta};

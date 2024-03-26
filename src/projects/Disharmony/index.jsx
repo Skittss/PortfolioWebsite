@@ -12,4 +12,4 @@ const Meta = {
     route: "https://devpost.com/software/disharmony",
 }
 
-export default Meta;
+export {Meta};

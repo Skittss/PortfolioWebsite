@@ -1,9 +1,5 @@
 import React, { Suspense, useEffect, useState, useRef, useCallback , useMemo} from 'react';
 import { Button, Image, Row, Col, Grid, Divider, Spin } from 'antd'
-import { Canvas, useFrame, useThree, extend } from 'react-three-fiber';
-import { DoubleSide, Clock, DepthTexture, LinearFilter, RGBFormat, WebGLRenderTarget, NearestFilter, UnsignedShortType } from 'three';
-import { OrbitControls, PerspectiveCamera } from '@react-three/drei'
-import { Link } from 'react-router-dom'
 
 import FadeIn from 'react-fade-in';
 import "../css/home.scss";

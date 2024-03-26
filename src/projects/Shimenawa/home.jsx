@@ -41,7 +41,7 @@ import Latex from 'react-latex-next';
 import SyntaxHighlighter from 'react-syntax-highlighter';
 import { dracula } from 'react-syntax-highlighter/dist/esm/styles/hljs';
 
-import Meta from '.';
+import {Meta} from '.';
 import ProjectPage from '../projectPage';
 import AnnotatedImage from '../annotatedImage';
 import AnnotatedVideo from '../annotatedVideo';

@@ -1,7 +1,7 @@
 import React from 'react';
 import './css/main.scss';
 import { Spin } from 'antd';
-import {BrowserRouter, HashRouter, Route, Switch} from "react-router-dom";
+import {HashRouter, Route, Routes} from "react-router-dom";
 import { Helmet } from 'react-helmet';
 
 const load = () => (
@@ -18,9 +18,9 @@ const App = () => {
     <Helmet><title>{pageTitle}</title></Helmet>
     <HashRouter>
       <React.Suspense fallback={load()}>
-        <Switch>
-          <Route path="/" render={props => <Main {...props}/>}/>
-        </Switch>
+        <Routes>
+          <Route path="*" element={<Main />}/>
+        </Routes>
       </React.Suspense>
     </HashRouter>
     </>

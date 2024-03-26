@@ -18,6 +18,10 @@ h1, h2, h3, h4, h5, h6 {
     background: transparent;
 }
 
+.ant-layout-content {
+    color: $textcol;
+}
+
 .ant-divider {
     color: $textcol;
     border-top-color: #F0F0F4 !important;

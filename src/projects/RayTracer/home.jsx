@@ -1,5 +1,4 @@
 import React from 'react';
-import { HashLink } from 'react-router-hash-link';
 import { Row, Col, Divider, Image, Carousel, Grid } from 'antd';
 import SyntaxHighlighter from 'react-syntax-highlighter';
 import { dracula } from 'react-syntax-highlighter/dist/esm/styles/hljs';
@@ -80,7 +79,7 @@ import hemisphere_scatter_code from '../../content/projects/RayTracer/code_snipp
 import 'katex/dist/katex.min.css'
 import Latex from 'react-latex-next';
 
-import Meta from '.';
+import {Meta} from '.';
 import ProjectPage from '../projectPage';
 import AnnotatedImage from '../annotatedImage';
 
@@ -109,11 +108,11 @@ const Home = () => {
                 <br/><br/>
                 This post is not entirely designed as a zero-knowledge read, and instead is probably best utilised as supplementary material when   
                 you have the basic concepts of 3D rendering and raytracing pinned down. I recommend two great reads if you don't feel comfortable jumping in 
-                here: <a target="_blank" href="https://www.scratchapixel.com/index.html">Scratchapixel</a> and <a target="_blank" href="https://raytracing.github.io/books/RayTracingInOneWeekend.html">Ray Tracing in One Weekend</a> which
+                here: <a target="_blank" rel="noreferrer" href="https://www.scratchapixel.com/index.html">Scratchapixel</a> and <a target="_blank" rel="noreferrer" href="https://raytracing.github.io/books/RayTracingInOneWeekend.html">Ray Tracing in One Weekend</a> which
                 go into more detail than I do, albeit with a slightly different focus (no photon-mapping for example).
 
                 <br /><br />
-                Code snippets in this post are abbreviated for brevity. The full source code for this renderer is available on <a target="_blank" href="https://github.com/Skittss/RayTracer">GitHub</a>.
+                Code snippets in this post are abbreviated for brevity. The full source code for this renderer is available on <a target="_blank" rel="noreferrer" href="https://github.com/Skittss/RayTracer">GitHub</a>.
             </p>
             <br />
             <Divider style={{borderTopWidth: "1px", borderTopColor: "#000000", opacity: 0.5}}/>
@@ -1153,7 +1152,7 @@ const Home = () => {
                 It is basically a variable colour filter, allowing our images to have a certain 'feel' under the curve. For example, we could
                 make images have a yellowish tint in their mid-tones for a more cosy feel.
                 <br /><br />
-                There are many tonemapping curves, a popular choice in video games is the ACES curve. In this implementation, I use a curve made by Hajime Uchimura, the details of which can be found <a target='_blank' href="https://www.polyphony.co.jp/publications/sa2018/">here</a>.
+                There are many tonemapping curves, a popular choice in video games is the ACES curve. In this implementation, I use a curve made by Hajime Uchimura, the details of which can be found <a target='_blank' rel="noreferrer" href="https://www.polyphony.co.jp/publications/sa2018/">here</a>.
             </p>
         </ProjectPage>
     );
