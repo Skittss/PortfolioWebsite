@@ -1427,11 +1427,11 @@ vec3 render(in vec3 ro, in vec3 rd, in float t, in float m)
                 We can take this even further and actually incorporate an ambient light colour into the shadow colour, akin to global illumination. This should be a colour from the scene's environment
                 to ground the lighting in reality. When rendering outdoor scenes, some variant of the sky colour is a good choice:
             </p>
-            <div style={{paddingLeft: "3em", paddingRight: "3em", textAlign: "center"}}>
+            <div style={{fontSize: screens.sm ? "inherit" : 12, paddingLeft: "3em", paddingRight: "3em", textAlign: "center"}}>
                 <Latex>{`$\\text{shadow\\_col} = \\text{mix}(\\text{mat\\_occ} \\times \\text{albedo},\\ \\text{mat\\_ambient},\\ \\text{ambient})\\ | \\ \\text{ambient}\\in [0,1]$`}</Latex>
             </div>
             <br/>
-            <div style={{paddingLeft: "3em", paddingRight: "3em", textAlign: "center"}}>
+            <div style={{fontSize: screens.sm ? "inherit" : 12, paddingLeft: "3em", paddingRight: "3em", textAlign: "center"}}>
                 <Latex>{`$\\implies\\text{(iii)}\\ \\text{col} = \\text{mix}\\bigg(\\text{mix}(\\text{mat\\_occ} \\times \\text{albedo},\\ \\text{mat\\_ambient},\\ \\text{ambient}),\\ \\text{albedo}, \\text{occ}\\bigg)$`}</Latex>
             </div>
             <br/>
@@ -1469,8 +1469,9 @@ vec3 render(in vec3 ro, in vec3 rd, in float t, in float m)
             <p>
                 The artificial subsurface scattering component is calculated by mixing a highly saturated 'terminator line' colour into a material's shadow colour as follows:
             </p>
+            {/* fontSize: screens.sm ? "inherit" : 12 */}
             <div style={{paddingLeft: "3em", paddingRight: "3em", textAlign: "center"}}>
-                <Latex>{`$\\text{ramped\\_shadow\\_col} = \\text{mix}\\bigg(\\text{shadow\\_col},\\ \\text{terminator\\_col},\\ \\min(1.0,\\ 4.0 \\times \\text{occ})\\bigg)$`}</Latex>
+                <Latex>{`$\\text{ramped\\_shadow\\_col} = \\text{mix}\\bigg(\\text{shadow\\_col},\\ \\text{terminator\\_col},\\allowbreak\\ \\min(1.0,\\ 4.0 \\times \\text{occ})\\bigg)$`}</Latex>
             </div>
             <br/>
             <p>
@@ -1481,14 +1482,14 @@ vec3 render(in vec3 ro, in vec3 rd, in float t, in float m)
                 We can then boost the lighting contrast by similarly applying a ramp to the albedo-shadow mix function:
             </p>
             <div style={{paddingLeft: "3em", paddingRight: "3em", textAlign: "center"}}>
-                <Latex>{`$\\text{(iv)}\\ \\text{col} = \\text{mix}\\bigg(\\text{ramped\\_shadow\\_col},\\ \\text{albedo},\\ \\min(1.0,\\ 2.0 \\times \\text{occ})\\bigg)$`}</Latex>
+                <Latex>{`$\\text{(iv)}\\ \\text{col} = \\text{mix}\\bigg(\\text{ramped\\_shadow\\_col},\\allowbreak\\ \\text{albedo},\\ \\min(1.0,\\ 2.0 \\times \\text{occ})\\bigg)$`}</Latex>
             </div>
             <br/>
             <p>
                 Applying this contrast ramp has a side effect of making the shadows particularly dark, so as a result I decided to modify the occlusion combination to brighten dark spots and
                 make ambient occlusion more emphasised:
             </p>
-            <div style={{paddingLeft: "3em", paddingRight: "3em", textAlign: "center"}}>
+            <div style={{fontSize: screens.sm ? "inherit" : 12, paddingLeft: "3em", paddingRight: "3em", textAlign: "center"}}>
                 <Latex>{`$\\text{(v)}\\ \\displaystyle\\text{occ} = \\frac{\\text{shadow} + \\text{extra\\_shadow\\_brightness}}{1.0 + \\text{extra\\_shadow\\_brightness}} \\times \\text{ao}^2$`}</Latex>
             </div>
             <br/>
