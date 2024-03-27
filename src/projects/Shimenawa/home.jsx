@@ -35,6 +35,12 @@ import noAO from '../../content/projects/Shimenawa/no-ao.png'
 import noAOlambertian from '../../content/projects/Shimenawa/no-ao-lambertian.png'
 import aoLambertian from '../../content/projects/Shimenawa/ao-lambertian.png'
 
+import shadowColMult from '../../content/projects/Shimenawa/shadow_col_mult.png'
+import shadowColConstMix from '../../content/projects/Shimenawa/shadow_col_const_mix.png'
+import shadowColAmbientMix from '../../content/projects/Shimenawa/shadow_col_ambient_mix.png'
+import shadowRamped from '../../content/projects/Shimenawa/shadow_col_ramped.png'
+import shadowRampedBright from '../../content/projects/Shimenawa/shadow_col_ramped_extra_bright.png'
+
 import 'katex/dist/katex.min.css'
 import Latex from 'react-latex-next';
 
@@ -1291,8 +1297,212 @@ void calcAO(in vec3 p, in vec3 normal) {
             </p>
             <br/>
             <h2 id="materials" className="raleway-title">
-                Basic Materials
+                Stylised Material System
             </h2>
+            <p>
+                Though materials have been used up until this point, I havent gone into the details of how they are implemented. Shimenawa uses a basic yet heavily stylised material system. The only material property 
+                that I chose to define is material albedo (base colour) - the rest of the material properties are handled on a case-by-case basis when calculating lighting.
+            </p>
+            <p>
+                We can define a material per SDF evaluation by returning (or passing in and setting an out/pointer argument) alongside our distance value. By doing this, we can define per-instance materials so that duplicates of the same object may
+                be rendered with different colours and lighting effects. Take for example the paper hanging from the rope ( 紙垂 ) where per instance materials are used to change the colour of individual paper strips from red to white above. 
+            </p>
+            <p>
+                Managing materials at a high level in this way requires a system to map a numerical value we return from the SDF to a certain material; an enum is a good choice for this. GLSL does not have an enum wrapper, but we can achieve the same
+                effect by defining our enum values as macros:
+            </p>
+            <div className="code-snippet" style={{width: "100%"}}>
+                <SyntaxHighlighter 
+                    language="cpp" 
+                    showLineNumbers={true}
+                    style={dracula}
+                    startingLineNumber={0}
+                >
+                    {
+`
+#define MAT_0 1.0
+#define MAT_1 2.0
+#define MAT_2 3.0
+//...
+#define MAT_DEBUG 1e10`
+                    }
+                </SyntaxHighlighter>
+            </div>
+            <p>
+                It is a good idea to include a default/debug material for convenience and debugging purposes in case your material index becomes messed up as you implement more rendering features.
+            </p>
+            <p>
+                We can now start evaluating object colour in our render loop with branching logic:
+            </p>
+            <div className="code-snippet" style={{width: "100%"}}>
+                <SyntaxHighlighter 
+                    language="cpp" 
+                    showLineNumbers={true}
+                    style={dracula}
+                    startingLineNumber={0}
+                >
+                    {
+`
+// We could directly compare material values with equality, but using
+//  a helper macro like the following is more versataile.
+#define CMP_MAT_LT(a, b) a < (b + 0.5)
+
+vec3 render(in vec3 ro, in vec3 rd, in float t, in float m) 
+{
+    // Calculate properties and lighting effects that all materials use
+    vec3 normal = calcNormal(pos);
+    float shadow = calcShadow(ro, rd);
+    float ambient_occlusion = calcAO(p, normal);
+
+    vec3 col = vec3(0.0);
+    
+    // Select material based on cascading comparisons of m to material values
+    if (CMP_MAT_LT(m, MAT_0)) {
+        // ...Calculate colour and lighting properties of MAT_0
+    }
+    else if (CMP_MAT_LT(m, MAT_1)) {
+        // ...Calculate colour and lighting properties of MAT_1
+    } 
+    else if (CMP_MAT_LT(m, MAT_2)) {
+        // ...Calculate colour and lighting properties of MAT_2
+    }
+    else {
+        // ...Debug / Default material
+    }
+
+    return col;
+}`
+                    }
+                </SyntaxHighlighter>
+            </div>
+            <p>
+                Due to materials generally generally being quite localised and thus usually in the same shader group, the hit on performance from branching like this is fairly inconsequential.
+            </p>
+            <p>
+                With the high-level material system set up, we can move onto applying stylised effects to individual materials.
+            </p>
+            <br/>
+            <h3 id="stylised-lighting" className="raleway-title">
+                Simple Stylised Lighting
+            </h3>
+            <p>
+                The first basic step in applying lighting to a material is to mix the material's albedo with the occlusion values we calculated earlier. We can start by combining the occlusion values multiplicatively
+                and applying then to the material's albedo.
+            </p>
+            <div style={{paddingLeft: "3em", paddingRight: "3em", textAlign: "center"}}>
+                <Latex>{`$\\text{occ} = \\text{shadow} \\times \\text{ao}$`}</Latex>
+            </div>
+            <br/>
+            <div style={{paddingLeft: "3em", paddingRight: "3em", textAlign: "center"}}>
+                <Latex>{`$(\\text{i})\\ \\text{col} = \\text{occ} \\times \\text{albedo}$`}</Latex>
+            </div>
+            <br/>
+            <p>
+                Improving this slightly, we can mix in a shadow colour to our albedo based on the value of occ.
+            </p>
+            <div style={{paddingLeft: "3em", paddingRight: "3em", textAlign: "center"}}>
+                <Latex>{`$\\text{col} = \\text{mix}(\\text{shadow\\_col},\\ \\text{albedo},\\ \\text{occ})$`}</Latex>
+            </div>
+            <br/>
+            <p>
+                We could choose all manner of values for the shadow colour, but drawing from and modifying physical principles is usually a good start when we want to stlyise. Let's consider a few to build
+                up a stylised lighting model - if you are aware of the phong lighting model, our starting point will be similar.
+            </p>
+            <p>
+                When light is occluded in reality, a proportion of the total light energy will be reflected back into view, so we can start by modelling the shadow colour in this way:
+            </p>
+            <div style={{paddingLeft: "3em", paddingRight: "3em", textAlign: "center"}}>
+                <Latex>{`$\\text{shadow\\_col} = \\text{mat\\_ occ} \\times \\text{albedo}\\ | \\ \\text{mat\\_occ}\\in [0,1]$`}</Latex>
+            </div>
+            <br/>
+            <div style={{paddingLeft: "3em", paddingRight: "3em", textAlign: "center"}}>
+                <Latex>{`$\\implies\\text{(ii)}\\ \\text{col} = \\text{mix}(\\text{mat\\_ occ} \\times \\text{albedo},\\ \\text{albedo},\\ \\text{occ})$`}</Latex>
+            </div>
+            <br/>
+            <p>
+                It is a good idea to separate this occlusion value into a separate variable 'mat_occ' so that we have more artistic control over per material lighting.
+                A shadow colour defined in this way effectively incorporates a constant strength ambient light into the scene.
+            </p>
+            <p>
+                We can take this even further and actually incorporate an ambient light colour into the shadow colour, akin to global illumination. This should be a colour from the scene's environment
+                to ground the lighting in reality. When rendering outdoor scenes, some variant of the sky colour is a good choice:
+            </p>
+            <div style={{paddingLeft: "3em", paddingRight: "3em", textAlign: "center"}}>
+                <Latex>{`$\\text{shadow\\_col} = \\text{mix}(\\text{mat\\_occ} \\times \\text{albedo},\\ \\text{mat\\_ambient},\\ \\text{ambient})\\ | \\ \\text{ambient}\\in [0,1]$`}</Latex>
+            </div>
+            <br/>
+            <div style={{paddingLeft: "3em", paddingRight: "3em", textAlign: "center"}}>
+                <Latex>{`$\\implies\\text{(iii)}\\ \\text{col} = \\text{mix}\\bigg(\\text{mix}(\\text{mat\\_occ} \\times \\text{albedo},\\ \\text{mat\\_ambient},\\ \\text{ambient}),\\ \\text{albedo}, \\text{occ}\\bigg)$`}</Latex>
+            </div>
+            <br/>
+            <p>
+                We can see how these methods compare:
+            </p>
+            <Carousel autoplay autoplaySpeed={5000} effect="fade" style={{margin: "0 auto", paddingBottom: "20px", width: "100%"}}>
+                <AnnotatedImage src={shadowColMult} annotation={"Shadow applied via (i) - multiplicative"}/>
+                <AnnotatedImage src={shadowColConstMix} annotation={"Shadow applied via (ii) - constant mix"}/>
+                <AnnotatedImage src={shadowColAmbientMix} annotation={"Shadow applied via (iii) - constant & ambient mix"}/>
+            </Carousel>
+            <br/>
+            <h3 id="shadow-ramp" className="raleway-title">
+                Colour Ramps
+            </h3>
+            <p>
+                A particular effect that I wanted to incorporate on the rope in Shimenawa was sub-surface scattering. 
+            </p>
+            <p>
+                Sub-surface scattering describes the transport of light within a translucent or porous object.
+                It is the same effect that you get when you can see your skin glow when you shine a torch on it for example, or why marble sculptures tend to look 'soft' or have a subtle glow. 
+                The same effect would be present on the rope when the sun shines at it - leading to a distinct glow around the edges of the rope where rope fibers would be sparse.
+            </p>
+            <p>
+                Though there is an upcoming section about applying this to a simpler case: the hanging paper, computing this effect for the rope accurately would be too expensive, or cheaply would be
+                too inaccurate to resemble the desired feature.
+            </p>
+            <p>
+                An alternative solution I came up with is to use a combination of colour ramps, <HashLink smooth to="#bloom">bloom</HashLink>, and <HashLink smooth to="#outline">stylised object outlines</HashLink>.
+                The usage of colour ramps was inspired by the lighting in Genshin Imapct, as well as their Unite Seoul 2018 talk: <a href="https://youtu.be/egHSE0dpWRw?si=_hTHBpRsOviCzsmK&t=776" target="_blank" rel="noreferrer">From mobile to high-end PC: Achieving high quality anime style rendering on Unity</a>.
+            </p>
+            <p>
+                Colour ramps define a multi-colour gradient over a value range, I use this both to boost contrast of lighting, as well as to add a artificial sub-surface scattering component when desired.
+            </p>
+            <p>
+                The artificial subsurface scattering component is calculated by mixing a highly saturated 'terminator line' colour into a material's shadow colour as follows:
+            </p>
+            <div style={{paddingLeft: "3em", paddingRight: "3em", textAlign: "center"}}>
+                <Latex>{`$\\text{ramped\\_shadow\\_col} = \\text{mix}\\bigg(\\text{shadow\\_col},\\ \\text{terminator\\_col},\\ \\min(1.0,\\ 4.0 \\times \\text{occ})\\bigg)$`}</Latex>
+            </div>
+            <br/>
+            <p>
+                The coefficient 4.0 of 'occ' is discretionary and serves to make the colour ramp shallower or steeper, depending on the desired effect. Typically, terminator lines in sub-surface scattering are fairly sharp,
+                so I chose to use a relatively steep ramp here.
+            </p>
+            <p>
+                We can then boost the lighting contrast by similarly applying a ramp to the albedo-shadow mix function:
+            </p>
+            <div style={{paddingLeft: "3em", paddingRight: "3em", textAlign: "center"}}>
+                <Latex>{`$\\text{(iv)}\\ \\text{col} = \\text{mix}\\bigg(\\text{ramped\\_shadow\\_col},\\ \\text{albedo},\\ \\min(1.0,\\ 2.0 \\times \\text{occ})\\bigg)$`}</Latex>
+            </div>
+            <br/>
+            <p>
+                Applying this contrast ramp has a side effect of making the shadows particularly dark, so as a result I decided to modify the occlusion combination to brighten dark spots and
+                make ambient occlusion more emphasised:
+            </p>
+            <div style={{paddingLeft: "3em", paddingRight: "3em", textAlign: "center"}}>
+                <Latex>{`$\\text{(v)}\\ \\displaystyle\\text{occ} = \\frac{\\text{shadow} + \\text{extra\\_shadow\\_brightness}}{1.0 + \\text{extra\\_shadow\\_brightness}} \\times \\text{ao}^2$`}</Latex>
+            </div>
+            <br/>
+            <p>
+                The effect is subtle, but has noticeable effects from certain viewing angles.
+            </p>
+            <Carousel autoplay autoplaySpeed={5000} effect="fade" style={{margin: "0 auto", paddingBottom: "20px", width: "100%"}}>
+                <AnnotatedImage src={shadowRamped} annotation={"Shadow applied via (iv) - ramped"}/>
+                <AnnotatedImage src={shadowRampedBright} annotation={"Shadow applied via (v) - ramped and brightened"}/>
+            </Carousel>
+            <br/>
+            <h3 id="reflections" className="raleway-title">
+                Grazing angles and Metallic Reflections
+            </h3>
             <p>
                 The following sections are in progress, please come back later!
             </p>
@@ -1303,12 +1513,11 @@ void calcAO(in vec3 p, in vec3 normal) {
             <h2 id="volumetrics" className="raleway-title">
                 Volumetric Cloud Rendering
             </h2>
-
             <br/>
             <h2 id="hdr" className="raleway-title">
                 HDR Rendering
             </h2>
-            <h3 id="hdr" className="raleway-title">
+            <h3 id="bloom" className="raleway-title">
                 Buffer-pass Bloom
             </h3>
             <br/>
@@ -1319,14 +1528,14 @@ void calcAO(in vec3 p, in vec3 normal) {
             <h2 id="bonus" className="raleway-title">
                 Bonus: Some Extra Techniques
             </h2>
-            <h3 id="atmosphere" className="raleway-title">
-                Simple Atmospheres
-            </h3>
             <h3 id="fog" className="raleway-title">
                 Better Fog
             </h3>
             <h3 id="hash" className="raleway-title">
                 "Good Enough" Hashing
+            </h3>
+            <h3 id="atmosphere" className="raleway-title">
+                Simple Atmospheres
             </h3>
             <h3 id="stars" className="raleway-title">
                 Procedural Star Fields 
