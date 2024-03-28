@@ -68,14 +68,14 @@ const AboutPage = () => {
                             <p style={{fontSize: 30, marginBottom: "5px", fontFamily: "'Raleway-Bold', sans-serif"}}>Hey there! 👋</p>
                             <p style={{marginBottom: "15px"}}>I'm Henry.</p>
                             <p style={{marginBottom: "15px"}}>
-                                I'm an aspiring software engineer looking to work on interesting and 
+                                I'm a software engineer looking to work on interesting and 
                                 challenging projects in Machine Learning, Computer Vision, and Graphics!
                             </p>
                             <p style={{marginBottom: "15px"}}>
                                 I love all things graphics, and am particularly fond of their application in creative industries. 
-                                Animation and video games have been a major inspiration to me since a young age, and I love the technical artistry that goes into each and every project within.
+                                My personal projects and interests tend to lay at the intersection of computer graphics and art.
                             </p>
-                            <p style={{marginBottom: "5px"}}>Please take a look around!</p>
+                            <p style={{marginBottom: "5px"}}>Please take a look around! 😊</p>
                         </div>
                     </div>
                 </Col>
@@ -90,7 +90,7 @@ const AboutPage = () => {
                     location="Bath, United Kingdom"
                     description={
                         <>
-                        <b>BSc (Hons) Computer Science.</b> Grade: <u>first class honours</u>.
+                        <b>BSc (Hons) Computer Science.</b> Grade: <u>First Class Honours</u>.
                         </>
                     }
                 />
@@ -106,7 +106,7 @@ const AboutPage = () => {
                     description={
                         <>
                         Intermediate level Japanese. Studied formally for two years at university through extracurricular classes.<br/><br/>
-                        中級の日本語があります。 大学生時、二年間課外授業で勉強していました。
+                        中級の日本語のレブルを持っています。 大学生時、二年間課外授業で勉強していました。
                         </>
                     }
                 />
