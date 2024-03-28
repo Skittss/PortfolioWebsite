@@ -41,6 +41,14 @@ import shadowColAmbientMix from '../../content/projects/Shimenawa/shadow_col_amb
 import shadowRamped from '../../content/projects/Shimenawa/shadow_col_ramped.png'
 import shadowRampedBright from '../../content/projects/Shimenawa/shadow_col_ramped_extra_bright.png'
 
+import glossNone from '../../content/projects/Shimenawa/gloss_none.png'
+import glossFre from '../../content/projects/Shimenawa/gloss_fresnel.png'
+import glossSpe from '../../content/projects/Shimenawa/gloss_metallic.png'
+import glossFreSpe from '../../content/projects/Shimenawa/gloss_fresnel_metallic.png'
+
+import sssNone from '../../content/projects/Shimenawa/sss_none.png'
+import sssApprox from '../../content/projects/Shimenawa/sss_approx.png'
+
 import 'katex/dist/katex.min.css'
 import Latex from 'react-latex-next';
 
@@ -1465,6 +1473,7 @@ vec3 render(in vec3 ro, in vec3 rd, in float t, in float m)
             </p>
             <p>
                 Colour ramps define a multi-colour gradient over a value range, I use this both to boost contrast of lighting, as well as to add a artificial sub-surface scattering component when desired.
+                We can generate simple colour ramps along shadow edges by using the already calculated occlusion factor as our value range.
             </p>
             <p>
                 The artificial subsurface scattering component is calculated by mixing a highly saturated 'terminator line' colour into a material's shadow colour as follows:
@@ -1505,15 +1514,161 @@ vec3 render(in vec3 ro, in vec3 rd, in float t, in float m)
                 Grazing angles and Metallic Reflections
             </h3>
             <p>
-                The following sections are in progress, please come back later!
+                For certain materials, such as metals and smooth surfaces (as well as dielectrics), a specular lighting component can be incorporated to add a sheen or glossiness to the material.
             </p>
+            <p>
+                Two mathematical concepts we can use to implement this are ray reflection, and the fresnel effect. We can calculate fresnel simply as <Latex>{`$\\vec n\\cdot \\vec {d}$`}</Latex>, where d is the ray direction, and 
+                ray reflection using GLSL's inbuilt <Latex>{`$\\text{reflect()}$`}</Latex> function.
+            </p>
+            <p>
+                For simple smooth surfaces, including fresnel in the lighting calculation will add a nice sheen at shallow ('grazing') viewing angles which sufficiently creates the illusion of smoothness for our scene.
+            </p>
+            <div className="code-snippet" style={{width: "100%"}}>
+                <SyntaxHighlighter 
+                    language="cpp" 
+                    showLineNumbers={true}
+                    style={dracula}
+                    startingLineNumber={0}
+                >
+                    {
+`
+// ...From MAT_0 branch: Example values for a smooth/glossy material
+#define MAT_0_ALBEDO vec3(0.9, 0.7, 0.5)
+#define MAT_0_OCC 0.2
+#define MAT_0_AMBIENT vec3(0.9, 0.9, 0.8)
+#define MAT_0_AMBIENT_COEFF 0.2
+#define MAT_0_FRESNEL vec3(0.7, 0.8, 0.9)
+
+// Calculate fresnel and translate to range [0,1]
+float fresnel = clamp(1.0 + dot(normal, rd), 0.0, 1.0); // glossy component
+
+vec3 shadow_col = mix(MAT_0_OCC * MAT_0_ALBEDO, MAT_0_AMBIENT, MAT_0_AMBIENT_COEFF);
+vec3 albedoFresnel = MAT_0_ALBEDO + fresnel * MAT_0_FRESNEL;
+vec3 col = mix(shadow_col, albedoFresnel, occ);
+`
+                    }
+                </SyntaxHighlighter>
+            </div>
+            <Carousel autoplay autoplaySpeed={5000} effect="fade" style={{margin: "0 auto", paddingBottom: "20px", width: "100%"}}>
+                <AnnotatedImage src={glossNone} annotation={"No Fresnel Applied"}/>
+                <AnnotatedImage src={glossFre} annotation={"Fresnel Applied"}/>
+            </Carousel>
+            <br/>
+            <p>
+                For metals, we can incorporate both fresnel and a specular component calculated similarly to how a specular component is calculated in the phong lighting model:
+            </p>
+            <div className="code-snippet" style={{width: "100%"}}>
+                <SyntaxHighlighter 
+                    language="cpp" 
+                    showLineNumbers={true}
+                    style={dracula}
+                    startingLineNumber={0}
+                >
+                    {
+`
+// ...From MAT_0 branch: Example values for a metallic material
+#define MAT_0_ALBEDO vec3(0.9, 0.7, 0.5)
+#define MAT_0_OCC 0.2
+#define MAT_0_AMBIENT vec3(0.8, 0.9, 0.9)
+#define MAT_0_AMBIENT_COEFF 0.2
+#define MAT_0_FRESNEL vec3(0.7, 0.8, 0.9)
+#define MAT_0_SPECULAR vec3(0.9)
+#define LIGHT_DIR vec3(-1.0)
+
+// Calculate fresnel and translate to range [0,1]
+float fresnel = clamp(1.0 + dot(normal, rd), 0.0, 1.0); // glossy component
+
+// Calculate reflection and attenuate
+float reflection = dot(rd, reflect(LIGHT_DIR, normal)) // metallic component
+reflection = smoothstep(0.5, 0.6, reflection)
+
+vec3 shadow_col = mix(MAT_0_OCC * MAT_0_ALBEDO, MAT_0_AMBIENT, MAT_0_AMBIENT_COEFF);
+vec3 albedoMetallic = MAT_0_ALBEDO + fresnel * MAT_0_FRESNEL + reflection * MAT_0_SPECULAR;
+vec3 col = mix(shadow_col, albedoMetallic, occ);
+`
+                    }
+                </SyntaxHighlighter>
+            </div>
+            <Carousel autoplay autoplaySpeed={5000} effect="fade" style={{margin: "0 auto", paddingBottom: "20px", width: "100%"}}>
+                <AnnotatedImage src={glossNone} annotation={"No Metallic Reflections Applied"}/>
+                <AnnotatedImage src={glossSpe} annotation={"Metallic Reflections Applied"}/>
+            </Carousel>
+            <p>
+                The difference here is that we can <Latex>{`$\\text{smoothstep}$`}</Latex> the reflective component to attenutate the specular component. Smoothstepping between a small value range as above 
+                gives a focused, cel-shading like highlight akin to a smooth metal, whereas a large value range would give the appearance of a rougher metal.
+            </p>
+            <br/>
+            <p>
+                Combining both leads to a simple yet pleasing lighting visual:
+            </p>
+            <Carousel autoplay autoplaySpeed={5000} effect="fade" style={{margin: "0 auto", paddingBottom: "20px", width: "100%"}}>
+                <AnnotatedImage src={glossNone} annotation={"No Effects"}/>
+                <AnnotatedImage src={glossFreSpe} annotation={"Glossy & Metallic Effects"}/>
+            </Carousel>
+            <p>
+                It is worth noting that in our highly stylised scene, there is no one <i>correct</i> way of calculating our lighting, we can make any approximations we like
+                if they look good! There are many more intricate examples from PBR that would be more accurate to reality, but the above examples are merely that - examples which I found looked good for my use case :)
+            </p>
+            <br/>
             <h3 id="sss" className="raleway-title">
-                Quick and Easy Sub-surface Scattering
+                Quick Sub-surface Scattering Approximation
             </h3>
+            <p> 
+                The final technique I will touch on here is a simple and very rough sub-surface scattering approximation which works well for objects which are convex, fairly geometrically uniform, and uniformly dense.
+            </p>
+            <p>
+                My implementation here is based off of the following GDC 
+                talk: <a href="https://colinbarrebrisebois.com/2011/03/07/gdc-2011-approximating-translucency-for-a-fast-cheap-and-convincing-subsurface-scattering-look/" target="_blank" rel="noreferrer">GDC 2011 - Approximating Translucency for a Fast, Cheap and Convincing Subsurface Scattering Look</a>,
+                so please refer here if you would like more details!
+            </p>
+            <p>
+                The basic idea is to calculate an additive SSS colour by doing a cheap secondary ray cast from an intersection point on a SSS enabled material in the direction of (important) light sources.
+                The ray cast gives the distance that light travels through an object to be visible from the sample point. If we then assume uniform density, we can linearly attenuate the light based on this distance to 
+                generate an approximate SSS light colour.
+            </p>
+            <p>
+                Since all our geometry is defined by SDFs, we can skip the raycast and instead do a single additional SDF evaluation to get the distance value. 
+                This requires us to bump the sample point however so we don't just constantly sample a zero-value of the SDF. Bumping proportionally to our ray march t-value is a simple and effective solution:
+            </p>
+            <div className="code-snippet" style={{width: "100%"}}>
+                <SyntaxHighlighter 
+                    language="cpp" 
+                    showLineNumbers={true}
+                    style={dracula}
+                    startingLineNumber={0}
+                >
+                    {
+`
+#define SSS_COEFF 1.0
+#define SSS_COL vec3(0.9)
+
+// 1/5 is our proportionality constant which defines how far
+//  away a light source will effect our SSS calculation.
+float transmission_range = t / 5.0; 
+float transmission = map(pos + LIGHT_DIR * transmission_range) / transmission_range;
+
+// Calculate SSS, smoothstepping transmission to make sure the value does not explode
+vec3 sss = SSS_COEFF * SSS_COL * smoothstep(0.0, 1.0, transmission);
+
+// Regular material lighting calculation
+vec3 shadow_col = ...
+vec3 albedo = ...
+vec3 col = sss + mix(shadow_col, albedoMetallic, occ);
+`
+                    }
+                </SyntaxHighlighter>
+            </div>
+            <Carousel autoplay autoplaySpeed={5000} effect="fade" style={{margin: "0 auto", paddingBottom: "20px", width: "100%"}}>
+                <AnnotatedImage src={sssNone} annotation={"No SSS Applied to Hanging Paper"}/>
+                <AnnotatedImage src={sssApprox} annotation={"Simple SSS Applied to Hanging Paper"}/>
+            </Carousel>
             <br/>
             <h2 id="volumetrics" className="raleway-title">
                 Volumetric Cloud Rendering
             </h2>
+            <p>
+                The following sections are in progress, please come back later!
+            </p>
             <br/>
             <h2 id="hdr" className="raleway-title">
                 HDR Rendering
