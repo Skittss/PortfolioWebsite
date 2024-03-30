@@ -49,6 +49,8 @@ import glossFreSpe from '../../content/projects/Shimenawa/gloss_fresnel_metallic
 import sssNone from '../../content/projects/Shimenawa/sss_none.png'
 import sssApprox from '../../content/projects/Shimenawa/sss_approx.png'
 
+import loginScreen from '../../content/projects/Shimenawa/reference_photos/login_screen.png'
+
 import 'katex/dist/katex.min.css'
 import Latex from 'react-latex-next';
 
@@ -126,7 +128,7 @@ const Home = () => {
             </h2>
             <p>
                 The algorithm at the core of this shader is sphere tracing, a simple yet versatile method when combined with Signed Distance Functions (SDFs). SDFs will be touched
-                on more later, but the idea is to genereate a camera ray, then render implicit geometry (i.e. a function <Latex>{`$f(x,y,z)=0$`}</Latex> at an object's surface) by leaping forward in space repeatedly until 
+                on more later, but the idea is to generate a camera ray, then render implicit geometry (i.e. a function <Latex>{`$f(x,y,z)=0$`}</Latex> at an object's surface) by leaping forward in space repeatedly until 
                 we are close enough to the surface to say that it has been hit (i.e. below some epsilon bound). This then generates a t-value for the camera ray much like ray-tracing, but we have 
                 done so in an approximate, non-analytical manner.
             </p>
@@ -1667,8 +1669,95 @@ vec3 col = sss + mix(shadow_col, albedoMetallic, occ);
                 Volumetric Cloud Rendering
             </h2>
             <p>
-                The following sections are in progress, please come back later!
+                The 'above the clouds' cloudscape in Shimenawa is inspired by the fabulously designed log-in screen from Genshin Impact.
             </p>
+            <AnnotatedImage src={loginScreen} annotation={"Genshin Impact's login screen: Inspiration for Shimenawa's Cloudscape"} />
+            <br/>
+            <p>
+                <a href="https://youtu.be/-JFyAdI_rO8?si=Za0ttWcJ5J4TATBL&t=1473" taget="_blank" rel="noreferrer">MiHoYo's talk at GDC 2021</a> outlines that their cloud rending tech works on a artist-controlled layered billboard system, responsible for its distinctive flat-drawn feel.
+            </p>
+            <p>
+                For Shimenawa, our main render loop is already driven by ray-marching though, so we can more easily integrate a fancier ray-marching algorithm for participating media into the scene, which we will be doing in this section.
+            </p>
+            <p>
+                The cloud rendering tech used was inspired by the tech used in <a href="https://www.guerrilla-games.com/read/the-real-time-volumetric-cloudscapes-of-horizon-zero-dawn" target="_blank" rel="noreferrer">Horizon: Zero Dawn</a>.
+                This tech has been revised and generally improved with a voxel-based approach given the release of <a href="https://advances.realtimerendering.com/s2023/index.html#Nubis3" target="_blank" rel="noreferrer">Horizon: Forbidden West</a>, so I'd love to revisit
+                the algorithm presented here in a future project. 
+            </p>
+            <p>
+                Before giving this section a read though, I strongly recommend having a look at the following resources, which I myself used during implementation. This should alleviate some of the burden with the technical language about 
+                to follow.
+            </p>
+            <div style={{paddingLeft: "2vw", paddingRight: "2vw"}}>
+                <Row className="project-style-cont" style={{display: "flex"}}>
+                    <Col className="project-style-cont">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</Col>
+                    <Col className="project-style-cont" flex="1vw">
+                        <li>
+                            <b>Geurilla Games: The Real time volumetric cloudscapes of Horizon: Zero Dawn.</b> <a href="https://www.guerrilla-games.com/read/the-real-time-volumetric-cloudscapes-of-horizon-zero-dawn" target="_blank" rel="noreferrer">[Publication]</a> <a href="https://advances.realtimerendering.com/s2015/The%20Real-time%20Volumetric%20Cloudscapes%20of%20Horizon%20-%20Zero%20Dawn%20-%20ARTR.pdf" target="_blank" rel="noreferrer">[PDF]</a>
+                        </li>
+                    </Col>
+                </Row>
+                <br/>
+                <Row className="project-style-cont" style={{display: "flex"}}>
+                    <Col className="project-style-cont">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</Col>
+                    <Col className="project-style-cont" flex="1vw">
+                        <li>
+                            <b>Sebastien Hillaire: Phsyically Based Sky, Atmosphere and Cloud Rendering in Frostbite.</b> <a href="https://www.ea.com/frostbite/news/physically-based-sky-atmosphere-and-cloud-rendering" target="_blank" rel="noreferrer">[Publication]</a> <a href="https://media.contentapi.ea.com/content/dam/eacom/frostbite/files/s2016-pbs-frostbite-sky-clouds-new.pdf" target="_blank" rel="noreferrer">[PDF]</a>
+                        </li>
+                    </Col>
+                </Row>
+                <br/>
+                <Row className="project-style-cont" style={{display: "flex"}}>
+                    <Col className="project-style-cont">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</Col>
+                    <Col className="project-style-cont" flex="1vw">
+                        <li>
+                            <b>Fredrik Haggstrom: Real-time rendering of volumetric clouds.</b> <a href="http://www.diva-portal.org/smash/record.jsf?pid=diva2%3A1223894&dswid=-695" target="_blank" rel="noreferrer">[Publication]</a> <a href="http://www.diva-portal.org/smash/get/diva2:1223894/FULLTEXT01.pdf" target="_blank" rel="noreferrer">[PDF]</a>
+                        </li>
+                    </Col>
+                </Row>
+                <br/>
+                <Row className="project-style-cont" style={{display: "flex"}}>
+                    <Col className="project-style-cont">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</Col>
+                    <Col className="project-style-cont" flex="1vw">
+                        <li>
+                            <b>PBR: From theory to implementation, Section 11.</b> <a href="https://www.pbr-book.org/4ed/Volume_Scattering" target="_blank" rel="noreferrer">[Publication]</a>
+                        </li>
+                    </Col>
+                </Row>
+            </div>
+            <br/><br />
+            <h3 id="volum-ray-march" className="raleway-title">
+                Ray Marching Volumetrics
+            </h3>
+            <p>
+                In our regular ray marching loop, we assume that radiance is constant along the whole length of the ray. For volumetrics, we cannot make this assumption as the transmission of light
+                varies depending on certain characteristics, such as the medium's density and what portion of the visible light spectrum is absorbed by the material within. 
+            </p>
+            <p>
+                Thus, the overarching idea behind ray marching volumetrics is to use the ray marching steps to accumulate varying radiance samples along the ray, leading to a final reflected radiance value.
+            </p>
+            <p>
+                Radiance along the ray may come directly from a light source, or from light scattered within the volume. In addition, 
+                light can be absorbed as it scatters throughout, or scatter out of the volume entirely. We must take all of these characteristics into account as we sample if we wish to render a convincing volumetric.
+            </p>
+            <h3 id="volum-blue-noise" className="raleway-title">
+                Approximate Sampling and Blue Noise
+            </h3>
+            <p>
+                The following sections are a work in progress, please come back later!
+            </p>
+            <h3 id="volum-shape" className="raleway-title">
+                Shaping the Clouds
+            </h3>
+            <h3 id="volum-shape-noise" className="raleway-title">
+                Perlin-Worley Noise
+            </h3>
+            <h3 id="volum-lighting" className="raleway-title">
+                Lighting the Clouds
+            </h3>
+            <h3 id="volum-multiple-octaves" className="raleway-title">
+                Multiple Octave Scattering
+            </h3>
             <br/>
             <h2 id="hdr" className="raleway-title">
                 HDR Rendering
