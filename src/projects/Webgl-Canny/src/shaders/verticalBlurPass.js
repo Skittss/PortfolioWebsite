@@ -1,52 +1,53 @@
-import { ShaderMaterial, UniformsUtils } from 'three';
-import { Pass, FullScreenQuad } from 'three/examples/jsm/postprocessing/Pass';
+import { ShaderMaterial, Uniform } from 'three';
+import { Pass } from 'postprocessing';
 import { vGaussianBlur } from './shaders';
 
-class HorizontalBlurPass extends Pass {
+let _kernel, _kernelSize, _vRes;
 
-    constructor ( kernel, kernelSize, height ) {
+class VerticalBlurShaderMaterial extends ShaderMaterial {
 
-        super();
+    constructor ( kernel, kernelSize, vRes ) {
 
-        const shader = vGaussianBlur;
+        super({
+            type: "CustomMaterial",
+            uniforms: {
+                tDiffuse: new Uniform(null),
+                kernelSize: new Uniform(0),
+                kernel: new Uniform([0]),
+                vRes: new Uniform(0)
+            },
 
-        this.uniforms = UniformsUtils.clone( shader.uniforms );
-        
-        this.material = new ShaderMaterial({
-
-            uniforms: this.uniforms,
-            vertexShader: shader.vertexShader,
-            fragmentShader: shader.fragmentShader
-        
+            fragmentShader: vGaussianBlur.fragmentShader,
+            vertexShader: vGaussianBlur.vertexShader,
+            toneMapped: false,
+            depthWrite: false,
+            depthTest: false
         });
+        
+        _kernel = kernel;
+        _kernelSize = kernelSize;
+        _vRes = vRes;
+    }
+}
 
-        if (kernel !== undefined) this.uniforms.kernel.value = kernel;
-        if (kernelSize !== undefined) this.uniforms.kernelSize.value = kernelSize;
-        if (height !== undefined) this.uniforms.vRes.value = height;
+export class VerticalBlurPass extends Pass {
 
-        this.fsQuad = new FullScreenQuad(this.material);
-
+    constructor ( kernel, kernelSize, hRes ) {
+        super("VerticalBlurPass");
+        this.fullscreenMaterial = new VerticalBlurShaderMaterial(kernel, kernelSize, hRes)
     }
 
-    render( renderer, writeBuffer, readBuffer) {
+    render( renderer, inputBuffer, outputBuffer, deltaTime, stencilTest ) {
 
-        this.uniforms[ 'tDiffuse' ].value = readBuffer.texture;
+        const material = this.fullscreenMaterial;
+        material.uniforms[ 'tDiffuse' ].value = inputBuffer ? inputBuffer.texture : null;
+        material.uniforms[ 'kernel' ].value = _kernel;
+        material.uniforms[ 'kernelSize' ].value = _kernelSize;
+        material.uniforms[ 'vRes' ].value = _vRes;
 
-        if ( this.renderToScreen ) { 
-            
-            renderer.setRenderTarget(null);
-            this.fsQuad.render(renderer);
-
-        } else {
-
-            renderer.setRenderTarget(writeBuffer);
-            if (this.clear) renderer.clear();
-            this.fsQuad.render(renderer);
-
-        }
+        renderer.setRenderTarget(this.renderToScreen ? null : outputBuffer);
+        renderer.render(this.scene, this.camera);
 
     }
 
 }
-
-export default HorizontalBlurPass;

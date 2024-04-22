@@ -1,20 +1,69 @@
-import { ShaderMaterial, UniformsUtils } from 'three';
-import { Pass, FullScreenQuad } from 'three/examples/jsm/postprocessing/Pass';
+import { ShaderMaterial, Uniform } from 'three';
+import { Pass } from 'postprocessing';
 import { normalizeShader, thresholdShader } from './shaders';
 
+let _thresh_max, _thresh_high, _thresh_low;
+class ThresholdShaderMaterial extends ShaderMaterial {
+
+    constructor ( max, high, low ) {
+        super({
+            type: "CustomMaterial",
+            uniforms: {
+                tDiffuse: new Uniform(null),
+                max: new Uniform(0),
+                high: new Uniform(0),
+                low: new Uniform(0),
+            },
+
+            fragmentShader: thresholdShader.fragmentShader,
+            vertexShader: thresholdShader.vertexShader,
+            toneMapped: false,
+            depthWrite: false,
+            depthTest: false
+        });
+        
+        _thresh_max = max;
+        _thresh_high = high;
+        _thresh_low = low;
+    }
+    
+}
+
+class NormShaderMaterial extends ShaderMaterial {
+
+    constructor () {
+        super({
+            type: "CustomMaterial",
+            uniforms: {
+                tDiffuse: new Uniform(null),
+                max: new Uniform(0)
+            },
+
+            fragmentShader: normalizeShader.fragmentShader,
+            vertexShader: normalizeShader.vertexShader,
+            toneMapped: false,
+            depthWrite: false,
+            depthTest: false
+        });
+    }
+    
+}
+
 // Combines passes for Sobel operator onwards due to dependency on calculated information
-class GpuComputePass extends Pass {
+export class GpuComputePass extends Pass {
 
     constructor ( sobelParams, nmsParams, dim, doNMS, threshold ) {
-
-        super();
+        super("GpuComputePass");
 
         this.doNMS = doNMS;
         this.threshold = threshold;
 
+        this._normShaderMaterial = new NormShaderMaterial();
+        if (threshold) this._thresholdShaderMaterial = new ThresholdShaderMaterial();
+        
         this.dims = dim;
 
-        this.gpuCompute = sobelParams.gpuCompute;
+        this.sobelGpuCompute = sobelParams.gpuCompute;
         this.magnitudeVariable = sobelParams.magnitudeVariable;
         this.magnitudeUniforms = sobelParams.magnitudeUniforms;
         this.argumentVariable = sobelParams.argumentVariable;
@@ -25,37 +74,28 @@ class GpuComputePass extends Pass {
             this.nmsVariable = nmsParams.nmsVariable;
             this.nmsUniforms = nmsParams.nmsUniforms;
         }
-
-        // Normalize values to range 0 -> 1.
-        this.initNormalizeShader();
-
-        if (threshold) this.initThresholdShader();
     }
 
-    render( renderer, writeBuffer, readBuffer) {
+    render( renderer, inputBuffer, outputBuffer, deltaTime, stencilTest ) {
 
         // Compute gradient magnitudes and angles
-        this.magnitudeUniforms[ 'tDiffuse' ].value = readBuffer.texture;
-        if ( this.doNMS ) this.argumentUniforms[ 'tDiffuse' ].value = readBuffer.texture;
+        this.magnitudeUniforms[ 'tDiffuse' ].value = inputBuffer.texture;
+        if ( this.doNMS ) this.argumentUniforms[ 'tDiffuse' ].value = inputBuffer.texture;
 
-        this.gpuCompute.compute();
+        this.sobelGpuCompute.compute();
 
         // Pass in shader uniforms depending on the process shader.
         let renderTarget;
         if ( this.doNMS ) {
-
-            this.nmsUniforms[ 'tMags' ].value = this.gpuCompute.getCurrentRenderTarget( this.magnitudeVariable ).texture;
-            this.nmsUniforms[ 'tArgs' ].value = this.gpuCompute.getCurrentRenderTarget( this.argumentVariable ).texture;
+            this.nmsUniforms[ 'tMags' ].value = this.sobelGpuCompute.getCurrentRenderTarget( this.magnitudeVariable ).texture;
+            this.nmsUniforms[ 'tArgs' ].value = this.sobelGpuCompute.getCurrentRenderTarget( this.argumentVariable ).texture;
             this.nmsUniforms[ 'dim' ].value = this.dims;
-
             this.nmsGpuCompute.compute();
 
             renderTarget = this.nmsGpuCompute.getCurrentRenderTarget( this.nmsVariable )
 
         } else {
-
-            renderTarget = this.gpuCompute.getCurrentRenderTarget( this.magnitudeVariable )
-
+            renderTarget = this.sobelGpuCompute.getCurrentRenderTarget( this.magnitudeVariable )
         }
         
         // Calculate the max value uniform for the normalize shader.
@@ -64,92 +104,37 @@ class GpuComputePass extends Pass {
         renderer.readRenderTargetPixels(renderTarget, 0, 0, this.dims[0], this.dims[1], read);
 
         // O(N) CPU bound search for max
-
         let max = 0.0;
         for (let i = 0; i < read.length; i+=4) {
             if (read[i] > max) max = read[i];
         }
-
-        if (max > 0.0) this.normUniforms[ 'max' ].value = max;
-        this.normUniforms[ 'tDiffuse' ].value = renderTarget.texture;
-
+        
         // Render norm pass in the effects chain.
-
         if ( this.renderToScreen && !this.threshold ) {
+            this.fullscreenMaterial = this._normShaderMaterial;
+            const normMaterial = this.fullscreenMaterial;
+            normMaterial.uniforms[ 'tDiffuse' ].value = renderTarget.texture;
+            normMaterial.uniforms[ 'max' ].value = Math.max(max, 0);
 
-            renderer.setRenderTarget(null);
-            this.normFsQuad.render(renderer);
-
-        } else {
-
-            renderer.setRenderTarget(readBuffer);
-            if (this.clear) renderer.clear();
-            this.normFsQuad.render(renderer);
-
+            renderer.setRenderTarget(this.renderToScreen ? null : inputBuffer);
+            renderer.render(this.scene, this.camera);
         }
 
         // Render threshold pass in the effects chain.
-
         if ( this.threshold ) {
             
             let hi = this.threshold.high * max;
 
-            this.threshUniforms[ 'tDiffuse' ].value = readBuffer.texture;
-            this.threshUniforms[ 'max' ].value = max;
-            this.threshUniforms[ 'high' ].value = hi;
-            this.threshUniforms[ 'low' ].value = this.threshold.low * hi;
+            this.fullscreenMaterial = this._thresholdShaderMaterial;
+            const threshMaterial = this.fullscreenMaterial;
+            
+            threshMaterial.uniforms[ 'tDiffuse' ].value = renderTarget.texture;
+            threshMaterial.uniforms[ 'max' ].value = max;
+            threshMaterial.uniforms[ 'high' ].value = hi;
+            threshMaterial.uniforms[ 'low' ].value = this.threshold.low * hi;
 
-            if (this.renderToScreen) {
-
-                renderer.setRenderTarget(null);
-                this.threshFsQuad.render(renderer)
-
-            } else {
-
-                renderer.setRenderTarget(writeBuffer);
-                if (this.clear) renderer.clear();
-                this.threshFsQuad.render(renderer);
-
-            }
-
+            renderer.setRenderTarget(this.renderToScreen ? null : outputBuffer);
+            renderer.render(this.scene, this.camera);    
         }
     }
-    
-    initNormalizeShader() {
-
-        const normShader = normalizeShader;
-
-        this.normUniforms = UniformsUtils.clone( normShader.uniforms );
-
-        this.normMaterial = new ShaderMaterial({
-
-            uniforms: this.normUniforms,
-            vertexShader: normShader.vertexShader,
-            fragmentShader: normShader.fragmentShader
-
-        })
-
-        this.normFsQuad = new FullScreenQuad(this.normMaterial);
-    
-    }
-
-    initThresholdShader() {
-
-        const threshShader = thresholdShader;
-
-        this.threshUniforms = UniformsUtils.clone( thresholdShader.uniforms );
-
-        this.threshMaterial = new ShaderMaterial({
-
-            uniforms: this.threshUniforms,
-            vertexShader: threshShader.vertexShader,
-            fragmentShader: threshShader.fragmentShader
-
-        })
-
-        this.threshFsQuad = new FullScreenQuad(this.threshMaterial);
-
-    }
 }
-
-export default GpuComputePass;

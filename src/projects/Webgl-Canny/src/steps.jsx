@@ -8,16 +8,16 @@ import "./main.scss";
 
 // Shader-related imports
 import ThreeImagePlane from "./threeImagePlane";
-import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer';
-import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass';
-import { GrayscalePass, HorizontalBlurPass, VerticalBlurPass, SobelPass, GpuComputePass, HysteresisPass, CopyStrongPass } from './shaders';
+import { EffectComposer, RenderPass } from 'postprocessing';
+import { GrayscalePass, HorizontalBlurPass, VerticalBlurPass, GpuComputePass, HysteresisPass, CopyStrongPass } from './shaders';
 import getComputationRenderers from "./shaders/getComputationRenderers";
 import { WebGLRenderTarget } from 'three';
 
 import { getSeparableKernel } from "./gaussianKernel";
 
 // Make sure to extend shader components so they work with three-fiber
-extend({ EffectComposer, RenderPass, GrayscalePass, HorizontalBlurPass, VerticalBlurPass, SobelPass, GpuComputePass, HysteresisPass, CopyStrongPass });
+extend({ EffectComposer })
+//extend({ GrayscalePass, HorizontalBlurPass, VerticalBlurPass, SobelPass, GpuComputePass, HysteresisPass, CopyStrongPass });
 
 const { Option } = Select;
 
@@ -297,7 +297,19 @@ const Steps = () => {
 
     }
 
-    const GetStepShaders = (step, gl) => {
+    // Wrap options in container for css styling.
+    const getOptions = (step) => {
+
+        return (
+            <div className="processor-options">
+                {stepOptions[step]}
+            </div>
+        )
+    }
+
+    const Shaders = () => {
+        const composer = useRef();
+        const { scene, gl, size, camera } = useThree();
 
         // Do manual memoization here of kernel and renderers as useMemo() does not have expected performance
         // (Unsure why as of now, though this works fine. Just a little more verbose).
@@ -365,61 +377,42 @@ const Steps = () => {
                     if (intermediateRT.tg) {
                         if (intermediateRT.tg.dispose) intermediateRT.tg.dispose();
                         delete intermediateRT.tg;
-                    }
-                    
+                    }                    
                     setIntermediateRT({tg: new WebGLRenderTarget(renderParams.dims.x, renderParams.dims.y)});
                 }
         }
-
-        // Sequence of shaders to be put into the post-processing passes (Threejs EffectComposer).
-        // only include shaders up to the current step to enable each step of the process to be previewed.
-        return (
-            <>
-                {step >= 0 ? <grayscalePass attachArray="passes" args={[selectedGrayscaleEncoding]} /> : null}
-                {step >= 1 ?  
-                <>
-                    <horizontalBlurPass attachArray="passes" args={[kernel, kernelSize, ImgContainerRef.current.offsetWidth]} />
-                    <verticalBlurPass attachArray="passes" args={[kernel, kernelSize, ImgContainerRef.current.offsetHeight]} />
-                </>
-                : null}
-                {step == 2 ? <gpuComputePass attachArray="passes" args={[currentRenderers.sobel, currentRenderers.nms, renderParams.dims, false, null]} /> : null}
-                {step == 3 ? <gpuComputePass attachArray="passes" args={[currentRenderers.sobel, currentRenderers.nms, renderParams.dims, true, null]} /> : null}
-                {step >= 4 ? <gpuComputePass attachArray="passes" args={[currentRenderers.sobel, currentRenderers.nms, renderParams.dims, true, {high: highThreshold, low: lowThreshold}]} /> : null}
-                {step >= 5 ? <hysteresisPass attachArray="passes" args={[hysteresisTolerance, hysteresisIters, intermediateRT.tg, renderParams.dims]}/> : null}
-                {step >= 6 ? <copyStrongPass attachArray="passes" args={[renderParams.dims]}/> : null}
-            </>
-        )
-    }
-
-    // Wrap options in container for css styling.
-    const getOptions = (step) => {
-
-        return (
-            <div className="processor-options">
-                {stepOptions[step]}
-            </div>
-        )
-    }
-
-    const Shaders = () => {
-        const composer = useRef();
-        const { scene, gl, size, camera } = useThree();
 
         // Save GL environment to state to allow downloading of the canvas.
         if (gl != rendererRef) {
             setRendererRef(gl);
         }
 
-        // Render post-processing once on mount.
-        useEffect(() => composer.current.render(), []);
+        // Set up and render post-processing on mount.
+        useEffect(() => {
+            // Note: The r3f library is an absolute NIGHTMARE for adding extra passes.
+            //       It is so bad that I can literally only get this to work by adding passes normally
+            //       through three.js
+            composer.current.addPass(new RenderPass(scene, camera));
+            if (step >= 0) composer.current.addPass(new GrayscalePass(selectedGrayscaleEncoding));
+            if (step >= 1) composer.current.addPass(new HorizontalBlurPass(kernel, kernelSize, ImgContainerRef.current.offsetWidth));
+            if (step >= 1) composer.current.addPass(new VerticalBlurPass(kernel, kernelSize, ImgContainerRef.current.offsetHeight));
+            if (step >= 2) composer.current.addPass(new GpuComputePass(currentRenderers.sobel, currentRenderers.nms, renderParams.dims, false, null));
+            if (step >= 3) composer.current.addPass(new GpuComputePass(currentRenderers.sobel, currentRenderers.nms, renderParams.dims, true, null));
+            if (step >= 4) composer.current.addPass(new GpuComputePass(currentRenderers.sobel, currentRenderers.nms, renderParams.dims, true, {high: highThreshold, low: lowThreshold}));
+            if (step >= 5) composer.current.addPass(new HysteresisPass(hysteresisTolerance, hysteresisIters, intermediateRT.tg, renderParams.dims));
+            if (step >= 6) composer.current.addPass(new CopyStrongPass(renderParams.dims));
+            composer.current.render()
+
+        }, []);
+
         // Render on each frame thereafter.
-        useFrame(() => composer.current.render(), 1);
+        useFrame(() => {
+            composer.current.render()
+        
+        }, 1);
 
         return (
-            <effectComposer ref={composer} args={[gl]}>
-                <renderPass attachArray="passes" scene={scene} camera={camera} />
-                {GetStepShaders(step, gl)}
-            </effectComposer>
+            <effectComposer ref={composer} args={[gl]} />
         )
     }
 
@@ -435,7 +428,7 @@ const Steps = () => {
                 <div className="fill-container">
                     <FadeIn className="fill-and-vertically-center">
 
-                        <Row gutter={[16,16]} justify="center" align="middle" style={{display: "flex", alignItems: "center"}}>
+                        <Row gutter={[16,16]} justify="center" align="middle" style={{display: "flex", alignItems: "center", marginRight: "0"}}>
 
                             {/* Input image */}
                             <Col className="process-preview-grid-col" flex={1}>
@@ -451,10 +444,8 @@ const Steps = () => {
                                         gl={{preserveDrawingBuffer: true}}
                                         style={{position: "relative", width: shaderDisplayDim.width, height: shaderDisplayDim.height}}
                                     >
-                                        <Suspense fallback="Loading...">
-                                            <ThreeImagePlane img={imgSource} dim={{width: imgDims.width, height: imgDims.height}}/>
-                                        </Suspense>
-                                        <Shaders />
+                                        <ThreeImagePlane img={imgSource} dim={{width: imgDims.width, height: imgDims.height}}/>
+                                        <Shaders /> 
                                     </Canvas>
                                 </div>
                             </Col>

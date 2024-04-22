@@ -1,56 +1,117 @@
-import { ShaderMaterial, UniformsUtils, WebGLRenderTarget } from 'three';
-import { Pass, FullScreenQuad } from 'three/examples/jsm/postprocessing/Pass';
-import { copyShader, copyStrongShader, dilationShader, hysteresisCombineShader } from './shaders';
+import { ShaderMaterial, Uniform, Vector2 } from 'three';
+import { Pass } from 'postprocessing';
+import { copyShader, dilationShader, hysteresisCombineShader } from './shaders';
 
-class HysteresisPass extends Pass {
+class CopyShaderMaterial extends ShaderMaterial {
+
+    constructor () {
+
+        super({
+            type: "CustomMaterial",
+            uniforms: {
+                tDiffuse: new Uniform(null)
+            },
+
+            fragmentShader: copyShader.fragmentShader,
+            vertexShader: copyShader.vertexShader,
+            toneMapped: false,
+            depthWrite: false,
+            depthTest: false
+        });
+    }
+}
+
+class DilationShaderMaterial extends ShaderMaterial {
+
+    constructor ( dims, tolerance ) {
+
+        super({
+            type: "CustomMaterial",
+            uniforms: {
+                tDiffuse: new Uniform(null),
+                dims: new Uniform(dims),
+                tolerance: new Uniform(tolerance)
+            },
+
+            fragmentShader: dilationShader.fragmentShader,
+            vertexShader: dilationShader.vertexShader,
+            toneMapped: false,
+            depthWrite: false,
+            depthTest: false
+        });
+    }
+}
+
+class HysteresisShaderMaterial extends ShaderMaterial {
+
+    constructor() {
+
+        super({
+            type: "CustomMaterial",
+            uniforms: {
+                tDilate: new Uniform(null),
+                tDiffuse: new Uniform(null)
+            },
+
+            fragmentShader: hysteresisCombineShader.fragmentShader,
+            vertexShader: hysteresisCombineShader.vertexShader,
+            toneMapped: false,
+            depthWrite: false,
+            depthTest: false
+        });
+    }
+}
+
+export class HysteresisPass extends Pass {
 
     constructor ( tolerance, iterations, renderTarget, dims ) {
-
-        super();
+        super("HysteresisPass");
 
         this.iterations = iterations;
 
-        if (iterations == 0) this.initCopyShader();
-        this.initDilationShader(dims, tolerance);
-        this.initHysteresisShader();
-
+        if (iterations == 0) this.copyMaterial = new CopyShaderMaterial();
+        this.dilationMaterial = new DilationShaderMaterial(dims, tolerance);
+        this.hysMaterial = new HysteresisShaderMaterial();
     }
 
-    render( renderer, writeBuffer, readBuffer) {
+    render( renderer, inputBuffer, outputBuffer, deltaTime, stencilTest ) {
 
-        this.intermediateRt = writeBuffer.clone();
+        // This is very inefficient... too bad!
+        this.intermediateRt = outputBuffer.clone();
 
         if (this.iterations == 0) {
-            
-            this.copyUniforms[ 'tDiffuse' ].value = readBuffer.texture;
 
+            this.fullscreenMaterial = this.copyMaterial;
+            const copyMaterial = this.fullscreenMaterial;
+            copyMaterial.uniforms[ 'tDiffuse' ].value = inputBuffer.texture;
+            
             renderer.setRenderTarget(null);
-            this.copyFsQuad.render(renderer);
+            renderer.render(this.scene, this.camera);
 
         } else {
 
-            this.hysUniforms[ 'tDiffuse' ].value = readBuffer.texture;
+            this.hysMaterial.uniforms[ 'tDiffuse' ].value = inputBuffer.texture;
 
             for (let i = 0; i < this.iterations; i++) {
-
-                this.uniforms[ 'tDiffuse' ].value = i == 0 ? readBuffer.texture : writeBuffer.texture;
+                this.dilationMaterial.uniforms[ 'tDiffuse' ].value = i == 0 ? inputBuffer.texture : outputBuffer.texture;
     
+                this.fullscreenMaterial = this.dilationMaterial;
                 renderer.setRenderTarget(this.intermediateRt);
                 if (this.clear) renderer.clear();
-                this.fsQuad.render(renderer);
+                renderer.render(this.scene, this.camera);
 
-                this.hysUniforms[ 'tDilate' ].value = this.intermediateRt.texture;
+                this.hysMaterial.uniforms[ 'tDilate' ].value = this.intermediateRt.texture;
 
-                if ( i == this.iterations - 1  && this.renderToScreen) {
+                this.fullscreenMaterial = this.hysMaterial;
+                if ( i == this.iterations - 1  && this.renderToScreen ) {
     
                     renderer.setRenderTarget(null);
-                    this.hysFsQuad.render(renderer);
+                    renderer.render(this.scene, this.camera);
     
                 } else {
     
-                    renderer.setRenderTarget(writeBuffer);
-                    if (this.clear) renderer.clear();
-                    this.hysFsQuad.render(renderer);
+                    renderer.setRenderTarget(outputBuffer);
+                    renderer.render(this.scene, this.camera);
     
                 }
             }
@@ -59,61 +120,4 @@ class HysteresisPass extends Pass {
         this.intermediateRt.dispose();
         delete this.intermediateRt;
     }
-
-    initCopyShader() {
-
-        const cpyShader = copyShader;
-
-        this.copyUniforms = UniformsUtils.clone( cpyShader.uniforms );
-
-        this.copyMaterial = new ShaderMaterial({
-
-            uniforms: this.copyUniforms,
-            vertexShader: cpyShader.vertexShader,
-            fragmentShader: cpyShader.fragmentShader
-
-        })
-
-        this.copyFsQuad = new FullScreenQuad(this.copyMaterial);
-
-    }
-
-    initDilationShader(dims, tolerance) {
-
-        const shader = dilationShader;
-
-        this.uniforms = UniformsUtils.clone( shader.uniforms );
-        
-        this.material = new ShaderMaterial({
-
-            uniforms: this.uniforms,
-            vertexShader: shader.vertexShader,
-            fragmentShader: shader.fragmentShader
-        
-        });
-
-        if (dims !== undefined) this.uniforms.dims.value = dims;
-        if (tolerance !== undefined) this.uniforms.tolerance.value = tolerance;
-
-        this.fsQuad = new FullScreenQuad(this.material);
-    }
-
-    initHysteresisShader() {
-        const hysShader = hysteresisCombineShader;
-
-        this.hysUniforms = UniformsUtils.clone( hysShader.uniforms );
-
-        this.hysMaterial = new ShaderMaterial({
-
-            uniforms: this.hysUniforms,
-            vertexShader: hysShader.vertexShader,
-            fragmentShader: hysShader.fragmentShader
-            
-        })
-
-        this.hysFsQuad = new FullScreenQuad(this.hysMaterial);
-    }
-
 }
-
-export default HysteresisPass;

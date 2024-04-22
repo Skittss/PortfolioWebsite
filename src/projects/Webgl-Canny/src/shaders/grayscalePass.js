@@ -1,50 +1,45 @@
-import { ShaderMaterial, UniformsUtils } from 'three';
-import { Pass, FullScreenQuad } from 'three/examples/jsm/postprocessing/Pass';
+import { ShaderMaterial, Uniform, Vector3 } from 'three';
+import { Pass } from 'postprocessing';
 import { GrayscaleShader } from './shaders';
 
-class GrayscalePass extends Pass {
+let _weights;
+
+class GrayscaleShaderMaterial extends ShaderMaterial {
 
     constructor ( weights ) {
 
-        super();
+        super({
+            type: "CustomMaterial",
+            uniforms: {
+                tDiffuse: new Uniform(null),
+                weights: new Uniform(new Vector3())
+            },
 
-        const shader = GrayscaleShader;
-
-        this.uniforms = UniformsUtils.clone( shader.uniforms );
-        
-        this.material = new ShaderMaterial({
-
-            uniforms: this.uniforms,
-            vertexShader: shader.vertexShader,
-            fragmentShader: shader.fragmentShader
-        
+            fragmentShader: GrayscaleShader.fragmentShader,
+            vertexShader: GrayscaleShader.vertexShader,
+            toneMapped: false,
+            depthWrite: false,
+            depthTest: false
         });
-
-        if (weights !== undefined) this.uniforms.weights.value = weights;
-
-        this.fsQuad = new FullScreenQuad(this.material);
-
+        
+        _weights = weights;
     }
-
-    render( renderer, writeBuffer, readBuffer) {
-
-        this.uniforms[ 'tDiffuse' ].value = readBuffer.texture;
-
-        if ( this.renderToScreen ) { 
-            
-            renderer.setRenderTarget(null);
-            this.fsQuad.render(renderer);
-
-        } else {
-
-            renderer.setRenderTarget(writeBuffer);
-            if (this.clear) renderer.clear();
-            this.fsQuad.render(renderer);
-
-        }
-
-    }
-
 }
 
-export default GrayscalePass;
+export class GrayscalePass extends Pass {
+    constructor(weights) {
+        super("GrayscalePass")
+        this.fullscreenMaterial = new GrayscaleShaderMaterial(weights);
+    }
+
+    render( renderer, inputBuffer, outputBuffer, deltaTime, stencilTest ) {
+
+        const material = this.fullscreenMaterial;
+        material.uniforms[ 'tDiffuse' ].value = inputBuffer ? inputBuffer.texture : null;
+        material.uniforms[ 'weights' ].value = _weights
+
+        renderer.setRenderTarget(this.renderToScreen ? null : outputBuffer);
+        renderer.render(this.scene, this.camera);
+
+    }
+}

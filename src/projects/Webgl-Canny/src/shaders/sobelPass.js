@@ -1,52 +1,53 @@
-import { ShaderMaterial, UniformsUtils } from 'three';
-import { Pass, FullScreenQuad } from 'three/examples/jsm/postprocessing/Pass';
+import { ShaderMaterial, Uniform, Vector2 } from 'three';
+import { Pass } from 'postprocessing';
 import { sobelShader } from './shaders';
 
-class SobelPass extends Pass {
+let _gx, _gy, _dim;
+
+class SobelShaderMaterial extends ShaderMaterial {
 
     constructor ( gx, gy, dim ) {
 
-        super();
+        super({
+            type: "CustomMaterial",
+            uniforms: {
+                tDiffuse: new Uniform(null),
+                gx: new Uniform(0),
+                gy: new Uniform(0),
+                dim: new Uniform(new Vector2()),
+            },
 
-        const shader = sobelShader;
-
-        this.uniforms = UniformsUtils.clone( shader.uniforms );
-        
-        this.material = new ShaderMaterial({
-
-            uniforms: this.uniforms,
-            vertexShader: shader.vertexShader,
-            fragmentShader: shader.fragmentShader
-        
+            fragmentShader: sobelShader.fragmentShader,
+            vertexShader: sobelShader.vertexShader,
+            toneMapped: false,
+            depthWrite: false,
+            depthTest: false
         });
+        
+        _gx = gx;
+        _gy = gy;
+        _dim = dim;
+    }
+}
 
-        if (gx !== undefined) this.uniforms.GX.value = gx;
-        if (gy !== undefined) this.uniforms.GY.value = gy;
-        if (dim !== undefined) this.uniforms.dim.value = dim;
+export class SobelPass extends Pass {
 
-        this.fsQuad = new FullScreenQuad(this.material);
-
+    constructor ( gx, gy, dim ) {
+        super("SobelPass");
+        this.fullscreenMaterial = new SobelShaderMaterial(gx, gy, dim)
     }
 
-    render( renderer, writeBuffer, readBuffer) {
+    render( renderer, inputBuffer, outputBuffer, deltaTime, stencilTest ) {
 
-        this.uniforms[ 'tDiffuse' ].value = readBuffer.texture;
+        const material = this.fullscreenMaterial;
+        material.uniforms[ 'tDiffuse' ].value = inputBuffer ? inputBuffer.texture : null;
+        material.uniforms[ 'gx' ].value = _gx;
+        material.uniforms[ 'gy' ].value = _gy;
+        material.uniforms[ 'dim' ].value = _dim;
 
-        if ( this.renderToScreen ) { 
-            
-            renderer.setRenderTarget(null);
-            this.fsQuad.render(renderer);
-
-        } else {
-
-            renderer.setRenderTarget(writeBuffer);
-            if (this.clear) renderer.clear();
-            this.fsQuad.render(renderer);
-
-        }
+        renderer.setRenderTarget(this.renderToScreen ? null : outputBuffer);
+        renderer.render(this.scene, this.camera);
 
     }
 
 }
-
-export default SobelPass;

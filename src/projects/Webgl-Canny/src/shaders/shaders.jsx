@@ -23,9 +23,10 @@ const GrayscaleShader = {
 		varying vec2 vUv;
 
 		void main() {
-			vec4 texel = texture2D( tDiffuse, vUv );
+			vec4 texel = pow(texture2D( tDiffuse, vUv ), vec4(1.0 / 2.2));
             float w_a = weights.x * texel.x + weights.y * texel.y + weights.z * texel.z;
 			gl_FragColor = vec4(w_a, w_a, w_a, 1.0);
+            //gl_FragColor = vec4(texel.rgba);
 		}`
 
 };
@@ -55,16 +56,18 @@ const hGaussianBlur = {
         varying vec2 vUv;
 
         void main() {
-
-            vec4 color = texture2D(tDiffuse, vUv) * kernel[0];
-
-            for (int i=1; i < 128; i++) {
-                if (i == kernelSize) break;
-                color += texture2D(tDiffuse, vUv + vec2(float(i)/hRes, 0.0)) * kernel[i];
-                color += texture2D(tDiffuse, vUv - vec2(float(i)/hRes, 0.0)) * kernel[i];
+            
+            if (hRes > 0.0) {
+                vec4 color = texture2D(tDiffuse, vUv) * kernel[0];
+    
+                for (int i=1; i < 128; i++) {
+                    if (i == kernelSize) break;
+                    color += texture2D(tDiffuse, vUv + vec2(float(i)/hRes, 0.0)) * kernel[i];
+                    color += texture2D(tDiffuse, vUv - vec2(float(i)/hRes, 0.0)) * kernel[i];
+                }
+    
+                gl_FragColor = color;
             }
-
-            gl_FragColor = color;
         }`
 };
 
@@ -94,15 +97,17 @@ const vGaussianBlur = {
 
         void main() {
 
-            vec4 color = texture2D(tDiffuse, vUv) * kernel[0];
-
-            for (int i=1; i < 128; i++) {
-                if (i == kernelSize) break;
-                color += texture2D(tDiffuse, vUv + vec2(0.0, float(i)/vRes)) * kernel[i];
-                color += texture2D(tDiffuse, vUv - vec2(0.0, float(i)/vRes)) * kernel[i];
+            if (vRes > 0.0) {
+                vec4 color = texture2D(tDiffuse, vUv) * kernel[0];
+    
+                for (int i=1; i < 128; i++) {
+                    if (i == kernelSize) break;
+                    color += texture2D(tDiffuse, vUv + vec2(0.0, float(i)/vRes)) * kernel[i];
+                    color += texture2D(tDiffuse, vUv - vec2(0.0, float(i)/vRes)) * kernel[i];
+                }
+    
+                gl_FragColor = color;
             }
-
-            gl_FragColor = color;
         }`
 
 };
@@ -349,7 +354,7 @@ const dilationShader = {
     uniforms: {
         'tDiffuse': { value: null },
         'dims': { value : new Vector2() },
-        'tolerance': { value: 1.0},
+        'tolerance': { value: 1.0 },
     },
 
     vertexShader: /* glsl */`
@@ -367,26 +372,33 @@ const dilationShader = {
         uniform vec2 dims;
         uniform int tolerance;
 
+        varying vec2 vUv;
+
         void main() {
+            
+            if (dims.x > 0.0 && dims.y > 0.0) {
+                // vec2 coord = vec2(gl_FragCoord.x/dims.x, gl_FragCoord.y/dims.y);
+                // float v = texture2D(tDiffuse, coord).x;
+                // if (v < 0.7) v = 0.0;
 
-            float v = 0.0;
-            for (int j = -tolerance; j <= tolerance; j++) {
-                for (int i = -tolerance; i <= tolerance; i++) {
-                    
-                    vec2 coord = vec2(gl_FragCoord.x/dims.x, gl_FragCoord.y/dims.y) + vec2( float(i)/dims.x, float(j)/dims.y );
-
-                    if ( texture2D(tDiffuse, coord).x > 0.3) {
-
-                        v = 1.0;
-                        break;
-
+                float v = 0.0;
+                for (int j = -tolerance; j <= tolerance; j++) {
+                    for (int i = -tolerance; i <= tolerance; i++) {
+                        
+                        vec2 coord = vec2(gl_FragCoord.x/dims.x, gl_FragCoord.y/dims.y) + vec2( float(i)/dims.x, float(j)/dims.y );
+    
+                        if ( texture2D(tDiffuse, coord).x > 0.7) {
+    
+                            v = 1.0;
+                            break;
+    
+                        }
+    
                     }
-
                 }
+    
+                gl_FragColor = vec4(v, v, v, 1.0);
             }
-
-            gl_FragColor = vec4(v, v, v, 1.0);
-
         }`
 
 }
@@ -420,9 +432,7 @@ const hysteresisCombineShader = {
             float weak = texture2D(tDiffuse, vUv).x;
 
             if (weak < 1.0 && weak > 0.0 && dilate > 0.3) {
-
                 weak = 1.0;
-
             }
 
             gl_FragColor = vec4(weak, weak, weak, 1.0);
@@ -456,7 +466,7 @@ const copyStrongShader = {
             vec2 coord = vec2(gl_FragCoord.x/dims.x, gl_FragCoord.y/dims.y);
 
             float v = texture2D(tDiffuse, coord).x;
-            if ( v <= 0.3 ) {
+            if ( v <= 0.7 ) {
                 v = 0.0;
             }
 
