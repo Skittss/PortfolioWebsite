@@ -68,8 +68,8 @@ const AboutPage = () => {
                             <p style={{fontSize: 30, marginBottom: "5px", fontFamily: "'Raleway-Bold', sans-serif"}}>Hey there! 👋</p>
                             <p style={{marginBottom: "15px"}}>I'm Henry.</p>
                             <p style={{marginBottom: "15px"}}>
-                                I'm a Graphics Research Engineer working on ray tracing interesting
-                                tasks at the forefront of low-level graphics and graphics architecture. 
+                                I'm a Graphics Research Engineer currently working on ray tracing
+                                at the forefront of low-level graphics and graphics architecture. 
                             </p>
                             <p style={{marginBottom: "15px"}}>
                                 I love all things graphics, and am particularly fond of their application in creative industries. 
