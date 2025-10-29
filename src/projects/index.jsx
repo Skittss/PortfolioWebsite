@@ -14,15 +14,15 @@ import {Meta as Shimenawa} from "./Shimenawa";
 const ProjectMetas = [
     Shimenawa,
     ODST,
-    CarRacing,
+    //CarRacing,
     RayTracer,
     FFTOcean,
     WebglCanny,
-    FourierSketcher,
-    MLPNN,
-    Disharmony,
+    //FourierSketcher,
+    //MLPNN,
+    //Disharmony,
     Website,
-    Hex
+    //Hex
 ];
 
 export default ProjectMetas;

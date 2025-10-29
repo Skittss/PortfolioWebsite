@@ -3,6 +3,7 @@ import FadeIn from 'react-fade-in';
 import { Link, useLocation } from 'react-router-dom';
 import { Card, Tooltip, Grid, Row, Col, Divider } from 'antd';
 import ProjectMetas from "../projects";
+import Seigaiha from './seigaiha/seigaiha';
 
 import "../css/projectpage.scss";
 
@@ -114,7 +115,8 @@ const _getProjectCard = (pMeta, thumb, large, screens) => {
 
     return (
         <Row style={{
-            boxShadow: "0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19)"
+            boxShadow: "0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19)",
+            background: "rgba(21,25,31,1)"
         }}>
         <Col span={8} style={{position: "relative"}}>
             <div style={{
@@ -186,6 +188,8 @@ const Projects = () => {
         <div className="project-view">
             <FadeIn>
 
+            <Seigaiha />
+
                 {screens.xl ? (
                     <Row style={{paddingBottom: 16}} justify="center">
                         <Col span={16}>
@@ -222,7 +226,7 @@ const Projects = () => {
                         })
                     }
                 </Row>
-                <Divider style={{borderTopWidth: "1px", borderTopColor: "#000000", opacity: 0.5, marginBottom: 0, marginTop: "10vh"}}/>
+                {/* <Divider style={{borderTopWidth: "1px", borderTopColor: "#000000", opacity: 0.5, marginBottom: 0, marginTop: "10vh"}}/>
                 <div className="project-content-wrapper" style={{paddingTop: 0}}>
                     <h1 align="middle" style={{fontSize: "2.5em", padding: "30px 0", marginBottom: "5vh"}}>
                         MISC. PROJECTS (LINK ONLY)
@@ -261,7 +265,7 @@ const Projects = () => {
                             }
                         })
                     }
-                </Row>
+                </Row> */}
             </FadeIn>
         </div>
         <div className="project-footer-wrapper" style={{
