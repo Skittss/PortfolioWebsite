@@ -142,7 +142,7 @@ const AboutPage = () => {
                     description={
                         <>
                         Hobbyist photographer. I shoot a mix of street photography, landscapes, nature, and architecture.<br /><br />
-                        Currently using a Fujifilm X-T20 & FX 18-55mm f2.8-4 lens.
+                        Currently using a Fujifilm X-T20 & XF 18-55mm f2.8-4.0 lens / XF 33mm f1.4 R LM WR.
                         </>
                     }
                 />
