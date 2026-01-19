@@ -40,7 +40,7 @@ const HomePage = () => {
 							<div className="styled-text">
 								<p style={{fontSize: 30, marginBottom: "5px", fontFamily: "'Raleway-Bold', sans-serif"}}>Hey there! 👋</p>
 								<p style={{marginBottom: "15px"}}>I'm <Link to="/about">Henry</Link> <span style={{color: 'gray'}}>(Github - Skittss)</span></p>
-								<p style={{marginBottom: "5px"}}>I'm into low-level graphics systems, and the higher level techniques at the intersection of graphics and art.</p>
+								<p style={{marginBottom: "5px"}}>I'm into low-level graphics systems, and higher level techniques at the intersection of graphics and art.</p>
 								<p style={{marginBottom: "15px"}}>Currently working as a Graphics Research Engineer.</p>
 								<p style={{marginBottom: "5px"}}>Check out my projects <Link to="/projects"> here. </Link></p>
 								<Divider style={{marginTop: "12px", marginBottom: "12px"}} />
@@ -69,7 +69,7 @@ const HomePage = () => {
 										<Col flex={1}>
 										<Row style={{height: "100%", display: "flex", alignItems: "center", justifyContent: screens.md ? "left" : "center"}}>
 											<Col style={{color: 'orange'}}>Status: &nbsp;</Col>
-											<Col style={{background: "rgba(0,0,0,0.5)", borderRadius: "0.4em", padding: "2px 5px 2px 5px", fontFamily: "'Roboto Mono', monospace"}}>&gt; Mapping Shadows ☀️<span className="animated-cursor" /></Col>
+											<Col style={{background: "rgba(0,0,0,0.5)", borderRadius: "0.4em", padding: "2px 5px 2px 5px", fontFamily: "'Roboto Mono', monospace"}}>&gt; Generating Cubes 🧊<span className="animated-cursor" /></Col>
 										</Row>
 										</Col>
 									</Row>

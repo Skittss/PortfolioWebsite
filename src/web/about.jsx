@@ -118,7 +118,7 @@ const AboutPage = () => {
                     description={
                         <>
                         Casual pianist of over 10 years.<br /><br />
-                        I enjoy sound engineering and composition, and enjoy making arrangements of music from film and games. 
+                        I enjoy arrangement and composition, and particularly like music from film and games. 
                         </>
                     }
                 />
